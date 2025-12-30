@@ -1,0 +1,35 @@
+{
+    "name": "server",
+    "version": "1.0.0",
+    "description": "Farmer to Vendor Platform",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "keywords": [],
+    "author": "Sumit Meena",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cloudinary": "^2.8.0",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.2.1",
+        "express-validator": "^7.3.1",
+        "helmet": "^8.1.0",
+        "joi": "^18.0.2",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.0.2",
+        "morgan": "^1.10.1",
+        "multer": "^2.0.2",
+        "nodemailer": "^7.0.12",
+        "socket.io": "^4.8.3",
+        "twilio": "^5.11.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.11"
+    }
+}

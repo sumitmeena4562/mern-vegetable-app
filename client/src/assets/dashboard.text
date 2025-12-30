@@ -1,0 +1,334 @@
+🎯 Farmer Dashboard UI Requirements
+1. Dashboard Overview Section
+text
+Create a modern, clean, and intuitive farmer dashboard with following sections:
+
+A. TOP HEADER BAR:
+   - Farm Name with location (City, State)
+   - Profile photo dropdown with: Profile, Settings, Logout
+   - Notification bell with badge count
+   - Real-time online status indicator
+
+B. QUICK STATS CARDS (Top Row - 4 Cards):
+   1. TOTAL EARNINGS CARD:
+      - Current month earnings (₹)
+      - Percentage change from last month (↑/↓ with arrow)
+      - Mini chart sparkline
+      - Color: Green gradient
+
+   2. ACTIVE PRODUCTS CARD:
+      - Number of products listed
+      - Available quantity (kg)
+      - Expiring soon count (red alert)
+      - Color: Blue gradient
+
+   3. PENDING ORDERS CARD:
+      - Number of pending orders
+      - Total value (₹)
+      - Awaiting pickup count
+      - Color: Amber gradient
+
+   4. CUSTOMER RATING CARD:
+      - Average rating (stars 1-5)
+      - Total reviews count
+      - Rating trend (improving/declining)
+      - Color: Purple gradient
+
+C. CENTRAL DASHBOARD:
+   1. REVENUE CHART SECTION:
+      - Line chart: Last 30 days revenue
+      - Bar chart: Monthly comparison (Current vs Previous)
+      - Toggle: Daily/Weekly/Monthly view
+      - Export button for data
+
+   2. ORDER TIMELINE:
+      - Today's orders timeline
+      - Status: Pending → Packed → Ready for Pickup → Delivered
+      - Color-coded status badges
+      - Quick action buttons for each order
+
+   3. MARKET PRICES WIDGET:
+      - Live vegetable prices in local market
+      - Comparison: Your price vs Market average
+      - Price trend arrows (↑/↓)
+      - Top 5 crops price list
+
+D. RIGHT SIDEBAR:
+   1. QUICK ACTIONS PANEL:
+      - "Add New Product" button (primary)
+      - "View All Orders" button
+      - "Update Stock" button
+      - "Send Broadcast" (notify buyers)
+
+   2. UPCOMING PICKUPS:
+      - Today's scheduled pickups
+      - Vendor names and time slots
+      - Contact buttons
+      - "Mark as Ready" toggle
+
+   3. WEATHER & CROP ADVISORY:
+      - Local weather (temp, rain forecast)
+      - Crop health tips
+      - Pest alert warnings
+      - Irrigation schedule
+
+E. BOTTOM SECTIONS:
+   1. RECENT ORDERS TABLE:
+      - Columns: Order ID, Buyer, Items, Amount, Status, Actions
+      - Filter: All/Pending/Completed/Cancelled
+      - Search orders
+      - Export to Excel
+
+   2. PRODUCT PERFORMANCE:
+      - Top selling products
+      - Low stock alerts
+      - Products expiring soon
+      - Edit/Remove product buttons
+
+   3. BUYER FEEDBACK:
+      - Recent reviews with stars
+      - Reply to review button
+      - Overall satisfaction score
+
+F. MOBILE VIEW:
+   - Hamburger menu for navigation
+   - Collapsible sections
+   - Touch-friendly buttons
+   - Simplified stats view
+2. Navigation Menu (Left Sidebar)
+text
+📊 DASHBOARD
+   └── Overview
+   └── Analytics
+   └── Reports
+
+🌱 PRODUCTS
+   └── All Products
+   └── Add New Product
+   └── Categories
+   └── Inventory
+
+📦 ORDERS
+   └── New Orders
+   └── Processing
+   └── Completed
+   └── Returns
+
+💰 FINANCE
+   └── Earnings
+   └── Payouts
+   └── Transactions
+   └── Tax
+
+🏪 MARKETPLACE
+   └── Market Prices
+   └── Competitors
+   └── Demand Trends
+
+👥 CUSTOMERS
+   └── Buyers List
+   └── Reviews
+   └── Subscriptions
+
+⚙️ SETTINGS
+   └── Profile
+   └── Farm Details
+   └── Bank Account
+   └── Notifications
+3. Design Specifications
+text
+COLOR SCHEME:
+   - Primary: Green (#16a34a - #22c55e gradient)
+   - Secondary: Earth tones (#ca8a04, #7c2d12)
+   - Background: Light green (#f0f9f4)
+   - Cards: White with subtle shadows
+
+TYPOGRAPHY:
+   - Headings: Inter, 700-800 weight
+   - Body: Inter, 400-500 weight
+   - Numbers: Space Mono for stats
+
+ICONS:
+   - Material Symbols (rounded, filled)
+   - Custom farm-related icons
+
+ANIMATIONS:
+   - Smooth card hover effects
+   - Loading skeletons
+   - Success/Error toast notifications
+   - Page transitions
+
+INTERACTIVE ELEMENTS:
+   - Clickable cards expand details
+   - Drag & drop for reordering products
+   - Real-time updates (WebSocket)
+   - Offline mode indicator
+4. Key Features & Functionality
+text
+1. REAL-TIME UPDATES:
+   - Live order notifications
+   - Price change alerts
+   - Chat with buyers
+   - Stock level updates
+
+2. SMART ALERTS:
+   - Low stock warnings
+   - Order deadline reminders
+   - Payment received alerts
+   - Weather warnings
+
+3. ANALYTICS:
+   - Sales heatmap (time of day)
+   - Customer location map
+   - Product performance charts
+   - Seasonal demand predictions
+
+4. QUICK ACTIONS:
+   - One-click order processing
+   - Bulk product upload
+   - Template messages for buyers
+   - Share products on social media
+
+5. MOBILE APP FEATURES:
+   - Push notifications
+   - Camera for product photos
+   - GPS for delivery tracking
+   - Offline data sync
+5. Dashboard Widgets Detailed
+text
+WIDGET 1: DAILY SUMMARY
+   [🌅] Good Morning, [Farmer Name]!
+   📈 Today's Target: ₹5,000 | Achieved: ₹3,200 (64%)
+   📋 Tasks: 3 pending | 5 completed
+   ⏰ Next pickup: Vendor Sharma at 11:00 AM
+
+WIDGET 2: CROP CALENDAR
+   Jan Feb Mar Apr May Jun
+   🌱🥬🍅🥒🌽🫑
+   Planting → Harvesting schedule
+   Click crop for details
+
+WIDGET 3: BUYER MAP
+   Interactive map showing:
+   - Vendor locations
+   - Delivery routes
+   - Hotspot areas
+
+WIDGET 4: QUICK STATS
+   📊 This Week:
+   • Orders: 24 (↑12%)
+   • Revenue: ₹18,450 (↑8%)
+   • New Buyers: 5
+   • Avg. Rating: 4.7★
+
+WIDGET 5: TIPS & ADVISORY
+   💡 Today's Tip: 
+   "Harvest tomatoes in morning for better shelf life"
+   🚨 Alert: Heavy rain forecast tomorrow
+6. Empty States & Loading
+text
+EMPTY DASHBOARD (New Farmer):
+   - Welcome message with setup guide
+   - "Add your first product" CTA
+   - Quick tour video
+   - Connect bank account prompt
+
+LOADING STATES:
+   - Skeleton screens for cards
+   - Progress indicators
+   - Placeholder content
+
+ERROR STATES:
+   - Connection lost (offline mode)
+   - Data loading failed (retry button)
+   - Empty search results
+7. Responsive Breakpoints
+text
+- Desktop (>1024px): Full dashboard
+- Tablet (768px-1024px): Collapsed sidebar
+- Mobile (<768px): Single column, bottom nav
+- Ultra-wide (>1440px): Extra widgets
+8. Accessibility Requirements
+text
+- WCAG 2.1 AA compliant
+- Keyboard navigation
+- Screen reader support
+- High contrast mode
+- Reduced motion option
+- Font size scaling
+9. Integration Points
+text
+BACKEND APIs NEEDED:
+1. GET /api/farmer/dashboard/stats
+2. GET /api/farmer/orders?status=pending
+3. GET /api/farmer/products?status=active
+4. GET /api/market/prices
+5. GET /api/weather/location
+6. WS /notifications (real-time)
+
+THIRD-PARTY:
+- Google Maps API
+- Weather API
+- Payment gateway webhooks
+- SMS/Email service
+10. Sample Dashboard Layout
+text
+┌─────────────────────────────────────────────────────┐
+│ 🏠 Green Farms, Pune      👤▾  🔔3  🌐 Online      │
+├─────────────────────────────────────────────────────┤
+│  📈 ₹24,850    📦 12       ⏳ 8      ⭐ 4.7        │
+│  Earnings      Products    Orders    Rating         │
+├──────────────┬──────────────────────┬──────────────┤
+│              │                      │              │
+│  REVENUE     │   TODAY'S ORDERS     │  QUICK       │
+│  CHART       │   1. Vendor A ✓      │  ACTIONS     │
+│  ↗ 15%       │   2. Hotel B 🚚      │  +Add Product│
+│              │   3. Customer C ⏳    │  View Orders │
+│              │                      │              │
+├──────────────┼──────────────────────┼──────────────┤
+│              │                      │              │
+│  MARKET      │   UPCOMING           │  WEATHER     │
+│  PRICES      │   PICKUPS            │  32°C ☀️     │
+│  Tomato: ₹40 │   11:00 - Sharma     │  No rain     │
+│  Potato: ₹25 │   14:00 - Restaurant │              │
+│              │                      │              │
+└──────────────┴──────────────────────┴──────────────┘
+11. Farmer Persona & Goals
+text
+PRIMARY GOALS:
+1. Maximize daily sales
+2. Reduce waste/spoilage
+3. Build buyer relationships
+4. Streamline operations
+
+PAIN POINTS ADDRESSED:
+- Manual order tracking → Automated dashboard
+- Price uncertainty → Market data
+- Payment delays → Real-time updates
+- Communication gap → Chat/in-app messaging
+
+SUCCESS METRICS:
+- Order fulfillment rate (>95%)
+- Customer rating (>4.5★)
+- Revenue growth (month-over-month)
+- Product sell-through rate
+🎨 Visual Design Keywords
+text
+Modern, Clean, Intuitive, Data-rich, Responsive
+Green/agricultural theme, Card-based layout
+Real-time indicators, Interactive charts
+Progress tracking, Action-oriented
+Delightful micro-interactions
+इस prompt को use करके आप एक comprehensive farmer dashboard बना सकते हैं जो:
+
+Data-driven हो - Charts, stats, analytics
+
+Action-oriented हो - Quick actions, notifications
+
+Responsive हो - Mobile से desktop तक
+
+Farmer-friendly हो - Simple language, agricultural context
+
+Real-time हो - Live updates, alerts
+
+यह dashboard farmer को उनकी daily operations manage करने में help करेगा!

@@ -1,0 +1,252 @@
+import User from '../models/User.js';
+import Farmer from '../models/Farmer.js';
+import { validationResult } from 'express-validator';
+
+// ==========================
+// 1. REGISTER User
+// ==========================
+export const register = async (req, res) => {
+    try {
+        console.log("🟢 Registration started...");
+        
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+        
+        const { fullName, mobile, password, role, email, ...otherData } = req.body;
+        
+        // Check if user already exists
+        const existing = await User.findOne({ mobile });
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: 'Mobile number already registered'
+            });
+        }
+        
+        // Step 1: Create Base User (common fields)
+        console.log("📝 Creating base user...");
+        const user = await User.create({
+            fullName,
+            mobile,
+            password, // Password will be hashed by pre-save hook
+            role,
+            email: email || `${mobile}@user.com`,
+            address: otherData.address || {},
+            location: otherData.location || { type: 'Point', coordinates: [0, 0] }
+        });
+        
+        console.log("✅ Base user created:", user._id);
+        
+        // Step 2: Create Role-Specific Profile
+        let profile;
+        
+        switch (role) {
+            case 'farmer':
+                console.log("🌾 Creating farmer profile...");
+                profile = await Farmer.create({
+                    user: user._id,
+                    farmName: otherData.farmName || `${fullName}'s Farm`,
+                    farmSize: otherData.farmSize || 1,
+                    farmSizeUnit: otherData.farmSizeUnit || 'acre',
+                    crops: otherData.crops || [],
+                    farmingExperience: otherData.farmingExperience || 0,
+                    preferredPickupTime: otherData.preferredPickupTime || 'morning',
+                    ...(otherData.farmerData || {})
+                });
+                break;
+                
+            case 'vendor':
+                console.log("🏪 Creating vendor profile...");
+                profile = await Vendor.create({
+                    user: user._id,
+                    shopName: otherData.shopName || `${fullName}'s Shop`,
+                    businessType: otherData.businessType || 'retailer',
+                    dailyCapacity: otherData.dailyCapacity || 10,
+                    preferredVegetables: otherData.preferredVegetables || ['all'],
+                    paymentTerms: otherData.paymentTerms || 'online',
+                    storeTimings: otherData.storeTimings || { open: '06:00', close: '22:00' },
+                    preferredPickupTime: otherData.preferredPickupTime || 'morning',
+                    ...(otherData.vendorData || {})
+                });
+                break;
+                
+            case 'customer':
+                console.log("👨‍👩‍👧‍👦 Creating customer profile...");
+                profile = await Customer.create({
+                    user: user._id,
+                    familySize: otherData.familySize || 1,
+                    subscription: otherData.subscription || 'none',
+                    deliveryAddresses: otherData.deliveryAddresses || [],
+                    paymentMethods: otherData.paymentMethods || [],
+                    ...(otherData.customerData || {})
+                });
+                break;
+                
+            default:
+                throw new Error('Invalid role specified');
+        }
+        
+        console.log(`✅ ${role} registration successful`);
+        
+        // Generate token
+        const token = user.generateAuthToken();
+        
+        // Prepare response
+        const response = {
+            success: true,
+            message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`,
+            data: {
+                user: {
+                    id: user._id,
+                    fullName: user.fullName,
+                    mobile: user.mobile,
+                    email: user.email,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    profilePhoto: user.profilePhoto
+                },
+                profile,
+                token
+            }
+        };
+        
+        res.status(201).json(response);
+        
+    } catch (error) {
+        console.error('❌ Registration error:', error);
+        
+        // Cleanup: If user was created but profile failed
+        if (req.body.mobile) {
+            try {
+                await User.findOneAndDelete({ mobile: req.body.mobile });
+                console.log("🧹 Cleaned up failed registration");
+            } catch (cleanupError) {
+                console.error('Cleanup error:', cleanupError);
+            }
+        }
+        
+        res.status(500).json({
+            success: false,
+            message: 'Registration failed',
+            error: error.message
+        });
+    }
+};
+
+// ==========================
+// 2. LOGIN USER
+// ==========================
+export const login = async (req, res) => {
+    try {
+        const { mobile, password } = req.body;
+
+        // Find user & include password
+        const user = await User.findOne({ mobile }).select('+password');
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid mobile number or password'
+            });
+        }
+
+        // Check password
+        const isPasswordValid = await user.comparePassword(password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid mobile number or password'
+            });
+        }
+
+        if (!user.isActive) {
+            return res.status(401).json({
+                success: false,
+                message: 'Account is deactivated'
+            });
+        }
+
+        // Generate Token
+        const token = user.generateAuthToken();
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: {
+                user: {
+                    id: user._id,
+                    fullName: user.fullName,
+                    mobile: user.mobile,
+                    role: user.role,
+                    isVerified: user.isVerified
+                },
+                token
+            }
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Login failed',
+            error: error.message
+        });
+    }
+};
+
+// ==========================
+// 3. GET USER NAME
+// ==========================
+export const getUserName = async (req, res) => {
+    try {
+        const user = req.user; // Auth middleware se mila
+        res.status(200).json({
+            success: true,
+            name: user.fullName
+        });
+    } catch (error) {
+        console.error("Error fetching name:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
+    }
+};
+
+
+// ==========================
+// 4. Full Profile for AuthContext
+// ==========================
+
+
+// ✅ NEW: Full Profile for AuthContext
+export const getMe = async (req, res) => {
+    try {
+        const user = req.user; // Auth middleware se mila hua user
+        
+        // Hum pura user object bhejenge taaki AuthContext khush rahe
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                mobile: user.mobile,
+                role: user.role,
+                isVerified: user.isVerified
+                // Aur jo fields chahiye wo yahan add kar sakte ho
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server Error"
+        });
+    }
+};
