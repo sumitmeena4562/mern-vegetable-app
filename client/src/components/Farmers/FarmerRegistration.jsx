@@ -145,19 +145,33 @@ const FarmerRegistration = () => {
         <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-blue-100/30 rounded-full blur-[80px]"></div>
       </div>
 
-      <div className="min-h-full flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-full flex flex-col justify-center py-5 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
-          <div className="inline-flex items-center justify-center h-20 w-20 rounded-[24px] bg-gradient-to-br from-green-500 to-green-700 text-white shadow-xl shadow-green-600/20 mb-4">
-            <span className="material-symbols-outlined text-5xl">agriculture</span>
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-2">
+
+          {/* Logo + Brand Name */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="material-symbols-outlined text-primary text-4xl">
+              eco
+            </span>
+          
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-gray-900">AgriConnect</h2>
-          <p className="mt-2 text-sm font-medium text-gray-600">India's most trusted farmer network</p>
+
+          {/* Heading */}
+          <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+            AgriConnect
+          </h2>
+
+          {/* Tagline */}
+          <p className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+            India's most trusted farmer network 🌾
+          </p>
+
         </div>
 
         {/* Registration Form Card */}
         <div className="sm:mx-auto sm:w-full sm:max-w-[1024px]">
-          <div className="glass-card shadow-2xl rounded-card px-6 py-10 sm:px-10 lg:px-14 relative overflow-hidden">
+          <div className="glass-card shadow-2xl rounded-card px-5 py-8 sm:px-10 lg:px-14 relative overflow-hidden">
             {/* Glass Card Effect */}
             <style jsx>{`
               .glass-card {
@@ -186,13 +200,13 @@ const FarmerRegistration = () => {
             `}</style>
 
             {/* Form Header */}
-            <div className="relative z-10 mb-10 pb-6 border-b border-gray-200/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative z-10 mb-5 pb-6 border-b border-gray-200/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Farmer Registration</h1>
-                <p className="mt-2 text-lg text-gray-600">Sell vegetables directly to vendors near you.</p>
+                <h1 className="text-2xl font-bold text-gray-900">Farmer Registration</h1>
+                <p className="mt-2 text-sm text-gray-600">Sell vegetables directly to vendors near you.</p>
               </div>
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-green-50/50 rounded-full border border-green-100 text-green-800 text-sm font-semibold">
-                <span className="material-symbols-outlined text-lg">verified_user</span>
+              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-green-50/50 rounded-full border border-green-100 text-green-900 text-sm font-semibold">
+                <span className="material-symbols-outlined text-md">verified_user</span>
                 <span>Secure & Verified</span>
               </div>
             </div>
@@ -202,8 +216,8 @@ const FarmerRegistration = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
                 {/* Personal Details Column */}
                 <div className="space-y-6">
-                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                  <h3 className="text-md font-bold text-gray-800 flex items-center gap-3 mb-6">
+                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-700">
                       <span className="material-symbols-outlined">person</span>
                     </div>
                     Personal Details
@@ -220,7 +234,7 @@ const FarmerRegistration = () => {
                           <span className="material-symbols-outlined text-gray-400">badge</span>
                         </div>
                         <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
+                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
                           id="fullName"
                           name="fullName"
                           value={formData.fullName}
@@ -242,7 +256,7 @@ const FarmerRegistration = () => {
                           <span className="material-symbols-outlined text-gray-400">smartphone</span>
                         </div>
                         <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
+                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
                           id="mobile"
                           name="mobile"
                           value={formData.mobile}
@@ -269,7 +283,7 @@ const FarmerRegistration = () => {
                             <span className="material-symbols-outlined text-gray-400">lock</span>
                           </div>
                           <input
-                            className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
+                            className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
                             id="password"
                             name="password"
                             value={formData.password}
@@ -289,7 +303,7 @@ const FarmerRegistration = () => {
                             <span className="material-symbols-outlined text-gray-400">lock_reset</span>
                           </div>
                           <input
-                            className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
+                            className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
                             id="confirmPassword"
                             name="confirmPassword"
                             value={formData.confirmPassword}
@@ -306,8 +320,8 @@ const FarmerRegistration = () => {
 
                 {/* Farm Location Column */}
                 <div className="space-y-6">
-                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
+                  <h3 className="text-md font-bold text-gray-800 flex items-center gap-3 mb-6">
+                    <div className="h-9 w-9 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
                       <span className="material-symbols-outlined">location_on</span>
                     </div>
                     Farm Location
@@ -324,7 +338,7 @@ const FarmerRegistration = () => {
                           <span className="material-symbols-outlined text-gray-400">home_pin</span>
                         </div>
                         <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
+                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
                           id="village"
                           name="village"
                           value={formData.village}
@@ -343,7 +357,7 @@ const FarmerRegistration = () => {
                           City / District
                         </label>
                         <input
-                          className="glass-input block w-full rounded-input py-4 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
+                          className="glass-input block w-full rounded-input py-2 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
                           id="city"
                           name="city"
                           value={formData.city}
@@ -358,7 +372,7 @@ const FarmerRegistration = () => {
                           State
                         </label>
                         <select
-                          className="glass-input block w-full rounded-input py-4 px-4 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
+                          className="glass-input block w-full rounded-input py-2 px-4 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
                           id="state"
                           name="state"
                           value={formData.state}
@@ -384,7 +398,7 @@ const FarmerRegistration = () => {
                           <span className="material-symbols-outlined text-gray-400">schedule</span>
                         </div>
                         <select
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-10 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
+                          className="glass-input block w-full rounded-input py-2 pl-12 pr-10 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
                           id="pickup"
                           name="pickup"
                           value={formData.pickup}
@@ -408,7 +422,7 @@ const FarmerRegistration = () => {
 
               {/* What do you grow? Section */}
               <div className="pt-6 border-t border-gray-200/50">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3 mb-6">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-6">
                   <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
                     <span className="material-symbols-outlined">potted_plant</span>
                   </div>
@@ -426,7 +440,7 @@ const FarmerRegistration = () => {
                         onChange={() => handleCropChange(crop.key)}
                       />
                       <div className={`
-                        glass-input rounded-input p-4 text-center hover:bg-white/80
+                        glass-input rounded-input p-4 rounded-md text-center hover:bg-white/80
                         peer-checked:bg-green-100 peer-checked:border-green-500 
                         peer-checked:ring-2 peer-checked:ring-green-500 transition-all 
                         h-full flex flex-col items-center justify-center

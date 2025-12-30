@@ -103,7 +103,7 @@ export const register = async (req, res) => {
             {
                 user: user._id,
                 title: "Account Created Successfully 🎉",
-                message: `Welcome to AgriConnect, ${user.name || 'User'}! 
+                message: `Welcome to AgriConnect, ${user.fullName || 'User'}! 
               We’re glad to have you as a ${user.role || 'member'}. 
               Your dashboard is ready. Start managing your activities, explore smart features, and grow with confidence using AgriConnect 🚜✨`,
               type: "success",

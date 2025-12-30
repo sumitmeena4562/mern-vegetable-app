@@ -247,5 +247,16 @@ text
 5. If geolocation fails → Default to "Pune, Maharashtra"
 ## 👨‍💻 Developed By
 
+
+
+OTP kaha use hota hai?
+
+✅ Signup / Account Creation
+
+✅ Login (2-step verification)
+
+✅ Forgot Password
+
+✅ Role change / Sensitive action
 **Sumit Meena**  
 MERN Stack Developer  

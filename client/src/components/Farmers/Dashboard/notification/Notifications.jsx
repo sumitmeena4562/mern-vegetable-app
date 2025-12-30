@@ -14,272 +14,407 @@ const Notifications = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
+  // Filters List
   const filters = [
-    { id: 'all', label: 'All', icon: 'view_list' },
-    { id: 'unread', label: 'Unread', icon: 'circle' },
-    { id: 'orders', label: 'Orders', icon: 'shopping_cart' },
-    { id: 'payments', label: 'Payments', icon: 'payments' },
-    { id: 'alerts', label: 'Alerts', icon: 'warning' },
+    { id: 'all', label: 'All', icon: 'apps', color: 'bg-gradient-to-r from-slate-600 to-slate-700' },
+    { id: 'unread', label: 'Unread', icon: 'mark_email_unread', color: 'bg-gradient-to-r from-green-500 to-emerald-600' },
+    { id: 'order', label: 'Orders', icon: 'shopping_bag', color: 'bg-gradient-to-r from-blue-500 to-cyan-600' },
+    { id: 'payment', label: 'Payments', icon: 'payments', color: 'bg-gradient-to-r from-purple-500 to-violet-600' },
+    { id: 'system', label: 'System', icon: 'settings', color: 'bg-gradient-to-r from-amber-500 to-orange-600' },
   ];
 
-  const handleNotificationClick = (notification) => {
-    // Mark as read when clicked
-    markAsRead(notification.id);
-    
-    // Navigate based on notification type
-    if (notification.type === 'order') {
-      navigate('/farmer-dashboard/orders');
-    } else if (notification.type === 'payment') {
-      navigate('/farmer-dashboard/payments');
-    } else if (notification.type === 'alert') {
-      navigate('/farmer-dashboard/inventory');
+  // Button Text Logic based on Type
+  const getActionText = (type) => {
+    switch (type) {
+      case 'order': return 'View Order';
+      case 'payment': return 'View Receipt';
+      case 'success': return 'Go to Dashboard';
+      case 'alert': return 'Check Inventory';
+      default: return null;
     }
-    // Add more navigation logic as needed
   };
 
-  // Filter logic
+  const handleNotificationClick = (notification) => {
+    markAsRead(notification.id);
+    
+    // Navigation Logic
+    switch (notification.type) {
+      case 'order': navigate('/farmer-dashboard/orders'); break;
+      case 'payment': navigate('/farmer-dashboard/payments'); break;
+      case 'success': navigate('/farmer-dashboard'); break;
+      default: break;
+    }
+  };
+
+  // Filter & Search Logic
   const filteredNotifications = notifications.filter(notification => {
-    // Search filter
     const matchesSearch = 
       notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Type filter
     const matchesType = activeFilter === 'all' || 
-                       (activeFilter === 'unread' && notification.unread) ||
-                       notification.type === activeFilter;
+                        (activeFilter === 'unread' && notification.unread) ||
+                        notification.type === activeFilter;
     
     return matchesSearch && matchesType;
   });
 
-  // Group by date
+  // Grouping
   const todayNotifications = filteredNotifications.filter(n => n.date === 'today');
   const yesterdayNotifications = filteredNotifications.filter(n => n.date === 'yesterday');
-  const olderNotifications = filteredNotifications.filter(n => !['today', 'yesterday'].includes(n.date));
+  const olderNotifications = filteredNotifications.filter(n => n.date === 'older');
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white">
-            Notifications {unreadCount > 0 && <span className="text-green-600">({unreadCount})</span>}
-          </h1>
-          <p className="text-slate-500 text-lg font-medium mt-2">
-            Stay updated on your orders, sales, and important alerts.
-          </p>
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllAsRead}
-            className="px-5 py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-colors flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-gray-500">done_all</span>
-            Mark All as Read
-          </button>
-        )}
-      </div>
-
-      {/* Controls: Search & Filters */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-8">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md group">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined transition-colors group-focus-within:text-green-500">
-            search
-          </span>
-          <input
-            className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-green-500/50 text-gray-800 dark:text-white placeholder-gray-400 text-base transition-all"
-            placeholder="Search notifications..."
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Chips/Tabs */}
-        <div className="flex flex-1 gap-2 overflow-x-auto pb-2 lg:pb-0">
-          {filters.map(filter => (
-            <button
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id)}
-              className={`px-4 h-12 rounded-xl text-sm font-medium whitespace-nowrap flex items-center gap-2 transition-all ${
-                activeFilter === filter.id
-                  ? 'bg-green-500 text-slate-900 shadow-lg shadow-green-500/20 font-bold'
-                  : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-600'
-              }`}
-            >
-              <span
-                className={`material-symbols-outlined text-[20px] ${
-                  activeFilter === filter.id
-                    ? 'text-slate-900'
-                    : filter.id === 'unread'
-                    ? 'text-green-500'
-                    : filter.id === 'orders'
-                    ? 'text-blue-500'
-                    : filter.id === 'payments'
-                    ? 'text-amber-500'
-                    : filter.id === 'alerts'
-                    ? 'text-red-500'
-                    : 'text-gray-500'
-                }`}
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-4 md:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* Header with Stats */}
+        <div className="mb-8 md:mb-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg">
+                  <span className="material-symbols-outlined text-white text-2xl">notifications</span>
+                </div>
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
+                    Notifications
+                  </h1>
+                  <p className="text-slate-500 text-sm md:text-base">
+                    Stay updated with your farm activities
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="group relative px-6 py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl font-semibold hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-center gap-2 shadow-lg"
               >
-                {filter.icon}
-              </span>
-              {filter.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Notifications List */}
-      <div className="space-y-4">
-        {/* Today Section */}
-        {todayNotifications.length > 0 && (
-          <>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">
-              Today
-            </div>
-            {todayNotifications.map(notification => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onClick={handleNotificationClick}
-              />
-            ))}
-          </>
-        )}
-
-        {/* Yesterday Section */}
-        {yesterdayNotifications.length > 0 && (
-          <>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1 mt-6 mb-2">
-              Yesterday
-            </div>
-            {yesterdayNotifications.map(notification => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onClick={handleNotificationClick}
-              />
-            ))}
-          </>
-        )}
-
-        {/* Older Section */}
-        {olderNotifications.length > 0 && (
-          <>
-            <div className="text-sm font-bold text-gray-400 uppercase tracking-wider ml-1 mt-6 mb-2">
-              Older
-            </div>
-            {olderNotifications.map(notification => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onClick={handleNotificationClick}
-              />
-            ))}
-          </>
-        )}
-
-        {/* Empty State */}
-        {filteredNotifications.length === 0 && (
-          <div className="text-center py-16">
-            <div className="material-symbols-outlined text-6xl text-gray-300 mb-4">
-              notifications_off
-            </div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              No notifications found
-            </h3>
-            <p className="text-gray-500">
-              {searchQuery ? 'Try a different search term' : 'You have no notifications at the moment'}
-            </p>
+                <span className="material-symbols-outlined text-[22px] transition-transform group-hover:rotate-12">done_all</span>
+                Mark All as Read
+                <div className="absolute -top-2 -right-2">
+                  <span className="relative flex h-5 w-5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-gradient-to-r from-green-500 to-emerald-600 items-center justify-center text-xs font-bold">
+                      {unreadCount}
+                    </span>
+                  </span>
+                </div>
+              </button>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Bottom Spacer */}
-      {filteredNotifications.length > 0 && (
-        <div className="h-20 flex items-center justify-center text-gray-400 text-sm font-medium mt-8">
-          <span className="material-symbols-outlined mr-2 text-lg">check</span>
-          You're all caught up!
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-4 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Total</p>
+                  <p className="text-2xl font-bold text-slate-800">{notifications.length}</p>
+                </div>
+                <div className="p-2 bg-slate-100 rounded-lg">
+                  <span className="material-symbols-outlined text-slate-600">stack</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-4 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Unread</p>
+                  <p className="text-2xl font-bold text-green-600">{unreadCount}</p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <span className="material-symbols-outlined text-green-600">mark_email_unread</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-4 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Orders</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {notifications.filter(n => n.type === 'order').length}
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <span className="material-symbols-outlined text-blue-600">shopping_bag</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-4 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">Filtered</p>
+                  <p className="text-2xl font-bold text-purple-600">{filteredNotifications.length}</p>
+                </div>
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <span className="material-symbols-outlined text-purple-600">filter_list</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Search & Filters Section */}
+        <div className="sticky top-4 z-10 mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200 p-4 shadow-lg">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative flex-1 group">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/10 rounded-xl blur group-focus-within:blur-md transition-all duration-300"></div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined group-focus-within:text-green-600 transition-colors duration-300">
+                    search
+                  </span>
+                  <input
+                    className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-green-500/30 focus:border-green-500 outline-none text-slate-700 transition-all duration-300 shadow-sm"
+                    placeholder="Search notifications by title or message..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+                {filters.map(filter => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setActiveFilter(filter.id)}
+                    className={`relative px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-all duration-300 border shadow-sm ${
+                      activeFilter === filter.id
+                        ? `${filter.color} text-white border-transparent shadow-lg scale-[1.05]`
+                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50 hover:shadow-md'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {filter.icon}
+                    </span>
+                    {filter.label}
+                    {filter.id === 'unread' && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notifications List */}
+        <div className="space-y-6">
+          {todayNotifications.length > 0 && (
+            <NotificationSection title="Today" list={todayNotifications} onAction={getActionText} onClick={handleNotificationClick} />
+          )}
+          
+          {yesterdayNotifications.length > 0 && (
+            <NotificationSection title="Yesterday" list={yesterdayNotifications} onAction={getActionText} onClick={handleNotificationClick} />
+          )}
+          
+          {olderNotifications.length > 0 && (
+            <NotificationSection title="Older" list={olderNotifications} onAction={getActionText} onClick={handleNotificationClick} />
+          )}
+
+          {/* Empty State */}
+          {filteredNotifications.length === 0 && (
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-emerald-50/30"></div>
+              <div className="relative flex flex-col items-center justify-center py-20 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200 shadow-lg">
+                <div className="relative mb-6">
+                  <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center shadow-inner">
+                    <span className="material-symbols-outlined text-5xl text-slate-400">notifications_off</span>
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="material-symbols-outlined text-white">check</span>
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">All caught up!</h3>
+                <p className="text-slate-600 text-center max-w-md">
+                  {searchQuery 
+                    ? `No notifications found for "${searchQuery}"`
+                    : 'You\'re all up to date. New notifications will appear here.'}
+                </p>
+                {(searchQuery || activeFilter !== 'all') && (
+                  <button
+                    onClick={() => { setSearchQuery(''); setActiveFilter('all'); }}
+                    className="mt-6 px-6 py-3 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-xl font-semibold hover:shadow-xl transition-all duration-300"
+                  >
+                    <span className="material-symbols-outlined align-middle mr-2">refresh</span>
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 };
 
-// Notification Item Component
-const NotificationItem = ({ notification, onClick }) => {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    amber: 'bg-amber-100 text-amber-600',
-    red: 'bg-red-100 text-red-600',
-    purple: 'bg-purple-100 text-purple-600',
-    green: 'bg-green-100 text-green-600',
+// --- Helper Components ---
+
+const NotificationSection = ({ title, list, onAction, onClick }) => (
+  <div className="relative">
+    <div className="sticky top-20 z-0">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider px-4 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm">
+          {title} • {list.length}
+        </h3>
+        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+      </div>
+    </div>
+    <div className="grid gap-3">
+      {list.map(notif => (
+        <NotificationItem 
+          key={notif.id} 
+          notification={notif} 
+          actionText={onAction(notif.type)} 
+          onClick={onClick} 
+        />
+      ))}
+    </div>
+  </div>
+);
+
+const NotificationItem = ({ notification, actionText, onClick }) => {
+  const colorConfig = {
+    blue: 'from-blue-100 to-blue-50 text-blue-700 border-blue-200',
+    amber: 'from-amber-100 to-amber-50 text-amber-700 border-amber-200',
+    red: 'from-red-100 to-red-50 text-red-700 border-red-200',
+    green: 'from-green-100 to-emerald-50 text-emerald-700 border-emerald-200',
+    purple: 'from-purple-100 to-violet-50 text-purple-700 border-purple-200',
+    slate: 'from-slate-100 to-slate-50 text-slate-700 border-slate-200',
   };
 
-  const darkColorClasses = {
-    blue: 'dark:bg-blue-900/30 dark:text-blue-400',
-    amber: 'dark:bg-amber-900/30 dark:text-amber-400',
-    red: 'dark:bg-red-900/30 dark:text-red-400',
-    purple: 'dark:bg-purple-900/30 dark:text-purple-400',
-    green: 'dark:bg-green-900/30 dark:text-green-400',
+  const iconConfig = {
+    blue: 'bg-gradient-to-br from-blue-500 to-cyan-600',
+    amber: 'bg-gradient-to-br from-amber-500 to-orange-600',
+    red: 'bg-gradient-to-br from-red-500 to-rose-600',
+    green: 'bg-gradient-to-br from-green-500 to-emerald-600',
+    purple: 'bg-gradient-to-br from-purple-500 to-violet-600',
+    slate: 'bg-gradient-to-br from-slate-500 to-slate-700',
   };
+
+  const activeColor = colorConfig[notification.color] || colorConfig.slate;
+  const activeIconColor = iconConfig[notification.color] || iconConfig.slate;
 
   return (
     <div
       onClick={() => onClick(notification)}
-      className={`bg-white p-5 rounded-2xl flex flex-col md:flex-row gap-4 items-start md:items-center group hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-all cursor-pointer relative overflow-hidden border border-slate-200 dark:border-slate-700 ${
-        notification.unread
-          ? 'border-l-4 border-l-green-500'
-          : 'border-l-4 border-l-transparent hover:border-l-slate-300 dark:hover:border-l-slate-600'
+      className={`group relative bg-gradient-to-br ${activeColor} border rounded-2xl p-5 transition-all duration-300 cursor-pointer hover:shadow-xl hover:-translate-y-0.5 ${
+        notification.unread 
+          ? 'border-l-4 border-l-green-500 shadow-lg' 
+          : 'shadow-md'
       }`}
     >
-      <div
-        className={`size-12 rounded-full ${colorClasses[notification.color]} ${darkColorClasses[notification.color]} flex items-center justify-center shrink-0`}
-      >
-        <span className="material-symbols-outlined">{notification.icon}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3
-            className={`font-bold text-lg truncate ${
-              notification.unread ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-200'
-            }`}
-          >
-            {notification.title}
-          </h3>
+      <div className="flex flex-col md:flex-row gap-5">
+        {/* Icon with Animation */}
+        <div className="relative">
+          <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${activeIconColor} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+            <span className="material-symbols-outlined text-white text-2xl">{notification.icon}</span>
+          </div>
           {notification.unread && (
-            <span className="size-2.5 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full animate-pulse border-2 border-white"></span>
           )}
         </div>
-        <p
-          className={`text-base truncate ${
-            notification.unread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {notification.message}
-        </p>
-      </div>
-      <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end mt-2 md:mt-0">
-        <span className="text-sm text-gray-400 font-medium whitespace-nowrap">
-          {notification.time}
-        </span>
-        {notification.buttonText && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent parent onClick
-              // Handle button click
-            }}
-            className={`${
-              notification.unread
-                ? 'bg-green-500 hover:bg-green-600 text-slate-900 shadow-sm'
-                : 'border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 opacity-0 group-hover:opacity-100'
-            } px-4 py-2 rounded-lg text-sm font-bold transition-all`}
-          >
-            {notification.buttonText}
-          </button>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-3">
+              <h4 className={`text-lg font-bold ${notification.unread ? 'text-slate-900' : 'text-slate-700'}`}>
+                {notification.title}
+              </h4>
+              {notification.priority === 'high' && (
+                <span className="px-2 py-0.5 bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-bold rounded-full">
+                  URGENT
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-lg shadow-sm">
+                {notification.time}
+              </span>
+              {notification.unread && (
+                <span className="hidden md:inline-block px-2 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full animate-pulse">
+                  NEW
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <p className={`text-sm leading-relaxed ${notification.unread ? 'text-slate-600' : 'text-slate-500'}`}>
+            {notification.message}
+          </p>
+          
+          {/* Tags */}
+          {notification.tags && notification.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {notification.tags.map((tag, index) => (
+                <span key={index} className="px-2 py-1 bg-white/50 text-xs font-medium text-slate-600 rounded-lg">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Action Button */}
+        {actionText && (
+          <div className="md:self-center shrink-0">
+            <button 
+              className="relative overflow-hidden px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300 group/btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick(notification);
+              }}
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                {actionText}
+                <span className="material-symbols-outlined text-[18px] group-hover/btn:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          </div>
         )}
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/50">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">
+            {notification.category || 'General'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {notification.unread && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                // This would need to be connected to markAsRead
+              }}
+              className="text-xs text-slate-500 hover:text-green-600 transition-colors"
+            >
+              Mark as read
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
