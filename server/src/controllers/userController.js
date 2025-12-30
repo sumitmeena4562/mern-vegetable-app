@@ -3,6 +3,9 @@ import Farmer from '../models/Farmer.js';
 import { validationResult } from 'express-validator';
 import Notification from '../models/Notification.js';
 import Otp from '../models/otp.js';
+import axios from 'axios';
+import twilio from 'twilio';
+
 // ==========================
 // 1. REGISTER User
 // ==========================
@@ -161,40 +164,71 @@ export const register = async (req, res) => {
     }
 };
 
+import nodemailer from 'nodemailer'; // 👈 Import add karein
+// import Otp from '../models/Otp.js';
+
 // ==========================
-// SEND OTP (Mock/Real)
+// EMAIL OTP LOGIC
 // ==========================
 export const sendOtp = async (req, res) => {
     try {
-        const { mobile } = req.body;
-        
-        // 1. Check agar user pehle se registered hai
+        const { mobile, email } = req.body; // 👈 Ab hum Email bhi maangenge
+
+        // 1. Check existing user
         const existingUser = await User.findOne({ mobile });
         if (existingUser) {
-            return res.status(400).json({ success: false, message: "Mobile number pehle se registered hai. Please Login karein." });
+            return res.status(400).json({ success: false, message: "Mobile number already registered. Please Login." });
         }
 
-        // 2. Generate 4 digit OTP
+        // 2. Validation
+        if(!email) {
+            return res.status(400).json({ success: false, message: "Email is required for verification." });
+        }
+
+        // 3. Generate OTP
         const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // 3. Purana OTP delete karein agar koi hai
+        // 4. Save OTP to DB (Mobile ke against save karenge taaki baad me verify kar sakein)
         await Otp.deleteMany({ mobile });
-
-        // 4. Save New OTP to DB
         await Otp.create({ mobile, otp: otpCode });
 
-        // 5. Send SMS (Yahan Fast2SMS / Twilio ka code ayega)
-        // Filhal development ke liye console me dikha rahe hain
-        console.log(`📩 OTP for ${mobile} is: ${otpCode}`);
+        // 5. Send Email using Nodemailer
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
 
-        res.status(200).json({ success: true, message: "OTP sent successfully!" });
+        const mailOptions = {
+            from: `"AgriConnect Security" <${process.env.EMAIL_USER}>`,
+            to: email, // User ka email
+            subject: 'AgriConnect Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+                    <h2 style="color: #16a34a;">AgriConnect 🌱</h2>
+                    <p>Hello Farmer,</p>
+                    <p>Your verification code for registration is:</p>
+                    <h1 style="color: #333; letter-spacing: 5px;">${otpCode}</h1>
+                    <p>This code is valid for 5 minutes.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Email sent to ${email} with OTP: ${otpCode}`);
+
+        res.status(200).json({ 
+            success: true, 
+            message: `OTP sent to ${email}. Please check your Inbox/Spam.` 
+        });
 
     } catch (error) {
-        console.error("OTP Send Error:", error);
-        res.status(500).json({ success: false, message: "OTP bhejne me dikkat aayi." });
+        console.error("❌ Email Error:", error);
+        res.status(500).json({ success: false, message: "Failed to send email. Check backend logs." });
     }
 };
-
 // ==========================
 // VERIFY OTP
 // ==========================
