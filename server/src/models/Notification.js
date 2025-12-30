@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose'; // 1. require hata kar import kiya
 
 const notificationSchema = new mongoose.Schema({
   user: {
@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema({
   
   type: {
     type: String,
-    enum: ['order', 'payment', 'market', 'system', 'promotion'],
+    enum: ['order', 'payment', 'market', 'system', 'promotion', 'success', 'error'],
     default: 'system'
   },
   
@@ -49,4 +49,6 @@ notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 // Index for user notifications
 notificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Notification', notificationSchema);
+// 2. module.exports hata kar export default kiya
+const Notification = mongoose.model('Notification', notificationSchema);
+export default Notification;

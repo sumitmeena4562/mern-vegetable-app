@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
 import { validationResult } from 'express-validator';
+import Notification from '../models/Notification.js';
 
 // ==========================
 // 1. REGISTER User
@@ -8,7 +9,7 @@ import { validationResult } from 'express-validator';
 export const register = async (req, res) => {
     try {
         console.log("🟢 Registration started...");
-        
+
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -16,9 +17,9 @@ export const register = async (req, res) => {
                 errors: errors.array()
             });
         }
-        
+
         const { fullName, mobile, password, role, email, ...otherData } = req.body;
-        
+
         // Check if user already exists
         const existing = await User.findOne({ mobile });
         if (existing) {
@@ -27,7 +28,7 @@ export const register = async (req, res) => {
                 message: 'Mobile number already registered'
             });
         }
-        
+
         // Step 1: Create Base User (common fields)
         console.log("📝 Creating base user...");
         const user = await User.create({
@@ -39,12 +40,12 @@ export const register = async (req, res) => {
             address: otherData.address || {},
             location: otherData.location || { type: 'Point', coordinates: [0, 0] }
         });
-        
+
         console.log("✅ Base user created:", user._id);
-        
+
         // Step 2: Create Role-Specific Profile
         let profile;
-        
+
         switch (role) {
             case 'farmer':
                 console.log("🌾 Creating farmer profile...");
@@ -59,7 +60,7 @@ export const register = async (req, res) => {
                     ...(otherData.farmerData || {})
                 });
                 break;
-                
+
             case 'vendor':
                 console.log("🏪 Creating vendor profile...");
                 profile = await Vendor.create({
@@ -74,7 +75,7 @@ export const register = async (req, res) => {
                     ...(otherData.vendorData || {})
                 });
                 break;
-                
+
             case 'customer':
                 console.log("👨‍👩‍👧‍👦 Creating customer profile...");
                 profile = await Customer.create({
@@ -86,16 +87,38 @@ export const register = async (req, res) => {
                     ...(otherData.customerData || {})
                 });
                 break;
-                
+
             default:
                 throw new Error('Invalid role specified');
         }
-        
+
         console.log(`✅ ${role} registration successful`);
-        
+
+        // -------------------------------------------------------------
+        // . NOTIFICATION SAVE (Tumhare naye Schema ke hisab se)
+        // -------------------------------------------------------------
+
+
+        await Notification.create(
+            {
+                user: user._id,
+                title: "Account Created Successfully 🎉",
+                message: `Welcome to AgriConnect, ${user.name || 'User'}! 
+              We’re glad to have you as a ${user.role || 'member'}. 
+              Your dashboard is ready. Start managing your activities, explore smart features, and grow with confidence using AgriConnect 🚜✨`,
+              type: "success",
+              priority: "high",
+              data:{
+                email:user.email,
+                action :"signup"
+              }
+
+            }
+
+        );
         // Generate token
         const token = user.generateAuthToken();
-        
+
         // Prepare response
         const response = {
             success: true,
@@ -114,12 +137,12 @@ export const register = async (req, res) => {
                 token
             }
         };
-        
+
         res.status(201).json(response);
-        
+
     } catch (error) {
         console.error('❌ Registration error:', error);
-        
+
         // Cleanup: If user was created but profile failed
         if (req.body.mobile) {
             try {
@@ -129,7 +152,7 @@ export const register = async (req, res) => {
                 console.error('Cleanup error:', cleanupError);
             }
         }
-        
+
         res.status(500).json({
             success: false,
             message: 'Registration failed',
@@ -228,7 +251,7 @@ export const getUserName = async (req, res) => {
 export const getMe = async (req, res) => {
     try {
         const user = req.user; // Auth middleware se mila hua user
-        
+
         // Hum pura user object bhejenge taaki AuthContext khush rahe
         res.status(200).json({
             success: true,
