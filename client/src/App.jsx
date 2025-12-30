@@ -5,8 +5,10 @@ import VendorRegistration from "./components/Vendors/VendorRegistration";
 import CustomerRegistrationPage from "./pages/CustomerRegistrationPage";
 import LoginPage from "./pages/Loginpage";
 import FarmerDashboard from "./pages/Farmer/FarmerDashboard";
+import { NotificationProvider } from "./contexts/NotificationContext";
 export default function App() {
     return (
+        <NotificationProvider>
         <div>
             <Routes>
                 <Route path="/" element={<Landingpage/>} />
@@ -17,5 +19,6 @@ export default function App() {
                 <Route path="/farmer-dashboard/*" element={<FarmerDashboard/>}/>
             </Routes>
         </div>
+        </NotificationProvider>
     )
 }

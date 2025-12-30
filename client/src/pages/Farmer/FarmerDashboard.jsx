@@ -6,6 +6,7 @@ import Sidebar from "../../components/Farmers/Dashboard/Sidebar";
 import Header from "../../components/Farmers/Dashboard/Header";
 import Dashboard from "../../components/Farmers/Dashboard/Dashboard";
 import AddSabji from "./AddSabji";
+import Notifications from "../../components/Farmers/Dashboard/notification/Notifications";
 
 // ============================================
 // 🧠 HELPER FUNCTIONS (Extract kar sakte ho alag file me)
@@ -723,6 +724,7 @@ export default function FarmerDashboard() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="add-sabji" element={<AddSabji />} />
+            <Route path="notifications"element={<Notifications/>}/>
 
             {/* 🔥 Yaha aur routes add kar sakte ho: */}
             {/* <Route path="products" element={<Products />} />
