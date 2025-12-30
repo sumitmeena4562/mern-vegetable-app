@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
 import { validationResult } from 'express-validator';
 import Notification from '../models/Notification.js';
-
+import Otp from '../models/otp.js';
 // ==========================
 // 1. REGISTER User
 // ==========================
@@ -162,24 +162,87 @@ export const register = async (req, res) => {
 };
 
 // ==========================
+// SEND OTP (Mock/Real)
+// ==========================
+export const sendOtp = async (req, res) => {
+    try {
+        const { mobile } = req.body;
+        
+        // 1. Check agar user pehle se registered hai
+        const existingUser = await User.findOne({ mobile });
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: "Mobile number pehle se registered hai. Please Login karein." });
+        }
+
+        // 2. Generate 4 digit OTP
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // 3. Purana OTP delete karein agar koi hai
+        await Otp.deleteMany({ mobile });
+
+        // 4. Save New OTP to DB
+        await Otp.create({ mobile, otp: otpCode });
+
+        // 5. Send SMS (Yahan Fast2SMS / Twilio ka code ayega)
+        // Filhal development ke liye console me dikha rahe hain
+        console.log(`📩 OTP for ${mobile} is: ${otpCode}`);
+
+        res.status(200).json({ success: true, message: "OTP sent successfully!" });
+
+    } catch (error) {
+        console.error("OTP Send Error:", error);
+        res.status(500).json({ success: false, message: "OTP bhejne me dikkat aayi." });
+    }
+};
+
+// ==========================
+// VERIFY OTP
+// ==========================
+export const verifyOtp = async (req, res) => {
+    try {
+        const { mobile, otp } = req.body;
+
+        // DB me check karo
+        const validOtp = await Otp.findOne({ mobile, otp });
+
+        if (!validOtp) {
+            return res.status(400).json({ success: false, message: "Galat OTP hai ya expire ho gaya." });
+        }
+
+        // Verify hone ke baad OTP delete kar do (Optional)
+        await Otp.deleteOne({ _id: validOtp._id });
+
+        res.status(200).json({ success: true, message: "Mobile Verified Successfully!" });
+
+    } catch (error) {
+        console.error("OTP Verify Error:", error);
+        res.status(500).json({ success: false, message: "Verification failed." });
+    }
+};
+
+// ==========================
 // 2. LOGIN USER
 // ==========================
 export const login = async (req, res) => {
     try {
         const { mobile, password } = req.body;
-
+console.log("Trying login for:", mobile); // 🟢 LOG 1
         // Find user & include password
         const user = await User.findOne({ mobile }).select('+password');
 
         if (!user) {
+            console.log("❌ User not found in DB");
             return res.status(401).json({
                 success: false,
                 message: 'Invalid mobile number or password'
             });
         }
+        console.log("✅ User found. Stored Hash:", user.password); // 🟢 LOG 3 (Hash check karne ke liye)
+        console.log("🔑 Input Password:", password); // 🟢 LOG 4
 
         // Check password
         const isPasswordValid = await user.comparePassword(password);
+        console.log("🤔 Password Valid?", isPasswordValid);
         if (!isPasswordValid) {
             return res.status(401).json({
                 success: false,

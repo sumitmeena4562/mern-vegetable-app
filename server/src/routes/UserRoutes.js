@@ -1,7 +1,7 @@
 import express from "express";
 import { login, getUserName,register,getMe } from "../controllers/userController.js"; // getUserName import karo
 import auth from "../middleware/auth.js"; // Auth middleware import karo
-
+import * as userController from "../controllers/userController.js"
 const router = express.Router();
 
 // Existing routes
@@ -14,5 +14,7 @@ router.post('/register/farmer', register);
 
 router.get('/me', auth(), getMe);
 
+router.post('/send-otp',userController.sendOtp);
+router.post('/verify-otp',userController.verifyOtp)
 
 export default router;

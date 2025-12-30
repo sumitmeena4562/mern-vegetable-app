@@ -20,7 +20,10 @@ const FarmerRegistration = () => {
     }
   });
   const [loading, setLoading] = useState(false);
-
+  const [isVerified, setIsVerified] = useState(false); // Mobile verification status
+  const [showOtpModal, setShowOtpModal] = useState(false); // Modal visibility
+  const [otpInput, setOtpInput] = useState(""); // User OTP input
+  const [otpLoading, setOtpLoading] = useState(false); // OTP loading state
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -40,15 +43,68 @@ const FarmerRegistration = () => {
     }));
   };
 
+  // 1. Send OTP Function
+  const handleSendOtp = async () => {
+    if (!formData.mobile || formData.mobile.length !== 10) {
+      alert("❌ Please enter a valid 10-digit mobile number first.");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const res = await axios.post('http://localhost:5000/api/auth/send-otp', { mobile: formData.mobile });
+      if (res.data.success) {
+        setShowOtpModal(true); // Modal Open
+        alert("✅ OTP Sent to your mobile (Check Console for now)");
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || "❌ Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // 2. Verify OTP Function
+  const handleVerifyOtp = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/auth/verify-otp', {
+        mobile: formData.mobile,
+        otp: otpInput
+      });
+
+      if (res.data.success) {
+        setIsVerified(true);
+        setShowOtpModal(false);
+        setOtpInput("");
+        alert("✅ Mobile Verified! You can now Register.");
+
+        // OPTIONAL: Agar aap chahte ho verify hote hi form submit ho jaye (Scenario B)
+        // To yahan check kar sakte ho ki baaki form filled hai ya nahi.
+      }
+    } catch (error) {
+      alert("❌ Invalid OTP. Please try again.");
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    // 1. Password Check
     if (formData.password !== formData.confirmPassword) {
       alert("❌ Passwords do not match!");
       return;
     }
 
+    // 2. VERIFICATION CHECK (New Logic)
+    if (!isVerified) {
+      // User ne verify nahi kiya, to hum automatic OTP bhejenge aur modal kholenge
+      const confirm = window.confirm("⚠️ Mobile number verify karna zaroori hai. Kya hum OTP bhejein?");
+      if (confirm) {
+        await handleSendOtp(); // Auto send OTP
+        // Note: Modal handleSendOtp ke andar open ho raha hai
+      }
+      return; // Registration yahi rok do
+    }
     setLoading(true);
 
     try {
@@ -154,7 +210,7 @@ const FarmerRegistration = () => {
             <span className="material-symbols-outlined text-primary text-4xl">
               eco
             </span>
-          
+
           </div>
 
           {/* Heading */}
@@ -247,29 +303,52 @@ const FarmerRegistration = () => {
                     </div>
 
                     {/* Mobile Number */}
+                    {/* Mobile Number Field */}
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="mobile">
                         Mobile Number
                       </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">smartphone</span>
+                      <div className="relative rounded-md shadow-sm flex gap-2">
+                        <div className="relative flex-1">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                            <span className="material-symbols-outlined text-gray-400">smartphone</span>
+                          </div>
+                          <input
+                            className={`glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium ${isVerified ? 'bg-green-50 border-green-500 text-green-700' : ''}`}
+                            id="mobile"
+                            name="mobile"
+                            value={formData.mobile}
+                            onChange={handleInputChange}
+                            placeholder="+91 98765 00000"
+                            type="tel"
+                            disabled={isVerified} // Verify hone ke baad lock kar do
+                            required
+                          />
                         </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                          id="mobile"
-                          name="mobile"
-                          value={formData.mobile}
-                          onChange={handleInputChange}
-                          placeholder="+91 98765 00000"
-                          type="tel"
-                          required
-                        />
+
+                        {/* Verify Button */}
+                        {!isVerified ? (
+                          <button
+                            type="button" // Important
+                            onClick={handleSendOtp}
+                            disabled={otpLoading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md"
+                          >
+                            {otpLoading ? 'Sending...' : 'Verify'}
+                          </button>
+                        ) : (
+                          <div className="flex items-center px-4 bg-green-100 text-green-700 rounded-lg border border-green-200 font-bold text-sm">
+                            Verified ✓
+                          </div>
+                        )}
                       </div>
-                      <p className="mt-1 ml-1 text-xs text-green-700 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">check_circle</span>
-                        OTP verification required later
-                      </p>
+                      {/* OTP Helper Text */}
+                      {!isVerified && (
+                        <p className="mt-1 ml-1 text-xs text-orange-600 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">warning</span>
+                          Verification pending
+                        </p>
+                      )}
                     </div>
 
                     {/* Password Fields */}
@@ -485,6 +564,50 @@ const FarmerRegistration = () => {
                   </p>
                 </div>
               </div>
+              {/* OTP Verification Modal */}
+              {showOtpModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+
+                    {/* Modal Header */}
+                    <div className="bg-green-600 p-4 text-center">
+                      <h3 className="text-white font-bold text-lg">Verify Mobile Number</h3>
+                      <p className="text-green-100 text-sm">OTP sent to {formData.mobile}</p>
+                    </div>
+
+                    {/* Modal Body */}
+                    <div className="p-6 space-y-4">
+                      <div className="text-center">
+                        <span className="material-symbols-outlined text-4xl text-green-600 mb-2">sms</span>
+                        <p className="text-gray-600 text-sm">Enter the 4-digit code sent to your phone.</p>
+                      </div>
+
+                      <input
+                        type="text"
+                        maxLength="4"
+                        className="w-full text-center text-2xl tracking-[0.5em] font-bold border-2 border-gray-300 rounded-lg py-3 focus:border-green-500 focus:outline-none transition-colors"
+                        value={otpInput}
+                        onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="0000"
+                      />
+
+                      <button
+                        onClick={handleVerifyOtp}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95"
+                      >
+                        Verify & Proceed
+                      </button>
+
+                      <button
+                        onClick={() => setShowOtpModal(false)}
+                        className="w-full text-gray-500 text-sm hover:text-gray-700 font-medium py-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
 
