@@ -5,6 +5,7 @@ import Notification from '../models/Notification.js';
 import Otp from '../models/otp.js';
 import axios from 'axios';
 import twilio from 'twilio';
+import path from 'path';
 
 // ==========================
 // 1. REGISTER User
@@ -206,14 +207,42 @@ export const sendOtp = async (req, res) => {
             to: email, // User ka email
             subject: 'AgriConnect Verification Code',
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-                    <h2 style="color: #16a34a;">AgriConnect 🌱</h2>
-                    <p>Hello Farmer,</p>
-                    <p>Your verification code for registration is:</p>
-                    <h1 style="color: #333; letter-spacing: 5px;">${otpCode}</h1>
-                    <p>This code is valid for 5 minutes.</p>
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        
+                        <img src="cid:agriconnectLogo" alt="AgriConnect Logo" style="width: 100px; height: 100px; margin-bottom: 10px;">
+                        
+                        <h2 style="color: #2E7D32; margin: 0;">AgriConnect 🌱</h2>
+                        <p style="color: #666; font-size: 14px;">Farm to Vendor Direct Supply</p>
+                    </div>
+                    
+                    <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <p style="font-size: 16px; color: #333;">Hello Farmer,</p>
+                        <p style="color: #555;">Use the code below to complete your registration:</p>
+                        
+                        <div style="margin: 20px 0;">
+                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2E7D32; background-color: #e8f5e9; padding: 10px 20px; border-radius: 5px; border: 1px dashed #2E7D32;">
+                                ${otpCode}
+                            </span>
+                        </div>
+                        
+                        <p style="font-size: 12px; color: #888;">This OTP is valid for <strong>10 minutes</strong>.</p>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px; color: #aaa; font-size: 12px;">
+                        &copy; 2025 AgriConnect Tech Team.
+                    </div>
                 </div>
-            `
+            `,
+            
+            // 👇 Attachments Section Add Karein
+            attachments: [
+                {
+                    filename: 'logo.png',
+                   path: path.join(process.cwd(), 'src', 'resource', 'Logo.png'), // 👈 Path adjust karein jahan image save ki hai
+                    cid: 'agriconnectLogo' // Same ID jo HTML ke img src mein hai
+                }
+            ]
         };
 
         await transporter.sendMail(mailOptions);

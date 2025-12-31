@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useEffect } from 'react';
+
 const FarmerRegistration = () => {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -20,27 +22,66 @@ const FarmerRegistration = () => {
       others: false
     }
   });
+
   const [loading, setLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false); // Mobile verification status
   const [showOtpModal, setShowOtpModal] = useState(false); // Modal visibility
   const [otpInput, setOtpInput] = useState(""); // User OTP input
   const [otpLoading, setOtpLoading] = useState(false); // OTP loading state
+  const [otpValues, setOtpValues] = useState(["", "", "", ""]); // 4 boxes ke liye
+  const [timer, setTimer] = useState(60); // Resend timer
+  const [canResend, setCanResend] = useState(false); // Resend button status
 
+  // Modal open hone par Timer shuru karne ke liye
+  React.useEffect(() => {
+    let interval;
+    if (showOtpModal && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 2000);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [showOtpModal, timer]);
+
+  // Handle 4 Boxes Input
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return;
+
+    let newOtp = [...otpValues];
+    newOtp[index] = element.value;
+    setOtpValues(newOtp);
+    setOtpInput(newOtp.join("")); // Main state update for API
+
+    // Auto Focus Next Box
+    if (element.nextSibling && element.value) {
+      element.nextSibling.focus();
+    }
+  };
+
+  // Handle Backspace (Piche jaane ke liye)
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otpValues[index] && e.target.previousSibling) {
+      e.target.previousSibling.focus();
+    }
+  };
+
+  // Resend OTP Click
+  const handleResendClick = async () => {
+    setTimer(60);
+    setCanResend(false);
+    await handleSendOtp(); // Wahi purana function call
+  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCropChange = (crop) => {
     setFormData(prev => ({
       ...prev,
-      crops: {
-        ...prev.crops,
-        [crop]: !prev.crops[crop]
-      }
+      crops: { ...prev.crops, [crop]: !prev.crops[crop] }
     }));
   };
 
@@ -50,15 +91,13 @@ const FarmerRegistration = () => {
       alert("❌ Please enter a valid mobile number.");
       return;
     }
-    // 👇 NEW: Email check
     if (!formData.email || !formData.email.includes('@')) {
-      alert("❌ Please enter a valid email address to receive OTP.");
+      alert("❌ Please enter a valid email address.");
       return;
     }
 
     setOtpLoading(true);
     try {
-      // Mobile aur Email dono bhejo
       const res = await axios.post('http://localhost:5000/api/auth/send-otp', {
         mobile: formData.mobile,
         email: formData.email
@@ -66,7 +105,7 @@ const FarmerRegistration = () => {
 
       if (res.data.success) {
         setShowOtpModal(true);
-        alert(`✅ OTP Sent to ${formData.email}! Check your Inbox.`);
+        alert(`✅ OTP Sent to ${formData.email}! Check Inbox.`);
       }
     } catch (error) {
       alert(error.response?.data?.message || "❌ Failed to send OTP");
@@ -88,72 +127,59 @@ const FarmerRegistration = () => {
         setShowOtpModal(false);
         setOtpInput("");
         alert("✅ Mobile Verified! You can now Register.");
-
-        // OPTIONAL: Agar aap chahte ho verify hote hi form submit ho jaye (Scenario B)
-        // To yahan check kar sakte ho ki baaki form filled hai ya nahi.
       }
     } catch (error) {
       alert("❌ Invalid OTP. Please try again.");
     }
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // 1. Password Check
+
+    // 1. Password Check (Pehle ki tarah)
     if (formData.password !== formData.confirmPassword) {
-      alert("❌ Passwords do not match!");
+      alert("❌ Passwords match nahi ho rahe hain!");
       return;
     }
 
-    // 2. VERIFICATION CHECK (New Logic)
+    // 👇 2. STRICT VERIFICATION CHECK (Yahan badlaav kiya hai)
     if (!isVerified) {
-      // User ne verify nahi kiya, to hum automatic OTP bhejenge aur modal kholenge
-      const confirm = window.confirm("⚠️ Mobile number verify karna zaroori hai. Kya hum OTP bhejein?");
-      if (confirm) {
-        await handleSendOtp(); // Auto send OTP
-        // Note: Modal handleSendOtp ke andar open ho raha hai
-      }
-      return; // Registration yahi rok do
+      // Step A: User ko roko aur alert do
+      alert("🛑 Rukiye! Registration se pehle Mobile Number verify karna zaroori hai.");
+
+      // Step B: Automatic OTP bhej do aur Modal khol do
+      // Hum direct handleSendOtp call kar rahe hain taaki user ko dhoondna na pade
+      await handleSendOtp();
+
+      // Step C: Code yahi rok do (Return kar do)
+      // Isse niche ka registration code nahi chalega jab tak verify na ho
+      return;
     }
+
+    // Agar Verified hai, to Loading shuru karo
     setLoading(true);
 
     try {
-      // ✅ SAHI PAYLOAD
+      // ... (Baaki wahi same registration logic) ...
       const payload = {
         fullName: formData.fullName,
         mobile: formData.mobile,
         password: formData.password,
         role: 'farmer',
-
-        // Farm details FIX karo:
-        farmName: formData.fullName + "'s Farm",  // ✅ Backtick ki jagah simple string
-        farmSize: Number(1),  // ✅ Explicitly number mein convert karo
-
-        // Address (address field required hai)
+        farmName: formData.fullName + "'s Farm",
+        farmSize: 1,
         address: {
           village: formData.village,
           city: formData.city,
           state: formData.state,
           fullAddress: `${formData.village}, ${formData.city}, ${formData.state}`
         },
-
-        // Crops (optional)
         crops: Object.keys(formData.crops)
           .filter(key => formData.crops[key])
           .map(key => ({ name: key }))
       };
 
-      console.log("📤 Sending payload to server:", payload);
-
-      // ✅ API CALL
-      const response = await axios.post('http://localhost:5000/api/auth/register/farmer', payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log("✅ Server response:", response.data);
+      const response = await axios.post('http://localhost:5000/api/auth/register/farmer', payload);
 
       if (response.data.success) {
         alert("✅ Registration Successful!");
@@ -161,38 +187,15 @@ const FarmerRegistration = () => {
       }
 
     } catch (error) {
-      console.error("❌ Full error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-
-      // User-friendly error message
-      if (error.response?.data?.errors) {
-        const errors = error.response.data.errors;
-        alert(`❌ Validation failed:\n${errors.map(e => `${e.field}: ${e.message}`).join('\n')}`);
-      } else {
-        alert(error.response?.data?.message || "❌ Server connection failed!");
-      }
+      console.error("Error:", error);
+      alert(error.response?.data?.message || "❌ Server connection failed!");
     } finally {
       setLoading(false);
     }
   };
 
-  const states = [
-    'Maharashtra',
-    'Punjab',
-    'Haryana',
-    'Uttar Pradesh',
-    'Madhya Pradesh'
-  ];
-
-  const pickupTimes = [
-    'Morning (6 AM - 10 AM)',
-    'Afternoon (12 PM - 4 PM)',
-    'Evening (4 PM - 8 PM)'
-  ];
-
+  const states = ['Maharashtra', 'Punjab', 'Haryana', 'Uttar Pradesh', 'Madhya Pradesh'];
+  const pickupTimes = ['Morning (6 AM - 10 AM)', 'Afternoon (12 PM - 4 PM)', 'Evening (4 PM - 8 PM)'];
   const crops = [
     { key: 'tomato', label: 'Tomato', emoji: '🍅' },
     { key: 'potato', label: 'Potato', emoji: '🥔' },
@@ -203,455 +206,342 @@ const FarmerRegistration = () => {
   ];
 
   return (
-    <div className="min-h-full font-display antialiased text-gray-900 bg-[#f3fbf6]">
+    // Changed min-h-full to min-h-screen taaki mobile pe background na kate
+    <div className="min-h-screen font-display antialiased text-gray-900 bg-[#f3fbf6] flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
+
       {/* Background Effects */}
-      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#ecfccb] via-[#f0fdf4] to-[#e0e7ff] opacity-80"></div>
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-green-200/40 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-yellow-200/40 rounded-full blur-[100px]"></div>
-        <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-blue-100/30 rounded-full blur-[80px]"></div>
       </div>
 
-      <div className="min-h-full flex flex-col justify-center py-5 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-2">
+      {/* Header Section */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6 relative z-10">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="material-symbols-outlined text-green-600 text-4xl">eco</span>
+        </div>
+        <h2 className="text-3xl font-black tracking-tight text-gray-900">AgriConnect</h2>
+        <p className="mt-2 text-sm font-medium text-gray-600">India's most trusted farmer network 🌾</p>
+      </div>
 
-          {/* Logo + Brand Name */}
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-primary text-4xl">
-              eco
-            </span>
+      {/* Main Registration Card */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-[1024px] relative z-10">
+        {/* Responsive Padding: px-4 (Mobile) to px-10 (Desktop) */}
+        <div className="glass-card shadow-xl rounded-2xl px-4 py-6 sm:px-10 sm:py-10 relative overflow-hidden">
 
+          <style jsx>{`
+            .glass-card {
+              background: rgba(255, 255, 255, 0.75);
+              backdrop-filter: blur(20px);
+              border: 1px solid rgba(255, 255, 255, 0.6);
+            }
+            .glass-input {
+              background: rgba(255, 255, 255, 0.5);
+              border: 1px solid rgba(209, 213, 219, 0.6);
+              transition: all 0.2s ease;
+            }
+            .glass-input:focus {
+              background: rgba(255, 255, 255, 0.95);
+              border-color: #16a34a;
+              box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1);
+            }
+          `}</style>
+
+          {/* Form Title */}
+          <div className="mb-6 pb-4 border-b border-gray-200/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Farmer Registration</h1>
+              <p className="mt-1 text-sm text-gray-600">Sell vegetables directly to vendors.</p>
+            </div>
+            {/* Verified Badge (Hidden on very small screens) */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50/80 rounded-full border border-green-100 text-green-900 text-xs font-semibold">
+              <span className="material-symbols-outlined text-sm">verified_user</span>
+              <span>Secure & Verified</span>
+            </div>
           </div>
 
-          {/* Heading */}
-          <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
-            AgriConnect
-          </h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Responsive Grid: 1 col on Mobile, 2 cols on Desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
 
-          {/* Tagline */}
-          <p className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-            India's most trusted farmer network 🌾
-          </p>
+              {/* Left Column: Personal Details */}
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                    <span className="material-symbols-outlined text-lg">person</span>
+                  </div>
+                  Personal Details
+                </h3>
 
-        </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                  <input
+                    className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Ram Kumar"
+                    required
+                  />
+                </div>
 
-        {/* Registration Form Card */}
-        <div className="sm:mx-auto sm:w-full sm:max-w-[1024px]">
-          <div className="glass-card shadow-2xl rounded-card px-5 py-8 sm:px-10 lg:px-14 relative overflow-hidden">
-            {/* Glass Card Effect */}
-            <style jsx>{`
-              .glass-card {
-                background: rgba(255, 255, 255, 0.65);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-              }
-              .glass-input {
-                background: rgba(255, 255, 255, 0.6);
-                border: 1px solid rgba(255, 255, 255, 0.8);
-                transition: all 0.2s ease;
-              }
-              .glass-input:focus {
-                background: rgba(255, 255, 255, 0.95);
-                border-color: #16a34a;
-                box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1);
-              }
-              .hide-scrollbar::-webkit-scrollbar {
-                display: none;
-              }
-              .hide-scrollbar {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-              }
-            `}</style>
+                {/* Mobile & Verify Button */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Mobile Number</label>
+                  <div className="flex gap-2">
+                    <input
+                      className={`glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none ${isVerified ? 'bg-green-50 border-green-500 text-green-700' : ''}`}
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      placeholder="+91 98765 00000"
+                      type="tel"
+                      disabled={isVerified}
+                      required
+                    />
+                    {!isVerified ? (
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={otpLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors"
+                      >
+                        {otpLoading ? '...' : 'Verify'}
+                      </button>
+                    ) : (
+                      <div className="flex items-center px-3 bg-green-100 text-green-700 rounded-lg border border-green-200 font-bold text-sm">
+                        ✓
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-            {/* Form Header */}
-            <div className="relative z-10 mb-5 pb-6 border-b border-gray-200/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Farmer Registration</h1>
-                <p className="mt-2 text-sm text-gray-600">Sell vegetables directly to vendors near you.</p>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Email (For OTP)</label>
+                  <input
+                    className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="farmer@example.com"
+                    disabled={isVerified}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
+                    <input
+                      className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Confirm</label>
+                    <input
+                      className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-green-50/50 rounded-full border border-green-100 text-green-900 text-sm font-semibold">
-                <span className="material-symbols-outlined text-md">verified_user</span>
-                <span>Secure & Verified</span>
+
+              {/* Right Column: Farm Location */}
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
+                    <span className="material-symbols-outlined text-lg">location_on</span>
+                  </div>
+                  Farm Location
+                </h3>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Village / Address</label>
+                  <input
+                    className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                    name="village"
+                    value={formData.village}
+                    onChange={handleInputChange}
+                    placeholder="Address..."
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">City</label>
+                    <input
+                      className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="District"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">State</label>
+                    <select
+                      className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none bg-white/50"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Preferred Pickup Time</label>
+                  <select
+                    className="glass-input block w-full rounded-lg py-2.5 px-3 text-base text-gray-900 focus:outline-none bg-white/50"
+                    name="pickup"
+                    value={formData.pickup}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    {pickupTimes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Registration Form */}
-            <form onSubmit={handleSubmit} className="relative z-10 space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
-                {/* Personal Details Column */}
-                <div className="space-y-6">
-                  <h3 className="text-md font-bold text-gray-800 flex items-center gap-3 mb-6">
-                    <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center text-green-700">
-                      <span className="material-symbols-outlined">person</span>
-                    </div>
-                    Personal Details
-                  </h3>
+            {/* Crops Section - Fully Responsive Grid */}
+            <div className="pt-6 border-t border-gray-200/50">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 mb-4">
+                <span className="material-symbols-outlined text-green-700">potted_plant</span>
+                What do you grow?
+              </h3>
 
-                  <div className="space-y-5">
-                    {/* Full Name */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="fullName">
-                        Full Name
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">badge</span>
-                        </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                          id="fullName"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          placeholder="Ex: Ram Kumar"
-                          type="text"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Mobile Number */}
-                    {/* Mobile Number Field */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="mobile">
-                        Mobile Number
-                      </label>
-                      <div className="relative rounded-md shadow-sm flex gap-2">
-                        <div className="relative flex-1">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400">smartphone</span>
-                          </div>
-                          <input
-                            className={`glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium ${isVerified ? 'bg-green-50 border-green-500 text-green-700' : ''}`}
-                            id="mobile"
-                            name="mobile"
-                            value={formData.mobile}
-                            onChange={handleInputChange}
-                            placeholder="+91 98765 00000"
-                            type="tel"
-                            disabled={isVerified} // Verify hone ke baad lock kar do
-                            required
-                          />
-                        </div>
-
-                        {/* Verify Button */}
-                        {!isVerified ? (
-                          <button
-                            type="button" // Important
-                            onClick={handleSendOtp}
-                            disabled={otpLoading}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md"
-                          >
-                            {otpLoading ? 'Sending...' : 'Verify'}
-                          </button>
-                        ) : (
-                          <div className="flex items-center px-4 bg-green-100 text-green-700 rounded-lg border border-green-200 font-bold text-sm">
-                            Verified ✓
-                          </div>
-                        )}
-                      </div>
-                      {/* OTP Helper Text */}
-                      {!isVerified && (
-                        <p className="mt-1 ml-1 text-xs text-orange-600 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">warning</span>
-                          Verification pending
-                        </p>
-                      )}
-                    </div>
-
-
-
-                    <div className="mb-5">
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Email Address (For OTP)</label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">mail</span>
-                        </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder="farmer@example.com"
-                          disabled={isVerified} // Verify hone ke baad lock
-                          required
-                        />
-                      </div>
-                      </div>
-
-                      {/* Password Fields */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="password">
-                            Password
-                          </label>
-                          <div className="relative rounded-md shadow-sm">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                              <span className="material-symbols-outlined text-gray-400">lock</span>
-                            </div>
-                            <input
-                              className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
-                              id="password"
-                              name="password"
-                              value={formData.password}
-                              onChange={handleInputChange}
-                              placeholder="••••••••"
-                              type="password"
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="confirmPassword">
-                            Confirm Password
-                          </label>
-                          <div className="relative rounded-md shadow-sm">
-                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                              <span className="material-symbols-outlined text-gray-400">lock_reset</span>
-                            </div>
-                            <input
-                              className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
-                              id="confirmPassword"
-                              name="confirmPassword"
-                              value={formData.confirmPassword}
-                              onChange={handleInputChange}
-                              placeholder="••••••••"
-                              type="password"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Farm Location Column */}
-                  <div className="space-y-6">
-                    <h3 className="text-md font-bold text-gray-800 flex items-center gap-3 mb-6">
-                      <div className="h-9 w-9 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700">
-                        <span className="material-symbols-outlined">location_on</span>
-                      </div>
-                      Farm Location
-                    </h3>
-
-                    <div className="space-y-5">
-                      {/* Village/Farm Address */}
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="village">
-                          Village / Farm Address
-                        </label>
-                        <div className="relative rounded-md shadow-sm">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400">home_pin</span>
-                          </div>
-                          <input
-                            className="glass-input block w-full rounded-input py-2 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                            id="village"
-                            name="village"
-                            value={formData.village}
-                            onChange={handleInputChange}
-                            placeholder="Ex: Village Rampur, Near Old Well"
-                            type="text"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      {/* City and State */}
-                      <div className="grid grid-cols-2 gap-5">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="city">
-                            City / District
-                          </label>
-                          <input
-                            className="glass-input block w-full rounded-input py-2 px-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                            id="city"
-                            name="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            placeholder="District"
-                            type="text"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="state">
-                            State
-                          </label>
-                          <select
-                            className="glass-input block w-full rounded-input py-2 px-4 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
-                            id="state"
-                            name="state"
-                            value={formData.state}
-                            onChange={handleInputChange}
-                            required
-                          >
-                            {states.map((state) => (
-                              <option key={state} value={state}>
-                                {state}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Preferred Pickup Time */}
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="pickup">
-                          Preferred Pickup Time
-                        </label>
-                        <div className="relative rounded-md shadow-sm">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400">schedule</span>
-                          </div>
-                          <select
-                            className="glass-input block w-full rounded-input py-2 pl-12 pr-10 text-gray-900 focus:ring-2 focus:ring-primary sm:text-base font-medium appearance-none"
-                            id="pickup"
-                            name="pickup"
-                            value={formData.pickup}
-                            onChange={handleInputChange}
-                            required
-                          >
-                            {pickupTimes.map((time) => (
-                              <option key={time} value={time}>
-                                {time}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                            <span className="material-symbols-outlined text-gray-400">expand_more</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* What do you grow? Section */}
-                <div className="pt-6 border-t border-gray-200/50">
-                  <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-3 mb-6">
-                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
-                      <span className="material-symbols-outlined">potted_plant</span>
-                    </div>
-                    What do you grow?
-                    <span className="text-sm font-normal text-gray-500 ml-2">(Select all that apply)</span>
-                  </h3>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {crops.map((crop) => (
-                      <label key={crop.key} className="cursor-pointer group">
-                        <input
-                          className="peer sr-only"
-                          type="checkbox"
-                          checked={formData.crops[crop.key]}
-                          onChange={() => handleCropChange(crop.key)}
-                        />
-                        <div className={`
-                        glass-input rounded-input p-4 rounded-md text-center hover:bg-white/80
-                        peer-checked:bg-green-100 peer-checked:border-green-500 
-                        peer-checked:ring-2 peer-checked:ring-green-500 transition-all 
-                        h-full flex flex-col items-center justify-center
-                      `}>
-                          {crop.emoji === 'add' ? (
-                            <span className="material-symbols-outlined text-3xl mb-2 text-gray-500 group-hover:scale-110 transition-transform">
-                              add
-                            </span>
-                          ) : (
-                            <span className="text-3xl mb-2 block group-hover:scale-110 transition-transform">
-                              {crop.emoji}
-                            </span>
-                          )}
-                          <span className="font-bold text-sm text-gray-900">{crop.label}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Submit Section */}
-                <div className="pt-8">
-                  <button
-                    type="submit"
-                    disabled={loading} // 4. Loading ke waqt button disable karein
-                    className={`w-full flex justify-center py-5 px-4 border border-transparent rounded-[20px] shadow-lg text-xl font-bold text-white bg-gradient-to-r from-green-600 to-green-500 transition-all transform active:scale-[0.98] ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:from-green-700 hover:to-green-600'}`}
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin material-symbols-outlined">sync</span>
-                        Processing...
+              {/* Mobile: 2 cols | Tablet: 3-4 cols | Desktop: 6 cols */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {crops.map((crop) => (
+                  <label key={crop.key} className="cursor-pointer group relative">
+                    <input
+                      className="peer sr-only"
+                      type="checkbox"
+                      checked={formData.crops[crop.key]}
+                      onChange={() => handleCropChange(crop.key)}
+                    />
+                    <div className="glass-input rounded-xl p-3 h-24 flex flex-col items-center justify-center text-center peer-checked:bg-green-100 peer-checked:border-green-500 peer-checked:ring-1 peer-checked:ring-green-500 hover:bg-white/80 transition-all">
+                      <span className="text-2xl mb-1 filter drop-shadow-sm">
+                        {crop.emoji === 'add' ? '+' : crop.emoji}
                       </span>
-                    ) : (
-                      'Register as Farmer'
-                    )}
-                  </button>
-
-                  <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-50/80 border border-yellow-200/60 rounded-xl">
-                    <span className="material-symbols-outlined text-yellow-600 shrink-0">info</span>
-                    <p className="text-sm text-yellow-800 font-medium">
-                      Account will be active after admin verification. We usually verify details within 24 hours by calling your provided mobile number.
-                    </p>
-                  </div>
-                </div>
-                {/* OTP Verification Modal */}
-                {showOtpModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-
-                      {/* Modal Header */}
-                      <div className="bg-green-600 p-4 text-center">
-                        <h3 className="text-white font-bold text-lg">Verify Mobile Number</h3>
-                        <p className="text-green-100 text-sm">OTP sent to {formData.mobile}</p>
-                      </div>
-
-                      {/* Modal Body */}
-                      <div className="p-6 space-y-4">
-                        <div className="text-center">
-                          <span className="material-symbols-outlined text-4xl text-green-600 mb-2">sms</span>
-                          <p className="text-gray-600 text-sm">Enter the 4-digit code sent to your phone.</p>
-                        </div>
-
-                        <input
-                          type="text"
-                          maxLength="4"
-                          className="w-full text-center text-2xl tracking-[0.5em] font-bold border-2 border-gray-300 rounded-lg py-3 focus:border-green-500 focus:outline-none transition-colors"
-                          value={otpInput}
-                          onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
-                          placeholder="0000"
-                        />
-
-                        <button
-                          onClick={handleVerifyOtp}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95"
-                        >
-                          Verify & Proceed
-                        </button>
-
-                        <button
-                          onClick={() => setShowOtpModal(false)}
-                          className="w-full text-gray-500 text-sm hover:text-gray-700 font-medium py-2"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <span className="text-xs font-bold text-gray-800 leading-tight">{crop.label}</span>
                     </div>
-                  </div>
-                )}
-            </form>
-          </div>
+                  </label>
+                ))}
+              </div>
+            </div>
 
-          {/* Login Link */}
-          <p className="mt-8 text-center text-sm text-gray-500 font-medium">
-            Already have an account?
-            <a className="font-bold text-green-700 hover:text-green-800 ml-1 underline decoration-2 decoration-green-300 underline-offset-2" href="#">
-              Login here
-            </a>
-          </p>
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full py-4 px-4 rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-green-600 to-green-500 transition-all transform active:scale-[0.98] ${loading ? 'opacity-70' : 'hover:from-green-700 hover:to-green-600'}`}
+              >
+                {loading ? 'Processing...' : 'Register as Farmer'}
+              </button>
+
+              <p className="mt-6 text-center text-sm text-gray-500">
+                Already have an account?
+                <a href="#" className="font-bold text-green-700 hover:underline ml-1">Login here</a>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
+
+      {/* OTP Modal (Centered on Mobile) */}
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-all">
+          {/* Modal Animation */}
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in duration-300">
+
+            {/* Modal Header with Icon */}
+            <div className="bg-white p-6 pb-0 text-center">
+              <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
+                <span className="material-symbols-outlined text-3xl text-green-600">lock_open</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">Verification</h3>
+              <p className="text-gray-500 text-sm mt-2">
+                Enter the 4-digit code sent to <br />
+                <span className="font-semibold text-gray-800">{formData.email}</span>
+              </p>
+            </div>
+
+            {/* OTP Inputs (4 Boxes) */}
+            <div className="p-6">
+              <div className="flex justify-center gap-3 mb-6">
+                {otpValues.map((data, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    name="otp"
+                    maxLength="1"
+                    className="w-14 h-14 border-2 border-gray-200 rounded-xl text-center text-2xl font-bold text-gray-800 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 focus:outline-none transition-all shadow-sm bg-gray-50"
+                    value={data}
+                    onChange={(e) => handleOtpChange(e.target, index)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    onFocus={(e) => e.target.select()}
+                  />
+                ))}
+              </div>
+
+              {/* Verify Button */}
+              <button
+                onClick={handleVerifyOtp}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <span>Verify Now</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+
+              {/* Resend Timer */}
+              <div className="mt-6 text-center">
+                {canResend ? (
+                  <button
+                    onClick={handleResendClick}
+                    className="text-sm font-bold text-green-600 hover:text-green-700 hover:underline transition-all"
+                  >
+                    Resend Code
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-400 font-medium">
+                    Resend code in <span className="text-gray-600">{timer}s</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Cancel Button at bottom */}
+            <div className="bg-gray-50 p-3 text-center border-t border-gray-100">
+              <button
+                onClick={() => setShowOtpModal(false)}
+                className="text-gray-500 text-sm font-semibold hover:text-gray-700 transition-colors"
+              >
+                Cancel Verification
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
