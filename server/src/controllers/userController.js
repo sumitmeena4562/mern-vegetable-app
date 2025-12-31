@@ -6,6 +6,9 @@ import Otp from '../models/otp.js';
 import axios from 'axios';
 import twilio from 'twilio';
 import path from 'path';
+import { body } from 'express-validator';
+
+
 
 // ==========================
 // 1. REGISTER User
@@ -23,6 +26,8 @@ export const register = async (req, res) => {
         }
 
         const { fullName, mobile, password, role, email, ...otherData } = req.body;
+        console.log("🔍 Incoming Email:", email);
+        console.log("📦 Full Body:", req.body);
 
         // Check if user already exists
         const existing = await User.findOne({ mobile });
@@ -110,12 +115,12 @@ export const register = async (req, res) => {
                 message: `Welcome to AgriConnect, ${user.fullName || 'User'}! 
               We’re glad to have you as a ${user.role || 'member'}. 
               Your dashboard is ready. Start managing your activities, explore smart features, and grow with confidence using AgriConnect 🚜✨`,
-              type: "success",
-              priority: "high",
-              data:{
-                email:user.email,
-                action :"signup"
-              }
+                type: "success",
+                priority: "high",
+                data: {
+                    email: user.email,
+                    action: "signup"
+                }
 
             }
 
@@ -182,7 +187,7 @@ export const sendOtp = async (req, res) => {
         }
 
         // 2. Validation
-        if(!email) {
+        if (!email) {
             return res.status(400).json({ success: false, message: "Email is required for verification." });
         }
 
@@ -234,12 +239,12 @@ export const sendOtp = async (req, res) => {
                     </div>
                 </div>
             `,
-            
+
             // 👇 Attachments Section Add Karein
             attachments: [
                 {
                     filename: 'logo.png',
-                   path: path.join(process.cwd(), 'src', 'resource', 'Logo.png'), // 👈 Path adjust karein jahan image save ki hai
+                    path: path.join(process.cwd(), 'src', 'resource', 'Logo.png'), // 👈 Path adjust karein jahan image save ki hai
                     cid: 'agriconnectLogo' // Same ID jo HTML ke img src mein hai
                 }
             ]
@@ -248,9 +253,9 @@ export const sendOtp = async (req, res) => {
         await transporter.sendMail(mailOptions);
         console.log(`✅ Email sent to ${email} with OTP: ${otpCode}`);
 
-        res.status(200).json({ 
-            success: true, 
-            message: `OTP sent to ${email}. Please check your Inbox/Spam.` 
+        res.status(200).json({
+            success: true,
+            message: `OTP sent to ${email}. Please check your Inbox/Spam.`
         });
 
     } catch (error) {
@@ -289,7 +294,7 @@ export const verifyOtp = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { mobile, password } = req.body;
-console.log("Trying login for:", mobile); // 🟢 LOG 1
+        console.log("Trying login for:", mobile); // 🟢 LOG 1
         // Find user & include password
         const user = await User.findOne({ mobile }).select('+password');
 
@@ -399,3 +404,261 @@ export const getMe = async (req, res) => {
         });
     }
 };
+
+
+export const test = (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Auth routes are working!',
+        timestamp: new Date().toISOString()
+    });
+};
+
+// Get User Profile with Role-Specific Data
+export const getProfile = async (req, res) => {
+    try {
+        // Get base user data
+        const user = await User.findById(req.user.id).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Get role-specific profile
+        let profile = null;
+        switch (user.role) {
+            case 'farmer':
+                profile = await Farmer.findOne({ user: user._id });
+                break;
+            case 'vendor':
+                profile = await Vendor.findOne({ user: user._id });
+                break;
+            case 'customer':
+                profile = await Customer.findOne({ user: user._id });
+                break;
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                user,
+                profile
+            }
+        });
+
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to get profile',
+            error: error.message
+        });
+    }
+};
+
+// Update Profile (Common + Role-Specific)
+export const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get current user to know role
+        const currentUser = await User.findById(userId);
+        if (!currentUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        // Separate common and role-specific data
+        const { password, mobile, role, ...updateData } = req.body;
+        
+        // Don't allow role change
+        if (role && role !== currentUser.role) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot change user role'
+            });
+        }
+        
+        // Prepare user updates (common fields only)
+        const userUpdates = {};
+        const allowedUserFields = [
+            'fullName', 'email', 'profilePhoto', 'address', 
+            'location', 'fcmToken', 'settings'
+        ];
+        
+        Object.keys(updateData).forEach(key => {
+            if (allowedUserFields.includes(key)) {
+                userUpdates[key] = updateData[key];
+            }
+        });
+        
+        // Update common user data
+        let updatedUser = currentUser;
+        if (Object.keys(userUpdates).length > 0) {
+            updatedUser = await User.findByIdAndUpdate(
+                userId,
+                userUpdates,
+                { new: true, runValidators: true }
+            ).select('-password');
+        }
+        
+        // Update role-specific profile
+        let profileUpdate = {};
+        let updatedProfile = null;
+        
+        switch (currentUser.role) {
+            case 'farmer':
+                const farmerFields = [
+                    'farmName', 'farmSize', 'farmSizeUnit', 'crops',
+                    'farmingExperience', 'preferredPickupTime', 'bankDetails',
+                    'documents', 'kycVerified', 'averageRating', 'totalSales'
+                ];
+                
+                Object.keys(updateData).forEach(key => {
+                    if (farmerFields.includes(key)) {
+                        profileUpdate[key] = updateData[key];
+                    }
+                });
+                
+                if (Object.keys(profileUpdate).length > 0) {
+                    updatedProfile = await Farmer.findOneAndUpdate(
+                        { user: userId },
+                        profileUpdate,
+                        { new: true, runValidators: true }
+                    );
+                } else {
+                    updatedProfile = await Farmer.findOne({ user: userId });
+                }
+                break;
+                
+            case 'vendor':
+                const vendorFields = [
+                    'shopName', 'businessType', 'gstNumber', 'businessLicense',
+                    'dailyCapacity', 'preferredVegetables', 'paymentTerms',
+                    'bankDetails', 'storeTimings', 'preferredPickupTime',
+                    'warehouseAddress', 'creditLimit', 'currentCreditUsed',
+                    'averageRating', 'totalPurchases'
+                ];
+                
+                Object.keys(updateData).forEach(key => {
+                    if (vendorFields.includes(key)) {
+                        profileUpdate[key] = updateData[key];
+                    }
+                });
+                
+                if (Object.keys(profileUpdate).length > 0) {
+                    updatedProfile = await Vendor.findOneAndUpdate(
+                        { user: userId },
+                        profileUpdate,
+                        { new: true, runValidators: true }
+                    );
+                } else {
+                    updatedProfile = await Vendor.findOne({ user: userId });
+                }
+                break;
+                
+            case 'customer':
+                const customerFields = [
+                    'preferences', 'deliveryInstructions', 'familySize',
+                    'averageMonthlySpend', 'subscription', 'deliveryAddresses',
+                    'paymentMethods', 'wishlist', 'cart', 'totalOrders',
+                    'loyaltyPoints'
+                ];
+                
+                Object.keys(updateData).forEach(key => {
+                    if (customerFields.includes(key)) {
+                        profileUpdate[key] = updateData[key];
+                    }
+                });
+                
+                if (Object.keys(profileUpdate).length > 0) {
+                    updatedProfile = await Customer.findOneAndUpdate(
+                        { user: userId },
+                        profileUpdate,
+                        { new: true, runValidators: true }
+                    );
+                } else {
+                    updatedProfile = await Customer.findOne({ user: userId });
+                }
+                break;
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                user: updatedUser,
+                profile: updatedProfile
+            }
+        });
+        
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update profile',
+            error: error.message
+        });
+    }
+};
+
+export const validateLogin = [
+    body('mobile')
+        .trim()
+        .notEmpty().withMessage('Mobile number is required'),
+
+    body('password')
+        .trim()
+        .notEmpty().withMessage('Password is required')
+];
+
+export const validateRegister = [
+    body('fullName')
+        .trim()
+        .notEmpty().withMessage('Full name is required')
+        .isLength({ min: 3 }).withMessage('Name must be at least 3 characters'),
+
+    body('mobile')
+        .trim()
+        .notEmpty().withMessage('Mobile number is required')
+        .matches(/^[6-9]\d{9}$/).withMessage('Valid Indian mobile number is required'),
+
+    body('password')
+        .trim()
+        .notEmpty().withMessage('Password is required')
+        .isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+
+    body('role')
+        .trim()
+        .notEmpty().withMessage('Role is required')
+        .isIn(['farmer', 'vendor', 'customer']).withMessage('Invalid role'),
+
+    // Conditional farmer fields
+    body('farmName')
+        .if(body('role').equals('farmer'))
+        .trim()
+        .notEmpty().withMessage('Please provide your farm name'),
+
+    body('farmSize')
+        .if(body('role').equals('farmer'))
+        .notEmpty().withMessage('Please provide farm size')
+        .bail()
+        .isNumeric().withMessage('Farm size must be a number'),
+
+    // Conditional vendor fields
+    body('shopName')
+        .if(body('role').equals('vendor'))
+        .trim()
+        .notEmpty().withMessage('Please provide your shop name'),
+
+    body('dailyCapacity')
+        .if(body('role').equals('vendor'))
+        .notEmpty().withMessage('Please provide daily buying capacity')
+        .bail()
+        .isNumeric().withMessage('Daily capacity must be a number')
+];

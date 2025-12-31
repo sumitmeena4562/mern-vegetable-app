@@ -8,7 +8,7 @@ import {
   test,
   validateRegister,
   validateLogin
-} from '../controllers/authController.js';
+} from '../controllers/userController.js';
 import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
