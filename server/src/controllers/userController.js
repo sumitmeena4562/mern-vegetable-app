@@ -25,9 +25,34 @@ export const register = async (req, res) => {
             });
         }
 
-        const { fullName, mobile, password, role, email, ...otherData } = req.body;
+        let { fullName, mobile, password, role,email, ...otherData } = req.body;
         console.log("🔍 Incoming Email:", email);
         console.log("📦 Full Body:", req.body);
+
+
+         
+        // 👇=== MAGICAL FIX (OTP Fallback Logic) ===👇
+        // Agar Frontend ne email nahi bheja, toh OTP record se nikalo
+        if (!email || email === "undefined" || email === "") {
+            console.log("⚠️ Email missing in body, checking OTP records...");
+            const otpRecord = await Otp.findOne({ mobile }).sort({ createdAt: -1 });
+            
+            if (otpRecord && otpRecord.email) {
+                email = otpRecord.email;
+                console.log("✅ Email recovered from OTP:", email);
+            } else {
+                console.log("❌ Email not found in OTP records either.");
+            }
+        }
+        // 👆=======================================👆
+        // Agar email undefined hai, toh OTP record se dhoondhein
+        if (!email || email === "") {
+            const otpRecord = await Otp.findOne({ mobile }).sort({ createdAt: -1 });
+            if (otpRecord && otpRecord.email) {
+                email = otpRecord.email;
+                console.log("📧 Email recovered from OTP record:", email);
+            }
+        }
 
         // Check if user already exists
         const existing = await User.findOne({ mobile });
@@ -463,7 +488,7 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        
+
         // Get current user to know role
         const currentUser = await User.findById(userId);
         if (!currentUser) {
@@ -472,10 +497,10 @@ export const updateProfile = async (req, res) => {
                 message: 'User not found'
             });
         }
-        
+
         // Separate common and role-specific data
         const { password, mobile, role, ...updateData } = req.body;
-        
+
         // Don't allow role change
         if (role && role !== currentUser.role) {
             return res.status(400).json({
@@ -483,20 +508,20 @@ export const updateProfile = async (req, res) => {
                 message: 'Cannot change user role'
             });
         }
-        
+
         // Prepare user updates (common fields only)
         const userUpdates = {};
         const allowedUserFields = [
-            'fullName', 'email', 'profilePhoto', 'address', 
+            'fullName', 'email', 'profilePhoto', 'address',
             'location', 'fcmToken', 'settings'
         ];
-        
+
         Object.keys(updateData).forEach(key => {
             if (allowedUserFields.includes(key)) {
                 userUpdates[key] = updateData[key];
             }
         });
-        
+
         // Update common user data
         let updatedUser = currentUser;
         if (Object.keys(userUpdates).length > 0) {
@@ -506,11 +531,11 @@ export const updateProfile = async (req, res) => {
                 { new: true, runValidators: true }
             ).select('-password');
         }
-        
+
         // Update role-specific profile
         let profileUpdate = {};
         let updatedProfile = null;
-        
+
         switch (currentUser.role) {
             case 'farmer':
                 const farmerFields = [
@@ -518,13 +543,13 @@ export const updateProfile = async (req, res) => {
                     'farmingExperience', 'preferredPickupTime', 'bankDetails',
                     'documents', 'kycVerified', 'averageRating', 'totalSales'
                 ];
-                
+
                 Object.keys(updateData).forEach(key => {
                     if (farmerFields.includes(key)) {
                         profileUpdate[key] = updateData[key];
                     }
                 });
-                
+
                 if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Farmer.findOneAndUpdate(
                         { user: userId },
@@ -535,7 +560,7 @@ export const updateProfile = async (req, res) => {
                     updatedProfile = await Farmer.findOne({ user: userId });
                 }
                 break;
-                
+
             case 'vendor':
                 const vendorFields = [
                     'shopName', 'businessType', 'gstNumber', 'businessLicense',
@@ -544,13 +569,13 @@ export const updateProfile = async (req, res) => {
                     'warehouseAddress', 'creditLimit', 'currentCreditUsed',
                     'averageRating', 'totalPurchases'
                 ];
-                
+
                 Object.keys(updateData).forEach(key => {
                     if (vendorFields.includes(key)) {
                         profileUpdate[key] = updateData[key];
                     }
                 });
-                
+
                 if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Vendor.findOneAndUpdate(
                         { user: userId },
@@ -561,7 +586,7 @@ export const updateProfile = async (req, res) => {
                     updatedProfile = await Vendor.findOne({ user: userId });
                 }
                 break;
-                
+
             case 'customer':
                 const customerFields = [
                     'preferences', 'deliveryInstructions', 'familySize',
@@ -569,13 +594,13 @@ export const updateProfile = async (req, res) => {
                     'paymentMethods', 'wishlist', 'cart', 'totalOrders',
                     'loyaltyPoints'
                 ];
-                
+
                 Object.keys(updateData).forEach(key => {
                     if (customerFields.includes(key)) {
                         profileUpdate[key] = updateData[key];
                     }
                 });
-                
+
                 if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Customer.findOneAndUpdate(
                         { user: userId },
@@ -587,7 +612,7 @@ export const updateProfile = async (req, res) => {
                 }
                 break;
         }
-        
+
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
@@ -596,7 +621,7 @@ export const updateProfile = async (req, res) => {
                 profile: updatedProfile
             }
         });
-        
+
     } catch (error) {
         console.error('Update profile error:', error);
         res.status(500).json({

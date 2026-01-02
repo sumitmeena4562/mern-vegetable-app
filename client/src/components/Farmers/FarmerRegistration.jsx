@@ -38,7 +38,7 @@ const FarmerRegistration = () => {
     if (showOtpModal && timer > 0) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
-      }, 2000);
+      }, 1000);
     } else if (timer === 0) {
       setCanResend(true);
     }
@@ -161,9 +161,11 @@ const FarmerRegistration = () => {
 
     try {
       // ... (Baaki wahi same registration logic) ...
+      const userEmail = formData.email || "";
       const payload = {
         fullName: formData.fullName,
         mobile: formData.mobile,
+        email:userEmail,
         password: formData.password,
         role: 'farmer',
         farmName: formData.fullName + "'s Farm",
@@ -177,6 +179,7 @@ const FarmerRegistration = () => {
         crops: Object.keys(formData.crops)
           .filter(key => formData.crops[key])
           .map(key => ({ name: key }))
+          
       };
 
       const response = await axios.post('http://localhost:5000/api/auth/register/farmer', payload);
