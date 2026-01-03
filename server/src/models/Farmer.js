@@ -47,8 +47,7 @@ const farmerSchema = new mongoose.Schema({
       type: String,
       required: true,
       // ✅ FIX: 'leafyVeg' aur 'others' add kiya taaki error na aaye
-      enum: ['tomato', 'potato', 'onion', 'carrot', 'spinach', 'cauliflower', 
-             'brinjal', 'chili', 'cabbage', 'okra', 'cucumber', 'leafyVeg', 'others', 'other']
+    
     },
     variety: String,
     season: String,

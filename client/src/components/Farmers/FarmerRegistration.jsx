@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast, Toaster } from 'react-hot-toast'; // New Import
 
 const FarmerRegistration = () => {
+  // API URL Constant (Change karke production mein easy rahega)
+  const API_URL = "http://localhost:5000/api/auth";
+
   const [formData, setFormData] = useState({
     fullName: '',
     mobile: '',
@@ -12,6 +16,7 @@ const FarmerRegistration = () => {
     city: '',
     state: 'Maharashtra',
     pickup: 'Morning (6 AM - 10 AM)',
+    otherCropName: '', // New Field for "Others" input
     crops: {
       tomato: true,
       potato: false,
@@ -23,13 +28,13 @@ const FarmerRegistration = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [isVerified, setIsVerified] = useState(false); 
-  const [showOtpModal, setShowOtpModal] = useState(false); 
-  const [otpInput, setOtpInput] = useState(""); 
-  const [otpLoading, setOtpLoading] = useState(false); 
-  const [otpValues, setOtpValues] = useState(["", "", "", ""]); 
-  const [timer, setTimer] = useState(60); 
-  const [canResend, setCanResend] = useState(false); 
+  const [isVerified, setIsVerified] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpValues, setOtpValues] = useState(["", "", "", ""]);
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // Modal Timer
@@ -71,10 +76,14 @@ const FarmerRegistration = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Mobile badalne par verification reset
-    if (name === 'mobile' && isVerified) {
-      setIsVerified(false);
+
+    // Mobile Validation: Sirf numbers allow karein
+    if (name === 'mobile') {
+      if (/\D/.test(value)) return; // Agar number nahi hai toh return
+      if (value.length > 10) return; // 10 digit limit
+      if (isVerified) setIsVerified(false);
     }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -87,25 +96,26 @@ const FarmerRegistration = () => {
 
   const handleSendOtp = async () => {
     if (!formData.mobile || formData.mobile.length !== 10) {
-      alert("❌ Please enter a valid 10-digit mobile number.");
+      toast.error("❌ Please enter a valid 10-digit mobile number.");
       return;
     }
     if (!formData.email || !formData.email.includes('@')) {
-      alert("❌ Please enter a valid email address.");
+      toast.error("❌ Please enter a valid email address.");
       return;
     }
 
     setOtpLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/send-otp', {
+      const res = await axios.post(`${API_URL}/send-otp`, {
         mobile: formData.mobile,
         email: formData.email
       });
       if (res.data.success) {
+        toast.success("OTP Sent Successfully!");
         setShowOtpModal(true);
       }
     } catch (error) {
-      alert(error.response?.data?.message || "❌ OTP nahi bheja ja saka");
+      toast.error(error.response?.data?.message || "❌ Failed to send OTP");
     } finally {
       setOtpLoading(false);
     }
@@ -113,7 +123,7 @@ const FarmerRegistration = () => {
 
   const handleVerifyOtp = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/verify-otp', {
+      const res = await axios.post(`${API_URL}/verify-otp`, {
         mobile: formData.mobile,
         otp: otpInput
       });
@@ -121,27 +131,28 @@ const FarmerRegistration = () => {
         setIsVerified(true);
         setShowOtpModal(false);
         setOtpValues(["", "", "", ""]);
-        alert("✅ Mobile Verified!");
+        toast.success("✅ Mobile Verified!");
       }
     } catch (error) {
-      alert("❌ Invalid OTP.");
+      toast.error("❌ Invalid OTP. Please try again.");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("❌ Passwords match nahi ho rahe hain!");
+      toast.error("❌ Passwords do not match!");
       return;
     }
     if (!isVerified) {
-      alert("🛑 Registration se pehle Mobile Number verify karna zaroori hai.");
+      toast.error("🛑 Please verify your mobile number first.");
       await handleSendOtp();
       return;
     }
 
     setLoading(true);
     try {
+      // Data prepare kar rahe hain
       const payload = {
         fullName: formData.fullName,
         mobile: formData.mobile,
@@ -157,16 +168,21 @@ const FarmerRegistration = () => {
         },
         crops: Object.keys(formData.crops)
           .filter(key => formData.crops[key])
-          .map(key => ({ name: key }))
+          .map(key => ({ 
+            // Agar "others" hai aur user ne naam likha hai, toh woh bhejenge
+            name: (key === 'others' && formData.otherCropName) ? formData.otherCropName : key 
+          }))
       };
 
-      const response = await axios.post('http://localhost:5000/api/auth/register/farmer', payload);
+      const response = await axios.post(`${API_URL}/register/farmer`, payload);
       if (response.data.success) {
-        alert("✅ Registration Successful!");
-        window.location.href = '/login';
+        toast.success("✅ Registration Successful!");
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1500);
       }
     } catch (error) {
-      alert(error.response?.data?.message || "❌ Registration failed!");
+      toast.error(error.response?.data?.message || "❌ Registration failed!");
     } finally {
       setLoading(false);
     }
@@ -185,6 +201,9 @@ const FarmerRegistration = () => {
 
   return (
     <div className="min-h-screen font-display antialiased text-gray-900 bg-[#f3fbf6] flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Toast Notification Container */}
+      <Toaster position="top-center" reverseOrder={false} />
+
       {/* Background Decor */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#ecfccb] via-[#f0fdf4] to-[#e0e7ff] opacity-80"></div>
@@ -219,9 +238,11 @@ const FarmerRegistration = () => {
                   <div className="flex gap-2">
                     <input required name="mobile" maxLength="10" value={formData.mobile} onChange={handleInputChange} className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 outline-none ${isVerified ? 'border-green-500 bg-green-50' : ''}`} placeholder="9876543210" />
                     {!isVerified ? (
-                      <button type="button" onClick={handleSendOtp} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Verify</button>
+                      <button type="button" onClick={handleSendOtp} disabled={otpLoading} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition">
+                        {otpLoading ? 'Sending...' : 'Verify'}
+                      </button>
                     ) : (
-                      <span className="flex items-center px-3 bg-green-100 text-green-700 rounded-lg">✓</span>
+                      <span className="flex items-center px-3 bg-green-100 text-green-700 rounded-lg font-bold">✓</span>
                     )}
                   </div>
                 </div>
@@ -297,9 +318,29 @@ const FarmerRegistration = () => {
                   </label>
                 ))}
               </div>
+
+              {/* Conditional Input for 'Others' */}
+              {formData.crops.others && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Please specify other crop name</label>
+                  <input 
+                    type="text"
+                    name="otherCropName"
+                    value={formData.otherCropName}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 focus:ring-2 focus:ring-green-500 outline-none"
+                    placeholder="Ex: Sugarcane, Cotton..."
+                  />
+                </div>
+              )}
             </div>
 
-            <button type="submit" disabled={loading} className="w-full py-4 rounded-xl bg-green-600 text-white font-black shadow-lg hover:bg-green-700 transition-all active:scale-95">
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className={`w-full py-4 rounded-xl text-white font-black shadow-lg transition-all 
+                ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:scale-95'}`}
+            >
               {loading ? 'Processing...' : 'Register as Farmer'}
             </button>
           </form>
@@ -317,11 +358,11 @@ const FarmerRegistration = () => {
                 <input key={index} maxLength="1" className="w-12 h-14 border-2 border-gray-200 rounded-xl text-center text-2xl font-bold focus:border-green-500 outline-none" value={data} onChange={(e) => handleOtpChange(e.target, index)} onKeyDown={(e) => handleKeyDown(e, index)} />
               ))}
             </div>
-            <button onClick={handleVerifyOtp} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl mb-4 shadow-lg">Verify Now</button>
+            <button onClick={handleVerifyOtp} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl mb-4 shadow-lg hover:bg-green-700">Verify Now</button>
             <div className="text-center">
               {canResend ? <button onClick={handleResendClick} className="text-green-600 font-bold">Resend Code</button> : <span className="text-gray-400">Resend in {timer}s</span>}
             </div>
-            <button onClick={() => setShowOtpModal(false)} className="w-full mt-4 text-gray-400 font-bold">Cancel</button>
+            <button onClick={() => setShowOtpModal(false)} className="w-full mt-4 text-gray-400 font-bold hover:text-gray-600">Cancel</button>
           </div>
         </div>
       )}
