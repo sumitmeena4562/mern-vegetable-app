@@ -40,7 +40,7 @@ const Login = () => {
       }
 
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/auth/login`, // Ensure .env variable is correct, or use 'http://localhost:5000/api' directly
+        `${import.meta.env.VITE_API_URL}/login`, // Ensure .env variable is correct, or use 'http://localhost:5000/api' directly
         formData
       );
 

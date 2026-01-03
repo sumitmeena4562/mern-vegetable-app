@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     // 4. Fetch User Profile
     const fetchUserProfile = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/me`);
+           const response = await axios.get(`${import.meta.env.VITE_API_URL}/me`);
 
             if (response.data.success) {
                 // Support both data structures
