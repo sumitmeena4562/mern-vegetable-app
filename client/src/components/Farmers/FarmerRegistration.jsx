@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const FarmerRegistration = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
+  const navigate = useNavigate();
 
   // --- States ---
   const [formData, setFormData] = useState({
@@ -17,12 +19,13 @@ const FarmerRegistration = () => {
     state: 'Maharashtra',
     pickup: 'Morning (6 AM - 10 AM)',
     otherCropName: '',
-    crops: { tomato: true, potato: false, onion: false, carrot: false, leafyVeg: false, others: false }
+    crops: { tomato: false, potato: false, onion: false, carrot: false, leafyVeg: false, others: false }
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [formProgress, setFormProgress] = useState(0);
   
   // OTP States
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -31,10 +34,16 @@ const FarmerRegistration = () => {
   const [otpValues, setOtpValues] = useState(["", "", "", ""]);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
+  const [otpError, setOtpError] = useState("");
   
   // Password UI
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isTouched, setIsTouched] = useState({});
+
+  // Ref for OTP inputs
+  const otpRefs = useRef([]);
 
   // --- Helper: Loading Spinner Component ---
   const Spinner = () => (
@@ -44,27 +53,63 @@ const FarmerRegistration = () => {
     </svg>
   );
 
-  // --- Logic ---
+  // --- Progress Calculation ---
+  useEffect(() => {
+    const calculateProgress = () => {
+      let progress = 0;
+      const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
+      
+      requiredFields.forEach(field => {
+        if (formData[field] && formData[field].trim().length > 0) {
+          progress += 10;
+        }
+      });
+      
+      // Check if at least one crop is selected
+      const hasCropSelected = Object.values(formData.crops).some(val => val === true);
+      if (hasCropSelected) progress += 10;
+      
+      // Check if other crop is specified when selected
+      if (formData.crops.others && formData.otherCropName.trim()) progress += 10;
+      
+      // Mobile verification
+      if (isVerified) progress += 20;
+      
+      setFormProgress(Math.min(progress, 100));
+    };
+    
+    calculateProgress();
+  }, [formData, isVerified]);
+
+  // --- Validation Logic ---
   const validateField = (name, value) => {
     let errorMsg = "";
     switch (name) {
       case "fullName":
-        if (value.trim().length < 3 && value.length > 0) errorMsg = "Name must be at least 3 characters.";
+        if (value.trim().length < 3) errorMsg = "Name must be at least 3 characters.";
+        else if (!/^[A-Za-z\s]+$/.test(value)) errorMsg = "Name can only contain letters and spaces.";
         break;
       case "mobile":
-        if (value.length > 0 && value.length !== 10) errorMsg = "Mobile number must be 10 digits.";
-        else if (value.length > 0 && !/^[6-9]/.test(value)) errorMsg = "Must start with 6-9.";
+        if (value.length !== 10) errorMsg = "Mobile number must be 10 digits.";
+        else if (!/^[6-9]\d{9}$/.test(value)) errorMsg = "Must be a valid Indian mobile number.";
         break;
       case "email":
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (value.length > 0 && !emailRegex.test(value)) errorMsg = "Invalid email format.";
+        if (!emailRegex.test(value)) errorMsg = "Invalid email format.";
         break;
       case "password":
-        setPasswordStrength(checkPasswordStrength(value));
-        if (value.length > 0 && value.length < 6) errorMsg = "Password must be at least 6 chars.";
+        if (value.length < 6) errorMsg = "Password must be at least 6 characters.";
+        else if (!/(?=.*[A-Z])/.test(value)) errorMsg = "Must contain at least one uppercase letter.";
+        else if (!/(?=.*[0-9])/.test(value)) errorMsg = "Must contain at least one number.";
         break;
       case "confirmPassword":
-        if (value.length > 0 && value !== formData.password) errorMsg = "Passwords do not match.";
+        if (value !== formData.password) errorMsg = "Passwords do not match.";
+        break;
+      case "village":
+        if (value.trim().length < 2) errorMsg = "Village name is too short.";
+        break;
+      case "city":
+        if (value.trim().length < 2) errorMsg = "City name is too short.";
         break;
       case "otherCropName":
         if (formData.crops.others && !value.trim()) errorMsg = "Please specify the crop name.";
@@ -72,6 +117,7 @@ const FarmerRegistration = () => {
       default: break;
     }
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    setIsTouched(prev => ({ ...prev, [name]: true }));
   };
 
   const checkPasswordStrength = (pass) => {
@@ -81,7 +127,7 @@ const FarmerRegistration = () => {
     if (/[A-Z]/.test(pass)) score++;
     if (/[0-9]/.test(pass)) score++;
     if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return score;
+    return Math.min(score, 5);
   };
 
   const getStrengthColor = () => {
@@ -91,53 +137,118 @@ const FarmerRegistration = () => {
   };
   
   const getStrengthLabel = () => {
-    if (passwordStrength === 0) return "";
-    if (passwordStrength <= 2) return "Weak";
-    if (passwordStrength === 3) return "Medium";
-    return "Strong";
+    if (passwordStrength === 0) return "Very Weak";
+    if (passwordStrength === 1) return "Weak";
+    if (passwordStrength === 2) return "Fair";
+    if (passwordStrength === 3) return "Good";
+    if (passwordStrength === 4) return "Strong";
+    return "Very Strong";
   };
 
+  const getStrengthTextColor = () => {
+    if (passwordStrength <= 2) return "text-red-600";
+    if (passwordStrength === 3) return "text-yellow-600";
+    return "text-green-600";
+  };
+
+  // --- Input Handlers ---
   const handleInputChange = (e) => {
-    let { name, value } = e.target;
-
-    // Improvement 3: Auto-Capitalize Names and Village
-    if ((name === 'fullName' || name === 'village' || name === 'city') && value.length > 0) {
-       value = value.charAt(0).toUpperCase() + value.slice(1);
+    const { name, value } = e.target;
+    
+    let processedValue = value;
+    
+    // Auto-capitalize names
+    if (['fullName', 'village', 'city'].includes(name)) {
+      processedValue = value
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
     }
-
+    
+    // Mobile number formatting
     if (name === 'mobile') {
       if (/\D/.test(value)) return;
       if (value.length > 10) return;
       if (isVerified) setIsVerified(false);
+      processedValue = value;
     }
+    
+    // Email lowercase
+    if (name === 'email') {
+      processedValue = value.toLowerCase();
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: processedValue }));
+    
+    // Real-time validation
+    if (isTouched[name] || ['password', 'confirmPassword'].includes(name)) {
+      validateField(name, processedValue);
+    }
+    
+    // Update password strength
+    if (name === 'password') {
+      setPasswordStrength(checkPasswordStrength(processedValue));
+    }
+  };
 
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
     validateField(name, value);
   };
 
   const handleCropChange = (crop) => {
-    setFormData(prev => ({
-      ...prev,
-      crops: { ...prev.crops, [crop]: !prev.crops[crop] }
-    }));
+    const newCrops = { ...formData.crops, [crop]: !formData.crops[crop] };
+    setFormData(prev => ({ ...prev, crops: newCrops }));
+    
+    // Clear other crop name if "others" is unchecked
+    if (crop === 'others' && !newCrops.others) {
+      setFormData(prev => ({ ...prev, otherCropName: '' }));
+      setErrors(prev => ({ ...prev, otherCropName: '' }));
+    }
   };
 
+  // --- OTP Functions ---
   const handleSendOtp = async () => {
+    // Validate mobile and email first
+    validateField('mobile', formData.mobile);
+    validateField('email', formData.email);
+    
     if (errors.mobile || errors.email || !formData.mobile || !formData.email) {
-      toast.error("Please enter valid Mobile and Email.");
+      toast.error("Please fix mobile/email errors before verification");
       return;
     }
+    
+    if (formData.mobile.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    
     setOtpLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/send-otp`, { mobile: formData.mobile, email: formData.email });
+      const res = await axios.post(`${API_URL}/send-otp`, { 
+        mobile: formData.mobile, 
+        email: formData.email 
+      });
+      
       if (res.data.success) {
-        toast.success("OTP Sent!");
+        toast.success("OTP sent to your mobile and email!");
         setShowOtpModal(true);
         setTimer(60);
         setCanResend(false);
+        setOtpError("");
+        // Focus first OTP input
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      const errorMsg = error.response?.data?.message || "Failed to send OTP";
+      toast.error(errorMsg);
+      
+      // Handle specific errors
+      if (error.response?.status === 400) {
+        if (errorMsg.includes("already registered")) {
+          setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
+        }
+      }
     } finally {
       setOtpLoading(false);
     }
@@ -155,51 +266,156 @@ const FarmerRegistration = () => {
   }, [showOtpModal, timer]);
 
   const handleVerifyOtp = async () => {
+    if (otpInput.length !== 4) {
+      setOtpError("Please enter complete 4-digit OTP");
+      return;
+    }
+    
+    setOtpLoading(true);
+    setOtpError("");
+    
     try {
       const res = await axios.post(`${API_URL}/verify-otp`, {
         mobile: formData.mobile,
         otp: otpInput
       });
+      
       if (res.data.success) {
         setIsVerified(true);
         setShowOtpModal(false);
         setOtpValues(["", "", "", ""]);
-        toast.success("✅ Verified Successfully!");
+        setOtpInput("");
+        toast.success("✅ Mobile verified successfully!");
+        
+        // Auto-focus password field after verification
+        setTimeout(() => {
+          document.getElementsByName("password")[0]?.focus();
+        }, 300);
       }
     } catch (error) {
-      toast.error("❌ Invalid OTP. Please try again.");
+      const errorMsg = error.response?.data?.message || "Invalid OTP";
+      setOtpError(errorMsg);
+      toast.error("❌ " + errorMsg);
+      
+      // Clear OTP on error
+      setOtpValues(["", "", "", ""]);
+      setOtpInput("");
+      otpRefs.current[0]?.focus();
+    } finally {
+      setOtpLoading(false);
     }
   };
 
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return;
+    
+    let newOtp = [...otpValues];
+    newOtp[index] = element.value;
+    setOtpValues(newOtp);
+    
+    const joinedOtp = newOtp.join("");
+    setOtpInput(joinedOtp);
+    setOtpError("");
+    
+    // Auto-focus next input
+    if (element.value && index < 3 && element.nextSibling) {
+      element.nextSibling.focus();
+    }
+    
+    // Auto-verify when 4 digits entered
+    if (joinedOtp.length === 4) {
+      setTimeout(() => handleVerifyOtp(), 300);
+    }
+  };
+  
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      e.preventDefault();
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 3) {
+      e.preventDefault();
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePasteOtp = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    if (/^\d{4}$/.test(pastedData)) {
+      const digits = pastedData.split('');
+      setOtpValues(digits);
+      setOtpInput(pastedData);
+      otpRefs.current[3]?.focus();
+    }
+  };
+
+  // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Check errors
+    
+    // Validate all fields
+    const fieldsToValidate = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
+    fieldsToValidate.forEach(field => {
+      validateField(field, formData[field]);
+    });
+    
+    if (formData.crops.others) {
+      validateField('otherCropName', formData.otherCropName);
+    }
+    
+    // Check for errors
     const hasErrors = Object.values(errors).some(err => err !== "");
-    const missingFields = !formData.fullName || !formData.mobile || !formData.email || !formData.password;
-
-    // Improvement 2: Scroll to Error
-    if (hasErrors || missingFields) {
-      toast.error("Please fix the errors shown in red.");
-      // Find the first field with an error and scroll to it
-      const firstErrorKey = Object.keys(errors).find(key => errors[key]) || Object.keys(formData).find(key => !formData[key] && key !== 'otherCropName');
+    if (hasErrors) {
+      toast.error("Please fix the errors highlighted in red");
+      
+      // Find and scroll to first error
+      const firstErrorKey = Object.keys(errors).find(key => errors[key]);
       if (firstErrorKey) {
         const element = document.getElementsByName(firstErrorKey)[0];
-        if(element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus();
+        }
       }
       return;
     }
-
+    
+    // Check required fields
+    const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
+    const missingField = requiredFields.find(field => !formData[field].trim());
+    if (missingField) {
+      toast.error(`Please fill in ${missingField.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+      const element = document.getElementsByName(missingField)[0];
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.focus();
+      }
+      return;
+    }
+    
+    // Check crop selection
+    const hasCropSelected = Object.values(formData.crops).some(val => val === true);
+    if (!hasCropSelected) {
+      toast.error("Please select at least one crop you grow");
+      return;
+    }
+    
     if (!isVerified) {
-      toast.error("🛑 Please verify your mobile number.");
+      toast.error("🛑 Please verify your mobile number");
+      document.getElementsByName("mobile")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    
     if (passwordStrength < 2) {
-      toast.error("⚠️ Password is too weak!");
+      toast.error("⚠️ Password is too weak! Please use a stronger password");
       return;
     }
-
+    
     setLoading(true);
+    
     try {
       const payload = {
         fullName: formData.fullName,
@@ -218,274 +434,726 @@ const FarmerRegistration = () => {
           .filter(key => formData.crops[key])
           .map(key => {
             if (key === 'others') {
-              return formData.otherCropName ? { name: formData.otherCropName } : null; 
+              return { name: formData.otherCropName.trim() };
             }
-            return { name: key };
-          })
-          .filter(Boolean)
+            return { name: key.charAt(0).toUpperCase() + key.slice(1) };
+          }),
+        pickupTime: formData.pickup
       };
 
       const response = await axios.post(`${API_URL}/register/farmer`, payload);
       
       if (response.data.success) {
-        toast.success("✅ Registration Successful!");
+        toast.success("✅ Registration Successful! Redirecting to login...");
         setTimeout(() => {
-            window.location.href = '/login';
-        }, 1500);
+          navigate('/login');
+        }, 2000);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "❌ Registration failed!");
+      const errorMsg = error.response?.data?.message || "Registration failed!";
+      toast.error(`❌ ${errorMsg}`);
+      
+      // Handle duplicate registration
+      if (errorMsg.includes("already exists") || errorMsg.includes("already registered")) {
+        if (errorMsg.includes("mobile")) {
+          setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
+        }
+        if (errorMsg.includes("email")) {
+          setErrors(prev => ({ ...prev, email: "Email already registered" }));
+        }
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return;
-    let newOtp = [...otpValues];
-    newOtp[index] = element.value;
-    setOtpValues(newOtp);
-    setOtpInput(newOtp.join(""));
-    if (element.nextSibling && element.value) element.nextSibling.focus();
-  };
+  // --- Data ---
+  const states = ['Maharashtra', 'Punjab', 'Haryana', 'Uttar Pradesh', 'Madhya Pradesh', 
+                  'Rajasthan', 'Gujarat', 'Karnataka', 'Tamil Nadu', 'Kerala', 
+                  'West Bengal', 'Bihar', 'Odisha', 'Telangana', 'Andhra Pradesh'];
   
-  const handleKeyDown = (e, index) => {
-     if (e.key === "Backspace" && !otpValues[index] && e.target.previousSibling) {
-        e.target.previousSibling.focus();
-     }
-  };
-
-  const states = ['Maharashtra', 'Punjab', 'Haryana', 'Uttar Pradesh', 'Madhya Pradesh'];
   const cropList = [
     { key: 'tomato', label: 'Tomato', emoji: '🍅' },
     { key: 'potato', label: 'Potato', emoji: '🥔' },
     { key: 'onion', label: 'Onion', emoji: '🧅' },
     { key: 'carrot', label: 'Carrot', emoji: '🥕' },
     { key: 'leafyVeg', label: 'Leafy Veg', emoji: '🥬' },
-    { key: 'others', label: 'Others', emoji: 'add' }
+    { key: 'others', label: 'Others', emoji: '🌾' }
+  ];
+
+  // Password requirements checklist
+  const passwordRequirements = [
+    { text: "At least 6 characters", met: formData.password.length >= 6 },
+    { text: "At least one uppercase letter", met: /[A-Z]/.test(formData.password) },
+    { text: "At least one number", met: /[0-9]/.test(formData.password) },
+    { text: "Strong password (recommended)", met: passwordStrength >= 3 }
   ];
 
   return (
-    <div className="min-h-screen font-display antialiased text-gray-900 bg-[#f3fbf6] flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
-      <Toaster position="top-center" />
+    <div className="min-h-screen font-display antialiased text-gray-900 bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+          },
+        }}
+      />
       
+      {/* Background Pattern - FIXED SVG URL */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#ecfccb] via-[#f0fdf4] to-[#e0e7ff] opacity-80"></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}></div>
+        <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] bg-green-300/20 rounded-full blur-[80px]"></div>
+        <div className="absolute bottom-[-20%] left-[-10%] w-[40%] h-[40%] bg-yellow-300/20 rounded-full blur-[80px]"></div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 h-2 bg-gray-200 z-40">
+        <div 
+          className="h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-500 ease-out"
+          style={{ width: `${formProgress}%` }}
+        ></div>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6 relative z-10">
-        <span className="material-symbols-outlined text-green-600 text-4xl">eco</span>
-        <h2 className="text-3xl font-black text-gray-900">AgriConnect</h2>
-        <p className="mt-2 text-sm text-gray-600">Farmer Registration 🌾</p>
+        <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-gradient-to-br from-green-400 to-emerald-600 text-white shadow-xl shadow-green-500/25 mb-4 transform hover:scale-105 transition-transform duration-300">
+          <span className="material-symbols-outlined text-5xl">eco</span>
+        </div>
+        <h2 className="text-3xl font-black text-gray-900 tracking-tight">AgriConnect</h2>
+        <p className="mt-2 text-sm font-medium text-emerald-700">Farmer Registration Portal 🌾</p>
+        <div className="mt-4 text-xs text-gray-500">
+          Progress: {formProgress}% • {formProgress >= 100 ? "Ready to submit!" : "Complete all fields"}
+        </div>
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-[1024px] relative z-10">
-        <div className="glass-card shadow-xl rounded-2xl px-4 py-6 sm:px-10 sm:py-10 relative overflow-hidden bg-white/75 backdrop-blur-xl border border-white/60">
+        <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl px-4 py-6 sm:px-10 sm:py-10 relative overflow-hidden border border-white/60">
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-8">
               
-              {/* Personal Details */}
-              <div className="space-y-4">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-green-700">person</span>
-                  Personal Details
-                </h3>
+              {/* Personal Details Column */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-lg text-gray-800 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-green-700 bg-green-100 p-2 rounded-full">person</span>
+                    Personal Details
+                  </h3>
+                  <span className="text-xs font-semibold px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                    Required
+                  </span>
+                </div>
                 
+                {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
                   <input 
-                    required name="fullName" value={formData.fullName} onChange={handleInputChange} 
-                    className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none transition ${errors.fullName ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-500 focus:ring-2'}`} 
-                    placeholder="Ram Kumar" 
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${
+                      errors.fullName 
+                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                    }`}
+                    placeholder="Enter your full name"
+                    maxLength={50}
                   />
-                  {errors.fullName && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.fullName}</p>}
+                  {errors.fullName && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.fullName}
+                    </p>
+                  )}
                 </div>
 
+                {/* Mobile Number with Verification */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Mobile Number</label>
-                  <div className="flex gap-2">
-                    <div className="w-full">
-                      <input 
-                        required name="mobile" maxLength="10" value={formData.mobile} onChange={handleInputChange} 
-                        className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none ${errors.mobile ? 'border-red-500' : (isVerified ? 'border-green-500 bg-green-50' : 'border-gray-300')}`} 
-                        placeholder="9876543210" 
-                      />
-                      {errors.mobile && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.mobile}</p>}
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Mobile Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <span className="text-gray-400">+91</span>
+                        </div>
+                        <input 
+                          name="mobile"
+                          value={formData.mobile}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          className={`w-full rounded-xl py-3 pl-12 pr-4 bg-white border outline-none ${
+                            errors.mobile 
+                              ? 'border-red-500' 
+                              : isVerified 
+                                ? 'border-green-500 bg-green-50' 
+                                : 'border-gray-300'
+                          }`}
+                          placeholder="9876543210"
+                          maxLength={10}
+                          inputMode="numeric"
+                        />
+                      </div>
+                      {errors.mobile && (
+                        <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">error</span>
+                          {errors.mobile}
+                        </p>
+                      )}
                     </div>
                     {!isVerified ? (
-                      <button type="button" onClick={handleSendOtp} disabled={otpLoading || !!errors.mobile} className="bg-blue-600 text-white px-4 h-[46px] rounded-lg font-bold text-sm hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center min-w-[80px]">
-                        {otpLoading ? <Spinner /> : 'Verify'}
+                      <button 
+                        type="button" 
+                        onClick={handleSendOtp}
+                        disabled={otpLoading || !!errors.mobile || !formData.mobile}
+                        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 h-[52px] rounded-xl font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px] shadow-lg shadow-blue-500/25"
+                      >
+                        {otpLoading ? <Spinner /> : 'Send OTP'}
                       </button>
                     ) : (
-                      <span className="flex items-center justify-center w-[80px] h-[46px] bg-green-100 text-green-700 rounded-lg font-bold">✓</span>
+                      <div className="flex items-center justify-center min-w-[100px] h-[52px] bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-xl font-bold border border-green-200 px-4">
+                        <span className="material-symbols-outlined mr-2">verified</span>
+                        Verified
+                      </div>
                     )}
                   </div>
                 </div>
 
+                {/* Email */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
                   <input 
-                    required type="email" name="email" value={formData.email} onChange={handleInputChange} 
-                    className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none ${errors.email ? 'border-red-500' : 'border-gray-300'}`} 
-                    placeholder="ram@example.com" 
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${
+                      errors.email 
+                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                    }`}
+                    placeholder="name@example.com"
                   />
-                  {errors.email && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Password */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Password <span className="text-red-500">*</span>
+                  </label>
                   <div className="relative">
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
                     <input 
-                      required name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleInputChange} 
-                      className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none pr-10 ${errors.password ? 'border-red-500' : 'border-gray-300'}`} 
-                      placeholder="••••••••" 
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${
+                        errors.password 
+                          ? 'border-red-500' 
+                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                      placeholder="Create a strong password"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-gray-400 hover:text-gray-600">
-                      <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility' : 'visibility_off'}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {showPassword ? 'visibility_off' : 'visibility'}
+                      </span>
                     </button>
-                    
-                    {formData.password && (
-                        <div className="mt-2 transition-all duration-300">
-                            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                                <div className={`h-full ${getStrengthColor()} transition-all duration-500 ease-out`} style={{ width: `${(passwordStrength / 5) * 100}%` }}></div>
-                            </div>
-                            <p className="text-xs text-right mt-1 font-semibold text-gray-500">{getStrengthLabel()}</p>
-                        </div>
-                    )}
-                     {errors.password && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.password}</p>}
                   </div>
+                  
+                  {/* Password Strength Indicator */}
+                  {formData.password && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className={`text-xs font-bold ${getStrengthTextColor()}`}>
+                          Strength: {getStrengthLabel()}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {passwordStrength}/5
+                        </span>
+                      </div>
+                      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${getStrengthColor()} transition-all duration-500 ease-out`} 
+                          style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                        ></div>
+                      </div>
+                      
+                      {/* Password Requirements */}
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        {passwordRequirements.map((req, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <span className={`material-symbols-outlined text-sm ${
+                              req.met ? 'text-green-600' : 'text-gray-400'
+                            }`}>
+                              {req.met ? 'check_circle' : 'radio_button_unchecked'}
+                            </span>
+                            <span className={`text-xs ${req.met ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
+                              {req.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Confirm</label>
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Confirm Password <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
                     <input 
-                      required name="confirmPassword" type={showPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleInputChange} 
-                      className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} 
-                      placeholder="••••••••" 
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${
+                        errors.confirmPassword 
+                          ? 'border-red-500' 
+                          : formData.confirmPassword && formData.confirmPassword === formData.password
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                      placeholder="Re-enter your password"
                     />
-                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.confirmPassword}</p>}
+                    <button 
+                      type="button" 
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      <span className="material-symbols-outlined text-xl">
+                        {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                      </span>
+                    </button>
                   </div>
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.confirmPassword}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Farm Details */}
-              <div className="space-y-4">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-yellow-700">location_on</span>
-                  Farm Location
-                </h3>
+              {/* Farm Details Column */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-lg text-gray-800 flex items-center gap-3">
+                    <span className="material-symbols-outlined text-yellow-700 bg-yellow-100 p-2 rounded-full">location_on</span>
+                    Farm Location
+                  </h3>
+                  <span className="text-xs font-semibold px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                    Required
+                  </span>
+                </div>
                 
+                {/* Village */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Village Address</label>
-                  <input required name="village" value={formData.village} onChange={handleInputChange} className="w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 outline-none" placeholder="Your Village" />
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Village/Town <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    name="village"
+                    value={formData.village}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
+                      errors.village 
+                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                    }`}
+                    placeholder="Your village or town name"
+                  />
+                  {errors.village && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.village}
+                    </p>
+                  )}
                 </div>
 
+                {/* City and State */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">City/District</label>
-                    <input required name="city" value={formData.city} onChange={handleInputChange} className="w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 outline-none" placeholder="District" />
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      City/District <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
+                        errors.city 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                      placeholder="District name"
+                    />
+                    {errors.city && (
+                      <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">error</span>
+                        {errors.city}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">State</label>
-                    <select name="state" value={formData.state} onChange={handleInputChange} className="w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 outline-none bg-white">
-                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className="w-full rounded-xl py-3 px-4 bg-white border border-gray-300 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    >
+                      {states.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
+                {/* Pickup Time */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Pickup Time</label>
-                  <select name="pickup" value={formData.pickup} onChange={handleInputChange} className="w-full rounded-lg py-2.5 px-3 bg-white/50 border border-gray-300 outline-none bg-white">
-                    {['Morning (6 AM - 10 AM)', 'Afternoon (12 PM - 4 PM)', 'Evening (4 PM - 8 PM)'].map(t => <option key={t} value={t}>{t}</option>)}
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Preferred Pickup Time <span className="text-gray-500 text-xs">(For collection agents)</span>
+                  </label>
+                  <select 
+                    name="pickup"
+                    value={formData.pickup}
+                    onChange={handleInputChange}
+                    className="w-full rounded-xl py-3 px-4 bg-white border border-gray-300 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                  >
+                    {['Morning (6 AM - 10 AM)', 'Afternoon (12 PM - 4 PM)', 'Evening (4 PM - 8 PM)', 'Flexible'].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Our collection agent will visit during this time slot
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Crops Grid */}
-            <div className="pt-6 border-t border-gray-200">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-green-700">potted_plant</span>
-                What do you grow?
-              </h3>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                {cropList.map(crop => (
-                  <label key={crop.key} className="cursor-pointer group relative">
-                    <input type="checkbox" className="peer sr-only" checked={formData.crops[crop.key]} onChange={() => handleCropChange(crop.key)} />
-                    <div className="rounded-xl p-2 h-20 flex flex-col items-center justify-center text-center bg-white/50 border border-gray-200 peer-checked:bg-green-600 peer-checked:text-white transition-all shadow-sm hover:shadow-md">
-                      <span className="text-xl mb-1">{crop.emoji === 'add' ? '➕' : crop.emoji}</span>
-                      <span className="text-[10px] uppercase font-bold">{crop.label}</span>
+            {/* Crops Selection */}
+            <div className="pt-8 border-t border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-bold text-lg text-gray-800 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-green-700 bg-green-100 p-2 rounded-full">potted_plant</span>
+                  What do you grow? <span className="text-red-500">*</span>
+                </h3>
+                <span className="text-xs font-semibold px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
+                  Select at least one
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                {cropList.map((crop, index) => (
+                  <label 
+                    key={crop.key} 
+                    className={`cursor-pointer group relative transition-all duration-200 ${
+                      formData.crops[crop.key] 
+                        ? 'scale-105' 
+                        : 'hover:scale-102'
+                    }`}
+                  >
+                    <input 
+                      type="checkbox" 
+                      className="peer sr-only" 
+                      checked={formData.crops[crop.key]} 
+                      onChange={() => handleCropChange(crop.key)} 
+                    />
+                    <div className={`rounded-2xl p-4 h-24 flex flex-col items-center justify-center text-center border-2 transition-all duration-300 shadow-sm ${
+                      formData.crops[crop.key]
+                        ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-400 shadow-lg shadow-green-200/50'
+                        : 'bg-white/70 border-gray-200 group-hover:border-green-300 group-hover:bg-green-50/50'
+                    }`}>
+                      <span className="text-2xl mb-2">{crop.emoji}</span>
+                      <span className="text-xs uppercase font-bold text-gray-700">{crop.label}</span>
+                      {formData.crops[crop.key] && (
+                        <span className="absolute -top-2 -right-2 bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">
+                          ✓
+                        </span>
+                      )}
                     </div>
                   </label>
                 ))}
               </div>
 
+              {/* Other Crop Input */}
               {formData.crops.others && (
-                <div className="mt-4 animate-in fade-in slide-in-from-top-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Specify Other Crop Name <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text"
-                    name="otherCropName"
-                    value={formData.otherCropName}
-                    onChange={(e) => {
-                        handleInputChange(e);
-                        if(!e.target.value.trim()) setErrors(prev => ({...prev, otherCropName: "Required"}));
-                        else setErrors(prev => ({...prev, otherCropName: ""}));
-                    }}
-                    className={`w-full rounded-lg py-2.5 px-3 bg-white/50 border outline-none 
-                        ${errors.otherCropName ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="Ex: Sugarcane, Cotton..."
-                  />
-                  {errors.otherCropName && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.otherCropName}</p>}
+                <div className="mt-8 animate-in fade-in slide-in-from-top-3 duration-300">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Specify Other Crop(s) <span className="text-red-500">*</span>
+                    <span className="text-gray-500 text-xs font-normal ml-2">(Separate multiple crops with commas)</span>
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      name="otherCropName"
+                      value={formData.otherCropName}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
+                        errors.otherCropName 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                      placeholder="Example: Sugarcane, Cotton, Turmeric, etc."
+                    />
+                    <div className="absolute right-3 top-3 text-gray-400">
+                      <span className="material-symbols-outlined">agriculture</span>
+                    </div>
+                  </div>
+                  {errors.otherCropName && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.otherCropName}
+                    </p>
+                  )}
+                  {formData.otherCropName && !errors.otherCropName && (
+                    <p className="text-green-600 text-xs mt-2 font-medium flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      Great! We'll add these to your profile.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Selected Crops Summary */}
+              {Object.values(formData.crops).some(val => val) && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-green-700">checklist</span>
+                    <h4 className="font-bold text-green-800">Selected Crops</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(formData.crops)
+                      .filter(([key, value]) => value)
+                      .map(([key, value]) => (
+                        <span 
+                          key={key} 
+                          className="px-3 py-1.5 bg-white border border-green-300 rounded-lg text-sm font-medium text-green-800 flex items-center gap-1"
+                        >
+                          {key === 'others' ? (
+                            <>
+                              <span className="material-symbols-outlined text-sm">agriculture</span>
+                              {formData.otherCropName || 'Other Crops'}
+                            </>
+                          ) : (
+                            <>
+                              {cropList.find(c => c.key === key)?.emoji}
+                              {key.charAt(0).toUpperCase() + key.slice(1)}
+                            </>
+                          )}
+                        </span>
+                      ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <button 
-              type="submit" 
-              disabled={loading || Object.values(errors).some(x => x !== "")} 
-              className={`w-full py-4 rounded-xl text-white font-black shadow-lg transition-all flex items-center justify-center gap-2
-                ${(loading || Object.values(errors).some(x => x !== "")) ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:scale-95'}`}
-            >
-              {loading ? <><Spinner /> Processing...</> : 'Register as Farmer'}
-            </button>
+            {/* Submit Button */}
+            <div className="pt-6">
+              <button 
+                type="submit" 
+                disabled={loading || Object.values(errors).some(x => x !== "") || !isVerified || formProgress < 100}
+                className={`w-full py-4 rounded-xl text-white font-black text-lg shadow-2xl transition-all duration-300 flex items-center justify-center gap-3
+                  ${(loading || Object.values(errors).some(x => x !== "") || !isVerified || formProgress < 100) 
+                    ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 active:scale-98 hover:shadow-2xl hover:shadow-emerald-500/30'
+                  }`}
+              >
+                {loading ? (
+                  <>
+                    <Spinner />
+                    <span>Registering...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined">how_to_reg</span>
+                    <span>Register as Farmer</span>
+                  </>
+                )}
+              </button>
+              
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <a 
+                    href="/login" 
+                    className="font-bold text-green-700 hover:text-green-800 underline decoration-2 decoration-green-300 underline-offset-2 transition-colors"
+                  >
+                    Login here
+                  </a>
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  By registering, you agree to our Terms of Service and Privacy Policy
+                </p>
+              </div>
+            </div>
           </form>
         </div>
       </div>
       
-      {/* Improvement 1: Fixed OTP Modal with Resend Button */}
+      {/* OTP Modal */}
       {showOtpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in duration-300">
-            <h3 className="text-2xl font-bold text-center">Verification</h3>
-            <p className="text-center text-gray-500 mb-6">OTP sent to <span className="font-bold text-gray-900">{formData.email}</span></p>
-            <div className="flex justify-center gap-3 mb-6">
-              {otpValues.map((data, index) => (
-                <input key={index} maxLength="1" className="w-12 h-14 border-2 border-gray-200 rounded-xl text-center text-2xl font-bold focus:border-green-500 outline-none" value={data} onChange={(e) => handleOtpChange(e.target, index)} onKeyDown={(e) => handleKeyDown(e, index)} />
-              ))}
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+          onClick={(e) => e.target === e.currentTarget && setShowOtpModal(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300 border border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-blue-50 mb-4">
+                <span className="material-symbols-outlined text-3xl text-blue-600">lock</span>
+              </div>
+              <h3 className="text-2xl font-black text-gray-900">Mobile Verification</h3>
+              <p className="text-gray-600 mt-2">
+                Enter the 4-digit OTP sent to
+              </p>
+              <p className="font-bold text-gray-900 mt-1">
+                +91 {formData.mobile} • {formData.email}
+              </p>
             </div>
-            <button onClick={handleVerifyOtp} className="w-full bg-green-600 text-white font-bold py-3 rounded-xl mb-4 shadow-lg hover:bg-green-700">Verify Now</button>
             
-            {/* Resend Logic Added Here */}
-            <div className="text-center">
-              {canResend ? (
-                <button 
-                    onClick={() => { handleSendOtp(); setTimer(60); setCanResend(false); }} 
-                    className="text-green-600 font-bold hover:underline transition"
-                >
-                    Resend Code
-                </button> 
-              ) : (
-                <span className="text-gray-400 text-sm">Resend code in {timer}s</span>
-              )}
+            {/* OTP Input */}
+            <div className="mb-8">
+              <div className="flex justify-center gap-4 mb-6">
+                {otpValues.map((data, index) => (
+                  <input 
+                    key={index}
+                    ref={el => otpRefs.current[index] = el}
+                    maxLength="1"
+                    className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${
+                      otpError 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200'
+                    }`}
+                    value={data}
+                    onChange={(e) => handleOtpChange(e.target, index)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                    onPaste={handlePasteOtp}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
               
-              <div className="mt-3">
-                <button onClick={() => setShowOtpModal(false)} className="text-gray-400 font-bold text-sm hover:text-gray-600 transition">
-                  Cancel
-                </button>
+              {otpError && (
+                <p className="text-center text-red-600 text-sm font-semibold flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-sm">error</span>
+                  {otpError}
+                </p>
+              )}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-4">
+              <button 
+                onClick={handleVerifyOtp}
+                disabled={otpLoading || otpInput.length !== 4}
+                className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 ${
+                  otpInput.length === 4
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                    : 'bg-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {otpLoading ? (
+                  <>
+                    <Spinner />
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify OTP'
+                )}
+              </button>
+              
+              {/* Resend Section */}
+              <div className="text-center space-y-3">
+                {canResend ? (
+                  <button 
+                    onClick={() => { 
+                      handleSendOtp(); 
+                      setTimer(60); 
+                      setCanResend(false); 
+                    }} 
+                    className="text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-lg">refresh</span>
+                    Resend Code
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <span className="text-gray-500 text-sm">
+                      Resend code in <span className="font-bold">{timer}s</span>
+                    </span>
+                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 transition-all duration-1000"
+                        style={{ width: `${(timer / 60) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="pt-4 border-t border-gray-200">
+                  <button 
+                    onClick={() => setShowOtpModal(false)}
+                    className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors"
+                  >
+                    Cancel Verification
+                  </button>
+                </div>
               </div>
             </div>
-
           </div>
         </div>
       )}
