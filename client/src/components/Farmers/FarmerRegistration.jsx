@@ -16,7 +16,7 @@ const FarmerRegistration = () => {
     confirmPassword: '',
     village: '',
     city: '',
-    state: 'Maharashtra',
+    state: '', // ✅ Fix: Default value empty rakhi taaki user khud select kare
     pickup: 'Morning (6 AM - 10 AM)',
     otherCropName: '',
     crops: { tomato: false, potato: false, onion: false, carrot: false, leafyVeg: false, others: false }
@@ -26,7 +26,7 @@ const FarmerRegistration = () => {
   const [loading, setLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [formProgress, setFormProgress] = useState(0);
-  
+
   // OTP States
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -35,13 +35,19 @@ const FarmerRegistration = () => {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [otpError, setOtpError] = useState("");
-  
+
   // Password UI
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isTouched, setIsTouched] = useState({});
 
+  // Dynamic location 
+  // ✅ Fix: Variable ka naam 'states' kiya (plural) taaki niche map function kaam kare
+  const [states, setStates] = useState([]);       
+  const [districts, setDistricts] = useState([]); 
+  const [isFetchingLocations, setIsFetchingLocations] = useState(false);
+  
   // Ref for OTP inputs
   const otpRefs = useRef([]);
 
@@ -53,33 +59,56 @@ const FarmerRegistration = () => {
     </svg>
   );
 
-  // --- Progress Calculation ---
+  // --- Progress & Initial Data Load ---
   useEffect(() => {
+    // 1. States Fetch Karna
+    const fetchStates = async () => {
+      try {
+        const BASE_URL = "http://localhost:5000/api";
+        const res = await axios.get(`${BASE_URL}/locations/states`);
+        
+        if (res.data.success) {
+          // ✅ Fix: res.data.state ki jagah res.data.states (Backend se match kiya)
+          setStates(res.data.states); 
+        }
+      } catch (error) {
+        console.error("Failed to load states", error);
+        toast.error("Failed to load location data");
+      }
+    };
+
+    // 2. Progress Bar Calculation
     const calculateProgress = () => {
       let progress = 0;
-      const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
-      
+      const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state']; // Added state to required
+
       requiredFields.forEach(field => {
         if (formData[field] && formData[field].trim().length > 0) {
           progress += 10;
         }
       });
-      
+
       // Check if at least one crop is selected
       const hasCropSelected = Object.values(formData.crops).some(val => val === true);
       if (hasCropSelected) progress += 10;
-      
+
       // Check if other crop is specified when selected
       if (formData.crops.others && formData.otherCropName.trim()) progress += 10;
-      
+
       // Mobile verification
       if (isVerified) progress += 20;
-      
+
       setFormProgress(Math.min(progress, 100));
     };
-    
+
     calculateProgress();
-  }, [formData, isVerified]);
+    
+    // Sirf tab call karein agar list khali ho (Optimization)
+    if (states.length === 0) {
+        fetchStates();
+    }
+    
+  }, [formData, isVerified]); // states dependency hatayi taaki infinite loop na ho
 
   // --- Validation Logic ---
   const validateField = (name, value) => {
@@ -109,7 +138,7 @@ const FarmerRegistration = () => {
         if (value.trim().length < 2) errorMsg = "Village name is too short.";
         break;
       case "city":
-        if (value.trim().length < 2) errorMsg = "City name is too short.";
+        if (!value) errorMsg = "Please select a district."; // Changed validation for select
         break;
       case "otherCropName":
         if (formData.crops.others && !value.trim()) errorMsg = "Please specify the crop name.";
@@ -135,7 +164,7 @@ const FarmerRegistration = () => {
     if (passwordStrength === 3) return "bg-yellow-500";
     return "bg-green-500";
   };
-  
+
   const getStrengthLabel = () => {
     if (passwordStrength === 0) return "Very Weak";
     if (passwordStrength === 1) return "Weak";
@@ -152,19 +181,19 @@ const FarmerRegistration = () => {
   };
 
   // --- Input Handlers ---
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
-    
+
     let processedValue = value;
-    
+
     // Auto-capitalize names
-    if (['fullName', 'village', 'city'].includes(name)) {
+    if (['fullName', 'village'].includes(name)) {
       processedValue = value
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
     }
-    
+
     // Mobile number formatting
     if (name === 'mobile') {
       if (/\D/.test(value)) return;
@@ -172,22 +201,43 @@ const FarmerRegistration = () => {
       if (isVerified) setIsVerified(false);
       processedValue = value;
     }
-    
+
     // Email lowercase
     if (name === 'email') {
       processedValue = value.toLowerCase();
     }
-    
+
     setFormData(prev => ({ ...prev, [name]: processedValue }));
-    
+
     // Real-time validation
     if (isTouched[name] || ['password', 'confirmPassword'].includes(name)) {
       validateField(name, processedValue);
     }
-    
+
     // Update password strength
     if (name === 'password') {
       setPasswordStrength(checkPasswordStrength(processedValue));
+    }
+    
+    // 👇 Logic: Agar 'state' change hua toh Districts mangwao
+    if (name === 'state') {
+      setDistricts([]);
+      setFormData(prev => ({ ...prev, city: '', [name]: value })); // Update state value immediately
+
+      if (value) {
+        setIsFetchingLocations(true);
+        try {
+          const BASE_URL = "http://localhost:5000/api";
+          const res = await axios.get(`${BASE_URL}/locations/districts/${value}`);
+          if (res.data.success) {
+            setDistricts(res.data.districts);
+          }
+        } catch (error) {
+          toast.error("Could not fetch districts");
+        } finally {
+          setIsFetchingLocations(false);
+        }
+      }
     }
   };
 
@@ -199,7 +249,7 @@ const FarmerRegistration = () => {
   const handleCropChange = (crop) => {
     const newCrops = { ...formData.crops, [crop]: !formData.crops[crop] };
     setFormData(prev => ({ ...prev, crops: newCrops }));
-    
+
     // Clear other crop name if "others" is unchecked
     if (crop === 'others' && !newCrops.others) {
       setFormData(prev => ({ ...prev, otherCropName: '' }));
@@ -212,24 +262,24 @@ const FarmerRegistration = () => {
     // Validate mobile and email first
     validateField('mobile', formData.mobile);
     validateField('email', formData.email);
-    
+
     if (errors.mobile || errors.email || !formData.mobile || !formData.email) {
       toast.error("Please fix mobile/email errors before verification");
       return;
     }
-    
+
     if (formData.mobile.length !== 10) {
       toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
-    
+
     setOtpLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/send-otp`, { 
-        mobile: formData.mobile, 
-        email: formData.email 
+      const res = await axios.post(`${API_URL}/send-otp`, {
+        mobile: formData.mobile,
+        email: formData.email
       });
-      
+
       if (res.data.success) {
         toast.success("OTP sent to your mobile and email!");
         setShowOtpModal(true);
@@ -242,7 +292,7 @@ const FarmerRegistration = () => {
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Failed to send OTP";
       toast.error(errorMsg);
-      
+
       // Handle specific errors
       if (error.response?.status === 400) {
         if (errorMsg.includes("already registered")) {
@@ -270,23 +320,23 @@ const FarmerRegistration = () => {
       setOtpError("Please enter complete 4-digit OTP");
       return;
     }
-    
+
     setOtpLoading(true);
     setOtpError("");
-    
+
     try {
       const res = await axios.post(`${API_URL}/verify-otp`, {
         mobile: formData.mobile,
         otp: otpInput
       });
-      
+
       if (res.data.success) {
         setIsVerified(true);
         setShowOtpModal(false);
         setOtpValues(["", "", "", ""]);
         setOtpInput("");
         toast.success("✅ Mobile verified successfully!");
-        
+
         // Auto-focus password field after verification
         setTimeout(() => {
           document.getElementsByName("password")[0]?.focus();
@@ -296,7 +346,7 @@ const FarmerRegistration = () => {
       const errorMsg = error.response?.data?.message || "Invalid OTP";
       setOtpError(errorMsg);
       toast.error("❌ " + errorMsg);
-      
+
       // Clear OTP on error
       setOtpValues(["", "", "", ""]);
       setOtpInput("");
@@ -308,26 +358,26 @@ const FarmerRegistration = () => {
 
   const handleOtpChange = (element, index) => {
     if (isNaN(element.value)) return;
-    
+
     let newOtp = [...otpValues];
     newOtp[index] = element.value;
     setOtpValues(newOtp);
-    
+
     const joinedOtp = newOtp.join("");
     setOtpInput(joinedOtp);
     setOtpError("");
-    
+
     // Auto-focus next input
     if (element.value && index < 3 && element.nextSibling) {
       element.nextSibling.focus();
     }
-    
+
     // Auto-verify when 4 digits entered
     if (joinedOtp.length === 4) {
       setTimeout(() => handleVerifyOtp(), 300);
     }
   };
-  
+
   const handleOtpKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otpValues[index] && index > 0) {
       e.preventDefault();
@@ -355,22 +405,22 @@ const FarmerRegistration = () => {
   // --- Form Submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate all fields
-    const fieldsToValidate = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
+    const fieldsToValidate = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state'];
     fieldsToValidate.forEach(field => {
       validateField(field, formData[field]);
     });
-    
+
     if (formData.crops.others) {
       validateField('otherCropName', formData.otherCropName);
     }
-    
+
     // Check for errors
     const hasErrors = Object.values(errors).some(err => err !== "");
     if (hasErrors) {
       toast.error("Please fix the errors highlighted in red");
-      
+
       // Find and scroll to first error
       const firstErrorKey = Object.keys(errors).find(key => errors[key]);
       if (firstErrorKey) {
@@ -382,9 +432,9 @@ const FarmerRegistration = () => {
       }
       return;
     }
-    
+
     // Check required fields
-    const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city'];
+    const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state'];
     const missingField = requiredFields.find(field => !formData[field].trim());
     if (missingField) {
       toast.error(`Please fill in ${missingField.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
@@ -395,27 +445,27 @@ const FarmerRegistration = () => {
       }
       return;
     }
-    
+
     // Check crop selection
     const hasCropSelected = Object.values(formData.crops).some(val => val === true);
     if (!hasCropSelected) {
       toast.error("Please select at least one crop you grow");
       return;
     }
-    
+
     if (!isVerified) {
       toast.error("🛑 Please verify your mobile number");
       document.getElementsByName("mobile")[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    
+
     if (passwordStrength < 2) {
       toast.error("⚠️ Password is too weak! Please use a stronger password");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const payload = {
         fullName: formData.fullName,
@@ -438,11 +488,11 @@ const FarmerRegistration = () => {
             }
             return { name: key.charAt(0).toUpperCase() + key.slice(1) };
           }),
-        pickupTime: formData.pickup
+        preferredPickupTime: formData.pickup // ✅ Fix: key matched with backend
       };
 
       const response = await axios.post(`${API_URL}/register/farmer`, payload);
-      
+
       if (response.data.success) {
         toast.success("✅ Registration Successful! Redirecting to login...");
         setTimeout(() => {
@@ -452,7 +502,7 @@ const FarmerRegistration = () => {
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Registration failed!";
       toast.error(`❌ ${errorMsg}`);
-      
+
       // Handle duplicate registration
       if (errorMsg.includes("already exists") || errorMsg.includes("already registered")) {
         if (errorMsg.includes("mobile")) {
@@ -468,10 +518,6 @@ const FarmerRegistration = () => {
   };
 
   // --- Data ---
-  const states = ['Maharashtra', 'Punjab', 'Haryana', 'Uttar Pradesh', 'Madhya Pradesh', 
-                  'Rajasthan', 'Gujarat', 'Karnataka', 'Tamil Nadu', 'Kerala', 
-                  'West Bengal', 'Bihar', 'Odisha', 'Telangana', 'Andhra Pradesh'];
-  
   const cropList = [
     { key: 'tomato', label: 'Tomato', emoji: '🍅' },
     { key: 'potato', label: 'Potato', emoji: '🥔' },
@@ -491,8 +537,8 @@ const FarmerRegistration = () => {
 
   return (
     <div className="min-h-screen font-display antialiased text-gray-900 bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
-      <Toaster 
-        position="top-center" 
+      <Toaster
+        position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
@@ -511,9 +557,10 @@ const FarmerRegistration = () => {
           },
         }}
       />
-      
-      {/* Background Pattern - FIXED SVG URL */}
+
+      {/* Background Pattern */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Updated SVG URL with single quotes */}
         <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
         }}></div>
@@ -523,7 +570,7 @@ const FarmerRegistration = () => {
 
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-2 bg-gray-200 z-40">
-        <div 
+        <div
           className="h-full bg-gradient-to-r from-green-500 to-emerald-600 transition-all duration-500 ease-out"
           style={{ width: `${formProgress}%` }}
         ></div>
@@ -542,10 +589,10 @@ const FarmerRegistration = () => {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-[1024px] relative z-10">
         <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl px-4 py-6 sm:px-10 sm:py-10 relative overflow-hidden border border-white/60">
-          
+
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-8">
-              
+
               {/* Personal Details Column */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -557,22 +604,21 @@ const FarmerRegistration = () => {
                     Required
                   </span>
                 </div>
-                
+
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     Full Name <span className="text-red-500">*</span>
                   </label>
-                  <input 
+                  <input
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${
-                      errors.fullName 
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                    }`}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${errors.fullName
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
                     placeholder="Enter your full name"
                     maxLength={50}
                   />
@@ -595,18 +641,17 @@ const FarmerRegistration = () => {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <span className="text-gray-400">+91</span>
                         </div>
-                        <input 
+                        <input
                           name="mobile"
                           value={formData.mobile}
                           onChange={handleInputChange}
                           onBlur={handleBlur}
-                          className={`w-full rounded-xl py-3 pl-12 pr-4 bg-white border outline-none ${
-                            errors.mobile 
-                              ? 'border-red-500' 
-                              : isVerified 
-                                ? 'border-green-500 bg-green-50' 
-                                : 'border-gray-300'
-                          }`}
+                          className={`w-full rounded-xl py-3 pl-12 pr-4 bg-white border outline-none ${errors.mobile
+                            ? 'border-red-500'
+                            : isVerified
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-300'
+                            }`}
                           placeholder="9876543210"
                           maxLength={10}
                           inputMode="numeric"
@@ -620,8 +665,8 @@ const FarmerRegistration = () => {
                       )}
                     </div>
                     {!isVerified ? (
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={handleSendOtp}
                         disabled={otpLoading || !!errors.mobile || !formData.mobile}
                         className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 h-[52px] rounded-xl font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px] shadow-lg shadow-blue-500/25"
@@ -642,17 +687,16 @@ const FarmerRegistration = () => {
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     Email Address <span className="text-red-500">*</span>
                   </label>
-                  <input 
+                  <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${
-                      errors.email 
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                    }`}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${errors.email
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
                     placeholder="name@example.com"
                   />
                   {errors.email && (
@@ -669,21 +713,20 @@ const FarmerRegistration = () => {
                     Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       name="password"
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${
-                        errors.password 
-                          ? 'border-red-500' 
-                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                      }`}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${errors.password
+                        ? 'border-red-500'
+                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                        }`}
                       placeholder="Create a strong password"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
                       aria-label={showPassword ? "Hide password" : "Show password"}
@@ -693,7 +736,7 @@ const FarmerRegistration = () => {
                       </span>
                     </button>
                   </div>
-                  
+
                   {/* Password Strength Indicator */}
                   {formData.password && (
                     <div className="mt-3 space-y-2">
@@ -706,19 +749,18 @@ const FarmerRegistration = () => {
                         </span>
                       </div>
                       <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${getStrengthColor()} transition-all duration-500 ease-out`} 
+                        <div
+                          className={`h-full ${getStrengthColor()} transition-all duration-500 ease-out`}
                           style={{ width: `${(passwordStrength / 5) * 100}%` }}
                         ></div>
                       </div>
-                      
+
                       {/* Password Requirements */}
                       <div className="grid grid-cols-2 gap-2 mt-3">
                         {passwordRequirements.map((req, index) => (
                           <div key={index} className="flex items-center gap-2">
-                            <span className={`material-symbols-outlined text-sm ${
-                              req.met ? 'text-green-600' : 'text-gray-400'
-                            }`}>
+                            <span className={`material-symbols-outlined text-sm ${req.met ? 'text-green-600' : 'text-gray-400'
+                              }`}>
                               {req.met ? 'check_circle' : 'radio_button_unchecked'}
                             </span>
                             <span className={`text-xs ${req.met ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
@@ -729,7 +771,7 @@ const FarmerRegistration = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {errors.password && (
                     <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">error</span>
@@ -744,23 +786,22 @@ const FarmerRegistration = () => {
                     Confirm Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${
-                        errors.confirmPassword 
-                          ? 'border-red-500' 
-                          : formData.confirmPassword && formData.confirmPassword === formData.password
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                      }`}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none pr-12 ${errors.confirmPassword
+                        ? 'border-red-500'
+                        : formData.confirmPassword && formData.confirmPassword === formData.password
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                        }`}
                       placeholder="Re-enter your password"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
@@ -790,21 +831,23 @@ const FarmerRegistration = () => {
                     Required
                   </span>
                 </div>
-                
-                   {/* City and State */}
+
+                {/* City and State */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
+                  <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                       State <span className="text-red-500">*</span>
                     </label>
-                    <select 
+                    <select
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
                       className="w-full rounded-xl py-3 px-4 bg-white border border-gray-300 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                     >
-                      {states.map(s => (
-                        <option key={s} value={s}>{s}</option>
+                      <option value="">Select State</option>
+                      {/* ✅ Fix: Changed 'state' to 'states' map */}
+                      {states.map((s) => (
+                        <option key={s.state_id} value={s.state_name}>{s.state_name}</option>
                       ))}
                     </select>
                   </div>
@@ -812,18 +855,44 @@ const FarmerRegistration = () => {
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                       City/District <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
-                        errors.city 
-                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+
+                    <div className="relative">
+                      <select
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        disabled={!formData.state || isFetchingLocations} // State nahi hai to disable rahega
+                        className={`w-full rounded-xl py-3 px-4 bg-white border outline-none appearance-none ${errors.city
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200'
                           : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                      }`}
-                      placeholder="District name"
-                    />
+                          } ${!formData.state ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
+                      >
+                        <option value="">Select District</option>
+
+                        {/* Agar districts array mein data hai to yahan map hoga */}
+                        {districts.map((dist, index) => (
+                          <option key={index} value={dist}>
+                            {dist}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* Dropdown Arrow Icon (Visual enhancement) */}
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-500">
+                        {!isFetchingLocations && (
+                          <span className="material-symbols-outlined">expand_more</span>
+                        )}
+                      </div>
+
+                      {/* Loading Spinner (Jab API call chal rahi ho) */}
+                      {isFetchingLocations && (
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <Spinner />
+                        </div>
+                      )}
+                    </div>
+
                     {errors.city && (
                       <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">error</span>
@@ -831,23 +900,22 @@ const FarmerRegistration = () => {
                       </p>
                     )}
                   </div>
-                
+
                 </div>
                 {/* Village */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     Village/Town <span className="text-red-500">*</span>
                   </label>
-                  <input 
+                  <input
                     name="village"
                     value={formData.village}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
-                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
-                      errors.village 
-                        ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
-                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                    }`}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${errors.village
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
                     placeholder="Your village or town name"
                   />
                   {errors.village && (
@@ -858,14 +926,12 @@ const FarmerRegistration = () => {
                   )}
                 </div>
 
-             
-
                 {/* Pickup Time */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
                     Preferred Pickup Time <span className="text-gray-500 text-xs">(For collection agents)</span>
                   </label>
-                  <select 
+                  <select
                     name="pickup"
                     value={formData.pickup}
                     onChange={handleInputChange}
@@ -893,28 +959,26 @@ const FarmerRegistration = () => {
                   Select at least one
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                 {cropList.map((crop, index) => (
-                  <label 
-                    key={crop.key} 
-                    className={`cursor-pointer group relative transition-all duration-200 ${
-                      formData.crops[crop.key] 
-                        ? 'scale-105' 
-                        : 'hover:scale-102'
-                    }`}
+                  <label
+                    key={crop.key}
+                    className={`cursor-pointer group relative transition-all duration-200 ${formData.crops[crop.key]
+                      ? 'scale-105'
+                      : 'hover:scale-102'
+                      }`}
                   >
-                    <input 
-                      type="checkbox" 
-                      className="peer sr-only" 
-                      checked={formData.crops[crop.key]} 
-                      onChange={() => handleCropChange(crop.key)} 
+                    <input
+                      type="checkbox"
+                      className="peer sr-only"
+                      checked={formData.crops[crop.key]}
+                      onChange={() => handleCropChange(crop.key)}
                     />
-                    <div className={`rounded-2xl p-4 h-24 flex flex-col items-center justify-center text-center border-2 transition-all duration-300 shadow-sm ${
-                      formData.crops[crop.key]
-                        ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-400 shadow-lg shadow-green-200/50'
-                        : 'bg-white/70 border-gray-200 group-hover:border-green-300 group-hover:bg-green-50/50'
-                    }`}>
+                    <div className={`rounded-2xl p-4 h-24 flex flex-col items-center justify-center text-center border-2 transition-all duration-300 shadow-sm ${formData.crops[crop.key]
+                      ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-400 shadow-lg shadow-green-200/50'
+                      : 'bg-white/70 border-gray-200 group-hover:border-green-300 group-hover:bg-green-50/50'
+                      }`}>
                       <span className="text-2xl mb-2">{crop.emoji}</span>
                       <span className="text-xs uppercase font-bold text-gray-700">{crop.label}</span>
                       {formData.crops[crop.key] && (
@@ -935,17 +999,16 @@ const FarmerRegistration = () => {
                     <span className="text-gray-500 text-xs font-normal ml-2">(Separate multiple crops with commas)</span>
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       type="text"
                       name="otherCropName"
                       value={formData.otherCropName}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
-                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
-                        errors.otherCropName 
-                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
-                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                      }`}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${errors.otherCropName
+                        ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                        : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                        }`}
                       placeholder="Example: Sugarcane, Cotton, Turmeric, etc."
                     />
                     <div className="absolute right-3 top-3 text-gray-400">
@@ -978,8 +1041,8 @@ const FarmerRegistration = () => {
                     {Object.entries(formData.crops)
                       .filter(([key, value]) => value)
                       .map(([key, value]) => (
-                        <span 
-                          key={key} 
+                        <span
+                          key={key}
                           className="px-3 py-1.5 bg-white border border-green-300 rounded-lg text-sm font-medium text-green-800 flex items-center gap-1"
                         >
                           {key === 'others' ? (
@@ -1002,12 +1065,12 @@ const FarmerRegistration = () => {
 
             {/* Submit Button */}
             <div className="pt-6">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading || Object.values(errors).some(x => x !== "") || !isVerified || formProgress < 100}
                 className={`w-full py-4 rounded-xl text-white font-black text-lg shadow-2xl transition-all duration-300 flex items-center justify-center gap-3
-                  ${(loading || Object.values(errors).some(x => x !== "") || !isVerified || formProgress < 100) 
-                    ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed' 
+                  ${(loading || Object.values(errors).some(x => x !== "") || !isVerified || formProgress < 100)
+                    ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 active:scale-98 hover:shadow-2xl hover:shadow-emerald-500/30'
                   }`}
               >
@@ -1023,12 +1086,12 @@ const FarmerRegistration = () => {
                   </>
                 )}
               </button>
-              
+
               <div className="mt-4 text-center">
                 <p className="text-sm text-gray-600">
                   Already have an account?{' '}
-                  <a 
-                    href="/login" 
+                  <a
+                    href="/login"
                     className="font-bold text-green-700 hover:text-green-800 underline decoration-2 decoration-green-300 underline-offset-2 transition-colors"
                   >
                     Login here
@@ -1042,14 +1105,14 @@ const FarmerRegistration = () => {
           </form>
         </div>
       </div>
-      
+
       {/* OTP Modal */}
       {showOtpModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
           onClick={(e) => e.target === e.currentTarget && setShowOtpModal(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300 border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1065,20 +1128,19 @@ const FarmerRegistration = () => {
                 +91 {formData.mobile} • {formData.email}
               </p>
             </div>
-            
+
             {/* OTP Input */}
             <div className="mb-8">
               <div className="flex justify-center gap-4 mb-6">
                 {otpValues.map((data, index) => (
-                  <input 
+                  <input
                     key={index}
                     ref={el => otpRefs.current[index] = el}
                     maxLength="1"
-                    className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${
-                      otpError 
-                        ? 'border-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200'
-                    }`}
+                    className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${otpError
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200'
+                      }`}
                     value={data}
                     onChange={(e) => handleOtpChange(e.target, index)}
                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
@@ -1088,7 +1150,7 @@ const FarmerRegistration = () => {
                   />
                 ))}
               </div>
-              
+
               {otpError && (
                 <p className="text-center text-red-600 text-sm font-semibold flex items-center justify-center gap-2">
                   <span className="material-symbols-outlined text-sm">error</span>
@@ -1096,17 +1158,16 @@ const FarmerRegistration = () => {
                 </p>
               )}
             </div>
-            
+
             {/* Action Buttons */}
             <div className="space-y-4">
-              <button 
+              <button
                 onClick={handleVerifyOtp}
                 disabled={otpLoading || otpInput.length !== 4}
-                className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  otpInput.length === 4
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
-                    : 'bg-gray-400 cursor-not-allowed'
-                }`}
+                className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 ${otpInput.length === 4
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                  : 'bg-gray-400 cursor-not-allowed'
+                  }`}
               >
                 {otpLoading ? (
                   <>
@@ -1117,16 +1178,16 @@ const FarmerRegistration = () => {
                   'Verify OTP'
                 )}
               </button>
-              
+
               {/* Resend Section */}
               <div className="text-center space-y-3">
                 {canResend ? (
-                  <button 
-                    onClick={() => { 
-                      handleSendOtp(); 
-                      setTimer(60); 
-                      setCanResend(false); 
-                    }} 
+                  <button
+                    onClick={() => {
+                      handleSendOtp();
+                      setTimer(60);
+                      setCanResend(false);
+                    }}
                     className="text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-lg">refresh</span>
@@ -1138,16 +1199,16 @@ const FarmerRegistration = () => {
                       Resend code in <span className="font-bold">{timer}s</span>
                     </span>
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-blue-500 transition-all duration-1000"
                         style={{ width: `${(timer / 60) * 100}%` }}
                       ></div>
                     </div>
                   </div>
                 )}
-                
+
                 <div className="pt-4 border-t border-gray-200">
-                  <button 
+                  <button
                     onClick={() => setShowOtpModal(false)}
                     className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors"
                   >
