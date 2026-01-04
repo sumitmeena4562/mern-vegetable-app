@@ -791,6 +791,48 @@ const FarmerRegistration = () => {
                   </span>
                 </div>
                 
+                   {/* City and State */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      name="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                      className="w-full rounded-xl py-3 px-4 bg-white border border-gray-300 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    >
+                      {states.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      City/District <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
+                        errors.city 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                      placeholder="District name"
+                    />
+                    {errors.city && (
+                      <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">error</span>
+                        {errors.city}
+                      </p>
+                    )}
+                  </div>
+                
+                </div>
                 {/* Village */}
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -816,47 +858,7 @@ const FarmerRegistration = () => {
                   )}
                 </div>
 
-                {/* City and State */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      City/District <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className={`w-full rounded-xl py-3 px-4 bg-white border outline-none ${
-                        errors.city 
-                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
-                          : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
-                      }`}
-                      placeholder="District name"
-                    />
-                    {errors.city && (
-                      <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">error</span>
-                        {errors.city}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      State <span className="text-red-500">*</span>
-                    </label>
-                    <select 
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      className="w-full rounded-xl py-3 px-4 bg-white border border-gray-300 outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
-                    >
-                      {states.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+             
 
                 {/* Pickup Time */}
                 <div>

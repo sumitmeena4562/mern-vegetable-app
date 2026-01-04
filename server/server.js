@@ -9,8 +9,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import UserRoutes from "./src/routes/UserRoutes.js";
 
+import UserRoutes from "./src/routes/UserRoutes.js";
+import locationRoutes from './src/routes/locationRoutes.js';
 // Load environment variables
 dotenv.config();
 const app = express();
@@ -68,6 +69,8 @@ connectDB();
 
 // Static Routes (Ab ye CORS ke baad hain, toh error nahi aayega)
 app.use("/api/auth", UserRoutes);
+//ye Routes Location fetch krne k liye 
+app.use("/api/locations",locationRoutes);
 
 // Dynamic Route Loading
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
