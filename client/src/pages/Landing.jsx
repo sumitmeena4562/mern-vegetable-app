@@ -1,27 +1,27 @@
 import { BrowserRouter as Router } from 'react-router-dom';
-import Header from '../components/Header.jsx';
-import HeroSection from '../components/HeroSection.jsx'
-import LiveMarketRates from '../components/LiveMarketRates'
-import WhyChooseAgriConnect from '../components/WhyChooseAgriConnect'
-import HowItWorks from '../components/HowItWorks'
-import Features from '../components/Features'
-import Stats from '../components/Stats'
-import AppDownload from '../components/AppDownload'
-import Footer from '../components/Footer'
+import Header from '../components/common/Header.jsx';
+import HeroSection from '../components/home/HeroSection.jsx'
+import LiveMarketRates from '../components/market/LiveMarketRates'
+import WhyChooseAgriConnect from '../components/home/WhyChooseAgriConnect'
+import HowItWorks from '../components/home/HowItWorks'
+import Features from '../components/home/Features'
+import Stats from '../components/home/Stats'
+import AppDownload from '../components/home/AppDownload'
+import Footer from '../components/common/Footer'
 
 function Landingpage() {
   return (
-      <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased ">
-        <Header />
-        <HeroSection />
-        <LiveMarketRates />
-        <WhyChooseAgriConnect />
-        <HowItWorks />
-        <Features />
-        <Stats />
-        <AppDownload />
-        <Footer />
-      </div>
+    <div className="bg-background-light dark:bg-background-dark text-text-main font-display antialiased ">
+      <Header />
+      <HeroSection />
+      <LiveMarketRates />
+      <WhyChooseAgriConnect />
+      <HowItWorks />
+      <Features />
+      <Stats />
+      <AppDownload />
+      <Footer />
+    </div>
   )
 }
 
