@@ -5,6 +5,7 @@ import Otp from '../models/otp.js';
 import { validationResult, body } from 'express-validator';
 import nodemailer from 'nodemailer';
 import path from 'path';
+import { sendMail } from '../utils/sendMail.js';
 
 // ==========================================
 // 1. REGISTER CONTROLLER (FIXED & SCALABLE)
@@ -50,7 +51,7 @@ export const register = async (req, res) => {
             role,
             email: email || `${mobile}@user.com`,
             // User model mein bhi address save kar rahe hain (Login response ke liye fast access)
-            address: otherData.address || {}, 
+            address: otherData.address || {},
         });
 
         console.log("✅ Base user created:", user._id);
@@ -61,7 +62,7 @@ export const register = async (req, res) => {
         switch (role) {
             case 'farmer':
                 console.log("🌾 Creating farmer profile...");
-                
+
                 // ✅ FIX: Address Data Preparation
                 const addressData = otherData.address || {};
 
@@ -70,7 +71,7 @@ export const register = async (req, res) => {
                     farmName: otherData.farmName || `${fullName}'s Farm`,
                     farmSize: otherData.farmSize || 1,
                     farmSizeUnit: otherData.farmSizeUnit || 'acre',
-                    
+
                     // ✅ FIXED: Text Address ko 'address' field mein map kiya
                     address: {
                         village: addressData.village,
@@ -87,10 +88,10 @@ export const register = async (req, res) => {
 
                     // ✅ FIXED: Crops array direct pass kiya (Enum hata diya hai model se)
                     crops: otherData.crops || [],
-                    
+
                     farmingExperience: otherData.farmingExperience || 0,
                     // Frontend 'pickup' bhejta hai, Backend 'preferredPickupTime' mangta hai
-                    preferredPickupTime: otherData.pickup || 'morning', 
+                    preferredPickupTime: otherData.pickup || 'morning',
                 });
                 break;
 
@@ -126,7 +127,7 @@ export const register = async (req, res) => {
 
         console.log(`✅ ${role} registration successful`);
 
-        // 7. Send Welcome Notification
+        // 7. Send Welcome Notification (In-App)
         await Notification.create({
             user: user._id,
             title: "Account Created Successfully 🎉",
@@ -136,7 +137,21 @@ export const register = async (req, res) => {
             data: { email: user.email, action: "signup" }
         });
 
-        // 8. Generate Token & Send Response
+        // 8. Send Welcome Email (Email)
+        console.log("📧 Attempting to send Welcome Email to:", user.email);
+        try {
+            await sendMail(user.email, 'WELCOME', {
+                name: user.fullName,
+                role: role.charAt(0).toUpperCase() + role.slice(1),
+                mobile: user.mobile,
+                location: user.address?.city ? `${user.address.city}, ${user.address.state}` : 'India'
+            });
+            console.log("✅ Welcome Email Processed");
+        } catch (emailErr) {
+            console.error("❌ Welcome Email Failed:", emailErr.message);
+        }
+
+        // 9. Generate Token & Send Response
         const token = user.generateAuthToken();
 
         res.status(201).json({
@@ -381,7 +396,7 @@ export const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
         const currentUser = await User.findById(userId);
-        
+
         if (!currentUser) return res.status(404).json({ success: false, message: 'User not found' });
 
         const { password, mobile, role, ...updateData } = req.body;
@@ -393,7 +408,7 @@ export const updateProfile = async (req, res) => {
         // 1. Update Base User Fields
         const allowedUserFields = ['fullName', 'email', 'profilePhoto', 'address', 'location', 'fcmToken', 'settings'];
         const userUpdates = {};
-        
+
         Object.keys(updateData).forEach(key => {
             if (allowedUserFields.includes(key)) userUpdates[key] = updateData[key];
         });
@@ -412,27 +427,27 @@ export const updateProfile = async (req, res) => {
             case 'farmer':
                 const farmerFields = ['farmName', 'farmSize', 'farmSizeUnit', 'crops', 'farmingExperience', 'preferredPickupTime', 'bankDetails', 'documents', 'address'];
                 Object.keys(updateData).forEach(key => { if (farmerFields.includes(key)) profileUpdate[key] = updateData[key]; });
-                
+
                 if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Farmer.findOneAndUpdate({ user: userId }, profileUpdate, { new: true, runValidators: true });
                 }
                 break;
-            
+
             case 'vendor':
-                 // ... existing vendor update logic ...
-                 const vendorFields = ['shopName', 'dailyCapacity', 'preferredVegetables', 'storeTimings']; // Add all vendor fields here
-                 Object.keys(updateData).forEach(key => { if (vendorFields.includes(key)) profileUpdate[key] = updateData[key]; });
-                 
-                 if (Object.keys(profileUpdate).length > 0) {
+                // ... existing vendor update logic ...
+                const vendorFields = ['shopName', 'dailyCapacity', 'preferredVegetables', 'storeTimings']; // Add all vendor fields here
+                Object.keys(updateData).forEach(key => { if (vendorFields.includes(key)) profileUpdate[key] = updateData[key]; });
+
+                if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Vendor.findOneAndUpdate({ user: userId }, profileUpdate, { new: true, runValidators: true });
                 }
                 break;
-                
+
             case 'customer':
                 // ... existing customer logic ...
                 const customerFields = ['familySize', 'deliveryAddresses'];
                 Object.keys(updateData).forEach(key => { if (customerFields.includes(key)) profileUpdate[key] = updateData[key]; });
-                
+
                 if (Object.keys(profileUpdate).length > 0) {
                     updatedProfile = await Customer.findOneAndUpdate({ user: userId }, profileUpdate, { new: true, runValidators: true });
                 }
@@ -464,7 +479,7 @@ export const validateRegister = [
     body('mobile').trim().notEmpty().matches(/^[6-9]\d{9}$/).withMessage('Valid Indian mobile number is required'),
     body('password').trim().notEmpty().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('role').trim().isIn(['farmer', 'vendor', 'customer']).withMessage('Invalid role'),
-    
+
     // Role specific basic validation
     body('farmName').if(body('role').equals('farmer')).trim().notEmpty().withMessage('Farm name required'),
     body('farmSize').if(body('role').equals('farmer')).isNumeric().withMessage('Farm size must be a number'),

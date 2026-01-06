@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
+import { sendMail } from '../utils/sendMail.js';
 
 
 /**
@@ -11,20 +12,26 @@ import Farmer from '../models/Farmer.js';
 
 // Create a new Farmer
 export const createFarmerService = async (data) => {
+    console.log("🛠️ [Service] createFarmerService started");
+
     const session = await mongoose.startSession();
     session.startTransaction();
+    console.log("🔄 Transaction Started");
 
     try {
         // 1. Check if User already exists (Mobile or Email)
+        console.log("🔍 Checking for existing user...");
         const existingUser = await User.findOne({
             $or: [{ mobile: data.mobile }, { email: data.email }]
         }).session(session);
 
         if (existingUser) {
+            console.error("❌ User already exists:", existingUser.email || existingUser.mobile);
             throw new Error('User with this mobile or email already exists');
         }
 
         // 2. Create the User Login Account first
+        console.log("👤 Creating User entry...");
         const userPayload = {
             fullName: data.fullName,
             mobile: data.mobile,
@@ -35,11 +42,12 @@ export const createFarmerService = async (data) => {
             location: data.location
         };
 
-        // Create User (Password hashing happens in User model pre-save hook)
         const newUser = new User(userPayload);
         await newUser.save({ session });
+        console.log("✅ User entry saved. ID:", newUser._id);
 
         // 3. Create the Farmer Profile linked to the User
+        console.log("🌾 Creating Farmer profile...");
         const farmerPayload = {
             user: newUser._id,
             farmName: data.farmName || `${data.fullName}'s Farm`,
@@ -52,15 +60,30 @@ export const createFarmerService = async (data) => {
 
         const newFarmer = new Farmer(farmerPayload);
         await newFarmer.save({ session });
+        console.log("✅ Farmer profile saved. ID:", newFarmer._id);
 
         await session.commitTransaction();
         session.endSession();
+        console.log("✅ Transaction Committed");
 
-
+        // 4. Send Welcome Email (Debug Mode: Blocking)
+        console.log("📧 Attempting to send Welcome Email to:", newUser.email);
+        try {
+            await sendMail(newUser.email, 'WELCOME', {
+                name: newUser.fullName,
+                role: 'Farmer',
+                mobile: newUser.mobile,
+                location: `${data.city || ''}, ${data.state || ''}`
+            });
+            console.log("✅ Welcome Email Processed");
+        } catch (emailErr) {
+            console.error("❌ Welcome Email Failed:", emailErr.message);
+        }
 
         return { user: newUser, farmer: newFarmer };
 
     } catch (error) {
+        console.error("❌ Transaction Aborted. Error:", error.message);
         await session.abortTransaction();
         session.endSession();
         throw error;

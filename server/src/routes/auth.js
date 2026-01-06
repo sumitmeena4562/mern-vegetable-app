@@ -1,13 +1,13 @@
 // file: src/routes/auth.js (UPDATE THIS FILE)
 import express from 'express';
 import {
-  register,
-  login,
-  getProfile,
-  updateProfile,
-  test,
-  validateRegister,
-  validateLogin
+    register,
+    login,
+    getProfile,
+    updateProfile,
+    test,
+    validateRegister,
+    validateLogin
 } from '../controllers/userController.js';
 import authMiddleware from '../middleware/auth.js';
 

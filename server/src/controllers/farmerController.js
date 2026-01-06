@@ -21,12 +21,21 @@ export const validateCreateFarmer = [
  */
 
 export const createFarmer = async (req, res) => {
+  console.log("🚀 [API] Request received: POST /api/farmers/register");
+  console.log("📦 Request Body:", JSON.stringify(req.body, null, 2));
+
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
+    if (!errors.isEmpty()) {
+      console.warn("⚠️ Validation Errors:", errors.array());
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
 
     // Call Service
+    console.log("🔄 calling createFarmerService...");
     const farmer = await createFarmerService(req.body);
+    console.log("✅ [API] Farmer Created Successfully. Sending Response.");
+
     return res.status(201).json({ success: true, data: farmer });
 
   } catch (err) {
