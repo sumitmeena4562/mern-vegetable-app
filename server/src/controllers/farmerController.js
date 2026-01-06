@@ -10,7 +10,9 @@ import {
 // Validation stays in Controller because it's related to HTTP Request formatting
 export const validateCreateFarmer = [
   body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('mobile').trim().matches(/^[6-9]\d{9}$/).withMessage('Valid Indian mobile number is required')
+  body('mobile').trim().matches(/^[6-9]\d{9}$/).withMessage('Valid Indian mobile number is required'),
+  body('email').optional().isEmail().withMessage('Invalid email format'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ];
 
 /**

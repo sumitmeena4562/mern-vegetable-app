@@ -35,7 +35,7 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
       </label>
 
       {/* Main Select Box (Trigger) */}
-      <div 
+      <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`w-full rounded-xl py-3 pl-10 pr-10 bg-white border cursor-pointer flex items-center justify-between transition-all duration-200
           ${disabled ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'hover:border-green-400 shadow-sm hover:shadow-md'}
@@ -125,7 +125,8 @@ const FarmerRegistration = () => {
     state: '', // ✅ Fix: Default value empty rakhi taaki user khud select kare
     pickup: 'Morning (6 AM - 10 AM)',
     otherCropName: '',
-    crops: { tomato: false, potato: false, onion: false, carrot: false, leafyVeg: false, others: false }
+    crops: { tomato: false, potato: false, onion: false, carrot: false, leafyVeg: false, others: false },
+    location: { type: 'Point', coordinates: [0, 0] } // Default location
   });
 
   const [errors, setErrors] = useState({});
@@ -147,12 +148,41 @@ const FarmerRegistration = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isTouched, setIsTouched] = useState({});
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   // Dynamic location 
   // ✅ Fix: Variable ka naam 'states' kiya (plural) taaki niche map function kaam kare
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [isFetchingLocations, setIsFetchingLocations] = useState(false);
+
+  // GPS Logic
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData(prev => ({
+          ...prev,
+          location: {
+            type: 'Point',
+            coordinates: [position.coords.longitude, position.coords.latitude]
+          }
+        }));
+        toast.success("Location captured successfully!");
+        setGpsLoading(false);
+      },
+      () => {
+        toast.error("Unable to retrieve your location");
+        setGpsLoading(false);
+      }
+    );
+  };
+
+
 
   // Ref for OTP inputs
   const otpRefs = useRef([]);
@@ -710,6 +740,25 @@ const FarmerRegistration = () => {
                     Required
                   </span>
                 </div>
+
+                {/* GPS Button */}
+                <div className="bg-green-50 p-4 rounded-xl border border-green-200 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-green-800">Auto-detect Location</h4>
+                    <p className="text-xs text-green-600">Capture accurate farm location</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={gpsLoading}
+                    className="bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-green-700 flex items-center gap-1"
+                  >
+                    {gpsLoading ? "Detecting..." : <><span className="material-symbols-outlined text-sm">my_location</span> Use GPS</>}
+                  </button>
+                </div>
+                {formData.location?.coordinates?.[0] !== 0 && (
+                  <p className="text-xs text-green-600 font-bold ml-1">✓ Coordinates: {formData.location.coordinates.join(', ')}</p>
+                )}
 
                 {/* Full Name */}
                 <div>

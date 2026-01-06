@@ -1,4 +1,7 @@
+import mongoose from 'mongoose';
+import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
+
 
 /**
  * Service: FarmerService
@@ -8,15 +11,60 @@ import Farmer from '../models/Farmer.js';
 
 // Create a new Farmer
 export const createFarmerService = async (data) => {
-    // Check for duplication logic here instead of controller
-    const existing = await Farmer.findOne({ mobile: data.mobile });
-    if (existing) {
-        throw new Error('Mobile already registered');
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Create and return the farmer
-    const farmer = await Farmer.create(data);
-    return farmer;
+    try {
+        // 1. Check if User already exists (Mobile or Email)
+        const existingUser = await User.findOne({
+            $or: [{ mobile: data.mobile }, { email: data.email }]
+        }).session(session);
+
+        if (existingUser) {
+            throw new Error('User with this mobile or email already exists');
+        }
+
+        // 2. Create the User Login Account first
+        const userPayload = {
+            fullName: data.fullName,
+            mobile: data.mobile,
+            email: data.email,
+            password: data.password,
+            role: 'farmer',
+            address: data.address,
+            location: data.location
+        };
+
+        // Create User (Password hashing happens in User model pre-save hook)
+        const newUser = new User(userPayload);
+        await newUser.save({ session });
+
+        // 3. Create the Farmer Profile linked to the User
+        const farmerPayload = {
+            user: newUser._id,
+            farmName: data.farmName || `${data.fullName}'s Farm`,
+            farmSize: data.farmSize || 1,
+            farmSizeUnit: data.farmSizeUnit || 'acre',
+            location: data.location,
+            crops: data.crops || [],
+            preferredPickupTime: data.preferredPickupTime
+        };
+
+        const newFarmer = new Farmer(farmerPayload);
+        await newFarmer.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+
+
+        return { user: newUser, farmer: newFarmer };
+
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        throw error;
+    }
 };
 
 // Get Farmer by ID
