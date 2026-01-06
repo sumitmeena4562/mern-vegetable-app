@@ -1,92 +1,97 @@
-import React from 'react'
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 const HeroSection = () => {
     return (
-        <section id="home" className="relative pt-12 pb-20 lg:pt-20 lg:pb-28">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid lg:grid-cols-12 gap-12 items-center">
-                    <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0e1b13] dark:text-white leading-[1.1]">
-                            Farm to Fork: <br />
-                            <span className="text-primary">India's Direct Vegetable Supply Chain.</span>
+        <section id="home" className="relative pt-16 pb-24 bg-white overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+                <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+                    {/* Content Left */}
+                    <div className="text-center lg:text-left z-10">
+                        <div className="inline-block px-4 py-2 bg-green-50 rounded-full mb-6">
+                            <span className="text-green-700 font-semibold text-sm tracking-wide uppercase">
+                                Direct • Fresh • Transparent
+                            </span>
+                        </div>
+
+                        <h1 className="text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-6">
+                            Connecting <span className="text-green-600">Farmers, Vendors</span> & Customers.
                         </h1>
-                        <p className="text-lg text-gray-600 dark:text-gray-300 font-medium max-w-2xl mx-auto lg:mx-0">
-                            Zero Commission. Fresh Produce. Instant Payments. Connecting Farmers, Vendors, and Customers directly.
+
+                        <p className="text-lg text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                            India's first unified platform where Farmers sell directly, Vendors buy in bulk, and Customers get fresh produce at fair prices.
                         </p>
-                        <div className="grid sm:grid-cols-3 gap-4 mt-8 w-full">
-                            {/* Farmer Card */}
+
+                        <div className="grid sm:grid-cols-3 gap-3">
+                            {/* Customer CTA */}
                             <Link
-                                to="/farmer-registration" // <-- Yahan apna route dein (e.g. signup ya farmer page)
-                                className="block no-underline" // Link ko block banayein taaki styling sahi rahe
+                                to="/customer-registration"
+                                className="group p-4 rounded-xl border-2 border-green-100 hover:border-green-600 hover:bg-green-50 transition-all text-center"
                             >
-                                <div className="group relative flex flex-col items-center p-6 bg-white dark:bg-[#1a2e22] rounded-2xl border-2 border-transparent hover:border-secondary shadow-lg hover:shadow-xl transition-all cursor-pointer">
-                                    <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary mb-3 group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-3xl">agriculture</span>
-                                    </div>
-                                    <h3 className="font-bold text-[#0e1b13] dark:text-white mb-1">I am a Farmer</h3>
-                                    <p className="text-xs text-center text-gray-500 mb-4 dark:text-gray-400">Sell Produce Directly</p>
-                                    <button className="w-full py-2 rounded-full bg-secondary text-white text-sm font-bold">JOIN US</button>
+                                <div className="w-10 h-10 mx-auto bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-2 group-hover:scale-110 transition-transform">
+                                    <span className="material-symbols-outlined">shopping_basket</span>
                                 </div>
+                                <h3 className="font-bold text-gray-900">Customer</h3>
+                                <p className="text-xs text-gray-500">Buy Fresh</p>
                             </Link>
 
-                            {/* Vendor Card */}
+                            {/* Farmer CTA */}
                             <Link
-                                to="/vendor-registration" // <-- Yahan apna route dein (e.g. signup ya farmer page)
-                                className="block no-underline" // Link ko block banayein taaki styling sahi rahe
+                                to="/farmer-registration"
+                                className="group p-4 rounded-xl border-2 border-green-100 hover:border-green-600 hover:bg-green-50 transition-all text-center"
                             >
-                                <div className="group relative flex flex-col items-center p-6 bg-white dark:bg-[#1a2e22] rounded-2xl border-2 border-transparent hover:border-primary shadow-lg hover:shadow-xl transition-all cursor-pointer">
-                                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3 group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-3xl">storefront</span>
-                                    </div>
-                                    <h3 className="font-bold text-[#0e1b13] dark:text-white mb-1">I am a Vendor</h3>
-                                    <p className="text-xs text-center text-gray-500 mb-4 dark:text-gray-400">Buy in Bulk</p>
-                                    <button className="w-full py-2 rounded-full bg-primary text-white text-sm font-bold">JOIN US</button>
+                                <div className="w-10 h-10 mx-auto bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-2 group-hover:scale-110 transition-transform">
+                                    <span className="material-symbols-outlined">agriculture</span>
                                 </div>
+                                <h3 className="font-bold text-gray-900">Farmer</h3>
+                                <p className="text-xs text-gray-500">Sell Produce</p>
                             </Link>
 
-                            {/* Customer Card */}
-
+                            {/* Vendor CTA */}
                             <Link
-                                to="/customer-registration" // <-- Yahan apna route dein (e.g. signup ya farmer page)
-                                className="block no-underline" // Link ko block banayein taaki styling sahi rahe
+                                to="/vendor-registration"
+                                className="group p-4 rounded-xl border-2 border-green-100 hover:border-green-600 hover:bg-green-50 transition-all text-center"
                             >
-                                <div className="group relative flex flex-col items-center p-6 bg-white dark:bg-[#1a2e22] rounded-2xl border-2 border-transparent hover:border-orange-500 shadow-lg hover:shadow-xl transition-all cursor-pointer">
-                                    <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mb-3 group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-3xl">shopping_basket</span>
-                                    </div>
-                                    <h3 className="font-bold text-[#0e1b13] dark:text-white mb-1">I am a Customer</h3>
-                                    <p className="text-xs text-center text-gray-500 mb-4 dark:text-gray-400">Order Fresh Veggies</p>
-                                    <button className="w-full py-2 rounded-full bg-orange-500 text-white text-sm font-bold">JOIN</button>
+                                <div className="w-10 h-10 mx-auto bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-2 group-hover:scale-110 transition-transform">
+                                    <span className="material-symbols-outlined">storefront</span>
                                 </div>
+                                <h3 className="font-bold text-gray-900">Vendor</h3>
+                                <p className="text-xs text-gray-500">Bulk Buy</p>
                             </Link>
                         </div>
-                    </div>
 
-                    <div className="lg:col-span-5 relative">
-                        <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-2xl">
-                            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCyGxXHP4HHTGuUsJJYIW93tS0N6PZH8WFU6aCk__hZT7ENCbUoVX1sQX16Uq1NRYt76NE63vIpSTKZl_7pozVEWnCsy4RKzHysiH_4opVH4X4gW-pScKqmOFHmSAaBqL-UCV3nyfZKvA_U5k33cbyRgpuNeDd6Jiw1KYGkqVpQxWB0jwF_6SmhKthbem8CuVo3x3GFdG5WCwMZq0Ar3-mJqjmbnz3DGmOmojzJYO86TZvd3SRLdTdRBXxeWHF7SVhKFtCgX-wVUU4')` }}>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        {/* Trust Badges */}
+                        <div className="mt-8 flex items-center justify-center lg:justify-start gap-6 text-gray-500 text-sm">
+                            <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-green-600 text-lg">verified</span>
+                                <span>Verified Profiles</span>
                             </div>
-                            <div className="absolute bottom-6 left-6 right-6">
-                                <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-white/20">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
-                                            <span className="material-symbols-outlined">verified</span>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Verified Quality</p>
-                                            <p className="text-sm font-bold text-[#0e1b13]">100% Organic & Fresh</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-green-600 text-lg">bolt</span>
+                                <span>Fast Logistics</span>
                             </div>
                         </div>
                     </div>
+
+                    {/* Image Right */}
+                    <div className="relative lg:h-[500px] w-full flex items-center justify-center">
+                        {/* Abstract Background Shapes */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-green-50 rounded-full opacity-50 blur-3xl -z-10"></div>
+
+                        <div className="relative rounded-3xl overflow-hidden shadow-xl border-4 border-white">
+                            <img
+                                src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                                alt="Farmer and Market"
+                                className="object-cover h-full w-full"
+                            />
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
-    )
-}
+    );
+};
 
 export default HeroSection;
