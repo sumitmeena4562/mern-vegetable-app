@@ -4,7 +4,7 @@ import LeftPanel from './LeftPanel';
 import RightPanel from './RightPanel';
 import { getFullProfile } from '@/api/userApi';
 
-const Dashboard = () => {
+const Overview = () => {
 
   const [fullData, setFullData] = useState(null);
   useEffect(() => {
@@ -62,4 +62,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Overview;

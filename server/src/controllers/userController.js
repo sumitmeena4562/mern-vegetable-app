@@ -280,6 +280,9 @@ export const verifyOtp = async (req, res) => {
         // OTP Verified, delete it
         await Otp.deleteOne({ _id: validOtp._id });
 
+        // Mark user as verified
+        await User.findOneAndUpdate({ mobile }, { isVerified: true });
+
         res.status(200).json({ success: true, message: "Mobile Verified Successfully!" });
 
     } catch (error) {

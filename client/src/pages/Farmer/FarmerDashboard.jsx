@@ -4,7 +4,8 @@ import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../../components/Farmers/Dashboard/Sidebar";
 import Header from "../../components/Farmers/Dashboard/Header";
-import Dashboard from "../../components/Farmers/Dashboard/Dashboard";
+
+import Overview from "../../components/Farmers/Dashboard/Overview";
 import AddSabji from "./AddSabji";
 import Notifications from "../../components/Farmers/Dashboard/notification/Notifications";
 
@@ -722,7 +723,7 @@ export default function FarmerDashboard() {
         {/* PAGE CONTENT */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Overview />} />
             <Route path="add-sabji" element={<AddSabji />} />
             <Route path="notifications" element={<Notifications />} />
 
