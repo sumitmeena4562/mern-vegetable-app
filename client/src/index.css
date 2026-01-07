@@ -5,7 +5,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Styles for Add Sabji Page */
+@layer components {
+  /* Glassmorphism */
+  .glass-panel {
+    @apply bg-white/85 backdrop-blur-md border border-white/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)];
+  }
+  .dark .glass-panel {
+    @apply bg-[#102216]/80 border-white/10;
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .glass-input:hover {
+    background: rgba(255, 255, 255, 0.8);
+    @apply border-green-400/50;
+  }
+
+  .soft-shadow {
+    @apply shadow-[0_10px_30px_-5px_rgba(0,0,0,0.05)];
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Start of Custom Styles */
 .form-radio:checked + div {
     background-color: #f0fdf4; /* green-50 */
     border-color: #2bee6c;
@@ -20,38 +74,8 @@
     background-color: rgba(43, 238, 108, 0.05);
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-@layer components {
-  .glass-panel {
-    @apply bg-white/85 backdrop-blur-md border border-white/80 shadow-[0_4px_20px_rgba(0,0,0,0.02)];
-  }
-  .dark .glass-panel {
-    @apply bg-[#102216]/80 border-white/10;
-  }
-  .soft-shadow {
-    @apply shadow-[0_10px_30px_-5px_rgba(0,0,0,0.05)];
-  }
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-/* Add to your existing index.css */
 .smooth-scroll {
   scroll-behavior: smooth;
-}
-
-.glass-panel {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Active navigation link styling */
@@ -60,7 +84,7 @@
   font-weight: 700;
 }
 
-/* Mobile menu animation */
+/* Animations */
 .mobile-menu-enter {
   opacity: 0;
   transform: translateY(-10px);
@@ -82,49 +106,6 @@
   transform: translateY(-10px);
   transition: opacity 300ms, transform 300ms;
 }
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-}
-
-.glass-input {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  transition: all 0.3s ease;
-}
-
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: #16a34a;
-  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15);
-  transform: translateY(-1px);
-}
-
-.glass-input:hover {
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* Reset and base styles */
 * {
@@ -141,7 +122,6 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: burlywood;
 }
 
 /* Material icons fix */

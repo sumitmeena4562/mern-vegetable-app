@@ -94,21 +94,21 @@ const getAddressFromCoordinates = async (lat, lng) => {
     // Try multiple geocoding services (fallback chain)
     const services = [
       {
-        name: "OpenStreetMap",
-        url: `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`,
-        parser: (data) => ({
-          city: data.address?.city || data.address?.town || data.address?.village || "",
-          state: data.address?.state || data.address?.region || "",
-          country: data.address?.country || "India"
-        })
-      },
-      {
         name: "BigDataCloud",
         url: `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
         parser: (data) => ({
           city: data.city || data.locality || "",
           state: data.principalSubdivision || "",
           country: data.countryName || "India"
+        })
+      },
+      {
+        name: "OpenStreetMap (Fallback)",
+        url: `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`,
+        parser: (data) => ({
+          city: data.address?.city || data.address?.town || data.address?.village || "",
+          state: data.address?.state || data.address?.region || "",
+          country: data.address?.country || "India"
         })
       }
     ];
@@ -220,7 +220,7 @@ export default function FarmerDashboard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerified,setVerified]=useState(false);
+  const [isVerified, setVerified] = useState(false);
 
   // 🔥 Aage aur user data add kar sakte ho:
   // const [phone, setPhone] = useState("");
@@ -724,7 +724,7 @@ export default function FarmerDashboard() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="add-sabji" element={<AddSabji />} />
-            <Route path="notifications"element={<Notifications/>}/>
+            <Route path="notifications" element={<Notifications />} />
 
             {/* 🔥 Yaha aur routes add kar sakte ho: */}
             {/* <Route path="products" element={<Products />} />

@@ -1,262 +1,234 @@
-# AgriConnect Backend
+# 🥬 AgriConnect - Farm to Fork Marketplace
 
-A modern farmer-to-vendor platform backend built with Node.js, Express 5, and MongoDB.
+AgriConnect is a comprehensive digital supply chain platform designed to bridge the gap between Farmers, Vendors, and Customers. By eliminating middlemen and digitizing the marketplace, it ensures fair pricing for farmers, fresh produce for customers, and organized business processes for vendors.
+
+---
 
 ## 🚀 Features
 
-- User authentication (Farmer, Vendor, Customer)
-- JWT-based authentication
-- Real-time updates with Socket.IO
-- File upload with Cloudinary
-- Email and SMS notifications
-- Rate limiting and security
-- ES6 Modules support
+- **Role-Based Access Control**: Distinct portals for Farmers, Vendors, and Customers.
+- **Real-Time Data**: Live dashboards for sales, inventory, and market prices.
+- **Secure Authentication**: JWT-based auth with OTP verification.
+- **Inventory Management**: Automated stock tracking for vendors.
+- **Responsive Design**: Mobile-first approach using React and Tailwind CSS.
+- **Geo-Location**: Location-based services for finding nearby vendors/farmers.
 
-## 📦 Technologies
+---
 
-- **Runtime:** Node.js
-- **Framework:** Express 5.2.1
-- **Database:** MongoDB with Mongoose 9.0.2
-- **Authentication:** JWT, bcryptjs
-- **Real-time:** Socket.IO 4.8.3
-- **File Upload:** Multer, Cloudinary
-- **Validation:** express-validator, Joi
-- **Security:** Helmet, CORS, express-rate-limit
+## 🛠️ Tech Stack
 
-## 🏗️ Installation
+### Client (Frontend)
+- **Framework**: React (Vite)
+- **Styling**: Tailwind CSS, PostCSS
+- **State Management**: React Context API
+- **Routing**: React Router DOM
+- **HTTP Client**: Axios
+- **Icons**: Google Material Symbols, Phosphor/Lucide (if applicable)
 
-1. Clone the repository
+### Server (Backend)
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB (Mongoose ODM)
+- **Authentication**: JWT, bcryptjs
+- **Real-time**: Socket.IO
+- **File Storage**: Cloudinary (via Multer)
+
+---
+
+## �️ Database & Configuration
+
+### 1. Environment Setup (.env)
+Create a `.env` file in the `server/` directory and add the following:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Connection
+MONGODB_URI=mongodb://127.0.0.1:27017/agriconnect
+# For MongoDB Atlas:
+# MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.example.mongodb.net/agriconnect
+
+# Authentication
+JWT_SECRET=your_super_secret_jwt_key_here
+JWT_EXPIRES_IN=30d
+```
+
+### 2. Database Connection Logic
+The database connection is managed in `server/src/config/database.js`. It handles connection retries and error logging automatically.
+
+**`server/src/config/database.js`**:
+```javascript
+import mongoose from 'mongoose';
+
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/agriconnect';
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 2000;
+
+let connected = false;
+
+const connectDB = async (retries = 0) => {
+  if (connected) return;
+  try {
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
+
+    connected = true;
+    const { host, port, name } = mongoose.connection;
+    console.log(`✅ MongoDB connected: ${host}:${port}/${name}`);
+    
+    mongoose.connection.on('disconnected', () => {
+      connected = false;
+      console.warn('⚠️ MongoDB disconnected');
+    });
+  } catch (err) {
+    const attempt = retries + 1;
+    console.error(`❌ MongoDB connection error (attempt ${attempt}): ${err?.message}`);
+
+    if (retries < MAX_RETRIES) {
+      await new Promise((res) => setTimeout(res, RETRY_DELAY_MS));
+      return connectDB(retries + 1);
+    }
+    throw err;
+  }
+};
+
+export default connectDB;
+```
+
+### 3. Running MongoDB
+- **Local:** Ensure **MongoDB Community Server** is running (`mongod`).
+- **Cloud (Atlas):** Create a cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas), whitelist your IP, and paste the Connection String into `MONGODB_URI`.
+
+---
+
+## 📂 Project Structure Explained
+
+To help you understand and contribute, here is a detailed breakdown of every file and folder.
+
+### 🖥️ Client (Frontend) - `client/src`
+Where the React application lives.
+
+```text
+client/src/
+├── api/                        # 📡 Backend Communication
+│   ├── axios.js                # Sets up the connection to the server. Automatically attaches your "Token" to every request so the server knows who you are.
+│   └── farmerApi.js            # Contains specific functions like `registerFarmer()` or `getFarmerStats()`. Keeps your UI code clean.
+│
+├── components/                 # 🧩 Reusable Building Blocks
+│   ├── Common/                 # Buttons, Inputs, Modals that are used everywhere.
+│   ├── Farmers/                # Components just for Farmers (e.g., "AddProductForm").
+│   └── ...
+│
+├── contexts/                   # 🧠 Global State (The App's Memory)
+│   ├── AuthContext.jsx         # Remembers "Is the user logged in?" and "Who is the user?". usable via `useAuth()`.
+│   └── NotificationContext.jsx # Manages pop-up alerts (success/error messages) across the app.
+│
+├── pages/                      # 📄 Full Website Pages
+│   ├── auth/                   # Login and Registration pages.
+│   ├── Farmer/                 # Farmer Dashboard pages.
+│   └── Landing.jsx             # The first page visitors see.
+│
+├── App.jsx                     # 🚦 Router. Decides which page to show based on the URL (e.g., if URL is /login, show LoginPage).
+├── main.jsx                    # 🏁 Entry Point. This is where React actually starts and attaches to the index.html file.
+└── index.css                   # 🎨 Global Styles. Tailwind CSS is set up here.
+```
+
+---
+
+### ⚙️ Server (Backend) - `server/src`
+Where the Logic and Database connections live.
+
+```text
+server/src/
+├── config/                     # ⚙️ Configuration
+│   └── database.js             # Connects to MongoDB. Fails safely and retries if the connection drops.
+│
+├── models/                     # 🗄️ Database Schemas (Data Blueprints)
+│   │   # These files tell MongoDB exactly what fields to save for each type of data.
+│   ├── User.js                 # Base user info (email, password, role: farmer/vendor/customer).
+│   ├── Farmer.js               # Extra farmer details (farm address, crops).
+│   ├── Product.js              # Details about a vegetable (price, quantity, name).
+│   ├── Order.js                # Tracks who bought what, how much, and payment status.
+│   ├── Notification.js         # Stores alerts for users.
+│   └── ...
+│
+├── controllers/                # 🧠 The Brains (Route Logic)
+│   │   # These functions run when a user visits a URL. They do the actual work.
+│   ├── authController.js       # Handles Registration, Login, and creating Tokens.
+│   ├── productController.js    # Logic for Adding, Deleting, and Updating products.
+│   ├── userController.js       # Logic for getting profile info.
+│   └── farmerController.js     # Specific logic for farmer dashboards.
+│
+├── middleware/                 # 🛡️ Gatekeepers
+│   ├── auth.js                 # Checks the "Token" before letting a user access a private route. If no token, it blocks them.
+│   └── error.js                # Catches bugs/crashes and sends a clean error message back to the frontend.
+│
+├── routes/                     # 📍 URL Definitions
+│   │   # Maps URLs to Controllers.
+│   ├── authRoutes.js           # Defines: POST /api/auth/login, POST /api/auth/register
+│   ├── product.js              # Defines: GET /api/products, POST /api/products
+│   └── FarmersRoutes.js        # Defines farmer specific URLs.
+│
+└── utils/                      # 🛠️ Helpers
+    └── ...                     # Small utility functions (like "sendEmail" or "calculateTotal").
+```
+
+---
+
+## 🏁 Getting Started
+
+### Prerequisites
+- **Node.js**: Environment to run JavaScript outside the browser.
+- **MongoDB**: The database engine.
+- **Git**: Version control.
+
+### Installation Steps
+
+1.  **Clone the Repository**
+    ```bash
+    git clone <repository_url>
+    cd AgriConnect-App
+    ```
+
+2.  **Setup Backend**
+    ```bash
+    cd server
+    npm install                 # Installs dependencies listed in package.json
+    # Create the .env file as explained above!
+    npm run dev                 # Starts the server in "watch" mode (auto-restarts on save)
+    ```
+
+3.  **Setup Frontend**
+    ```bash
+    cd client
+    npm install                 # Installs React, Tailwind, etc.
+    npm run dev                 # Starts the local React development server
+    ```
+
+### Running the Project
+
+You need **two** terminal windows running at the same time:
+
+**Terminal 1 (Backend):**
 ```bash
-git clone <repository-url>
-cd agr-backend
+cd server
+npm run dev
+```
+(Expected output: `✅ MongoDB connected... Server running on port 5000`)
 
-
-
-# 🥬 Digital Sabji Supply Chain System  
-### Farmer – Vendor – Customer (MERN Stack Project)
-
----
-
-## 📌 Project Introduction
-
-Digital Sabji Supply Chain System ek **role-based web application** hai jo traditional sabji market me aane wali real-life problems ko solve karta hai.  
-Ye system **Farmer, Vendor aur Customer** ke beech ek **transparent, digital aur efficient connection** banata hai.
+**Terminal 2 (Frontend):**
+```bash
+cd client
+npm run dev
+```
+(Expected output: `Local: http://localhost:5173/`)
 
 ---
 
-## 🎯 Objective of the Project
+## 👨‍💻 Author
 
-- Farmer ko fair price dilana  
-- Vendor ka business organized banana  
-- Customer ko fresh aur affordable sabji dena  
-- Pure supply chain ko digital banana  
-
----
-
-## 🌍 Existing System (Real-Life Scenario)
-
-| Problem (Real Life)              | Solution (Proposed System) |
-|----------------------------------|----------------------------|
-| Sabji selling process manual hai | Digital web platform       |
-| Koi centralized system nahi      | Single integrated system   |
-| Data paper-based hota hai        | MongoDB database           |
-| Transparency nahi hoti           | Real-time dashboards       |
-
----
-
-## 🚜 Farmer Related Problems & Solutions
-
-### Problem 1: Farmer ko sahi daam nahi milta  
-**Reason:** Market price ka knowledge nahi hota  
-
-✅ **Solution:**  
-System farmer ko sabji list karne aur current market price dekhne ka option deta hai, jisse farmer fair price decide kar sakta hai.
-
----
-
-### Problem 2: Middlemen zyada profit le jaate hain  
-**Reason:** Farmer direct buyer tak nahi pahunch pata  
-
-✅ **Solution:**  
-Platform farmer ko **direct vendor aur customer** se connect karta hai, jisse dependency kam hoti hai.
-
----
-
-### Problem 3: Payment delay aur confusion  
-**Reason:** Manual payment aur koi record nahi  
-
-✅ **Solution:**  
-System me **digital payment tracking** hota hai jisme farmer apni sales aur payment status dekh sakta hai.
-
----
-
-### Problem 4: Demand ka idea nahi hota  
-**Reason:** Koi data analysis nahi  
-
-✅ **Solution:**  
-Farmer dashboard me sales history aur demand trends show hote hain.
-
----
-
-## 🏪 Vendor (Valtor) Related Problems & Solutions
-
-### Problem 1: Farmer se manual dealing  
-**Reason:** Phone calls aur mandi visits  
-
-✅ **Solution:**  
-Vendor directly platform se farmer ki sabji purchase kar sakta hai.
-
----
-
-### Problem 2: Inventory ka record nahi hota  
-**Reason:** Manual stock handling  
-
-✅ **Solution:**  
-Inventory Management System jisme stock auto-update hota hai.
-
----
-
-### Problem 3: Sabji waste hone se loss  
-**Reason:** Demand ka data available nahi  
-
-✅ **Solution:**  
-Vendor ko previous order history aur demand analysis milta hai.
-
----
-
-### Problem 4: Profit/Loss calculation mushkil  
-**Reason:** Accounting system nahi  
-
-✅ **Solution:**  
-System automatic **profit/loss calculation** provide karta hai.
-
----
-
-## 🧑 Customer Related Problems & Solutions
-
-### Problem 1: Sabji mehngi milti hai  
-**Reason:** Price transparency nahi  
-
-✅ **Solution:**  
-Customer multiple vendors ke prices compare kar sakta hai.
-
----
-
-### Problem 2: Quality aur freshness ka trust nahi  
-**Reason:** No feedback system  
-
-✅ **Solution:**  
-Rating aur review system jisse quality check hoti hai.
-
----
-
-### Problem 3: Limited choice  
-**Reason:** Sirf nearby vendor  
-
-✅ **Solution:**  
-Customer platform par available sabhi vendors dekh sakta hai.
-
----
-
-## ⚠️ System-Level Problems & Solutions
-
-| System Problem        | Solution           |
-|---------------------- |--------------------|
-| Data loss             | MongoDB Database   |
-| Unauthorized access   | JWT Authentication |
-| Role confusion        | Role-Based A ccess |
-| Scalability issue     | MERN Architecture  |
-
----
-
-## 💡 Proposed System Overview
-
-Digital Sabji Supply Chain System ek **secure, scalable aur user-friendly** MERN stack application hai jo:
-
-- Farmer ko empowerment deta hai  
-- Vendor ka business automate karta hai  
-- Customer experience improve karta hai  
-
----
-
-## 🔐 Role-Based Modules
-
-### 👨‍🌾 Farmer
-- Add / update sabji
-- Manage quantity & price
-- View sales & payment history
-
-### 🏪 Vendor
-- Purchase sabji from farmers
-- Manage inventory
-- Set selling price
-- Track profit/loss
-
-### 🧑 Customer
-- Browse sabji
-- Add to cart
-- Place order
-- Rate & review
-
----
-
-## 🛠️ Technology Stack
-
-- **Frontend:** React.js + Tailwind CSS  
-- **Backend:** Node.js + Express.js  
-- **Database:** MongoDB  
-- **Authentication:** JWT  
-- **API Type:** REST API  
-
----
-
-## 🎯 Expected Outcomes
-
-- Farmer income increase 📈  
-- Vendor losses decrease 📉  
-- Customer satisfaction 😊  
-- Transparent supply chain 🌱  
-
----
-
-## 🚀 Future Enhancements
-
-- Online payment gateway  
-- Delivery tracking  
-- AI-based price prediction  
-- Mobile application  
-
----
-
-## 🏆 Conclusion
-
-Ye project ek **real-world agriculture problem** ko solve karta hai aur MERN stack ka **complete practical implementation** dikhata hai.  
-Multi-role system, security, scalability aur transparency ki wajah se ye project **interview aur industry ready** hai.
-
----
-
-
-
-
-📍 Location Flow Chart:
-text
-1. Database check (saved location) → If found → Use it
-2. If not found → Check geolocation permission
-3. If permission granted → Get current location → Convert to address
-4. If permission denied → Show "Add Location" button
-5. If geolocation fails → Default to "Pune, Maharashtra"
-## 👨‍💻 Developed By
-
-
-
-OTP kaha use hota hai?
-
-✅ Signup / Account Creation
-
-✅ Login (2-step verification)
-
-✅ Forgot Password
-
-✅ Role change / Sensitive action
 **Sumit Meena**  
-MERN Stack Developer  
+MERN Stack Developer
