@@ -52,6 +52,7 @@ export const register = async (req, res) => {
             email: email || `${mobile}@user.com`,
             // User model mein bhi address save kar rahe hain (Login response ke liye fast access)
             address: otherData.address || {},
+            isVerified: true // ✅ Assuming frontend Verified OTP first
         });
 
         console.log("✅ Base user created:", user._id);
@@ -279,9 +280,6 @@ export const verifyOtp = async (req, res) => {
 
         // OTP Verified, delete it
         await Otp.deleteOne({ _id: validOtp._id });
-
-        // Mark user as verified
-        await User.findOneAndUpdate({ mobile }, { isVerified: true });
 
         res.status(200).json({ success: true, message: "Mobile Verified Successfully!" });
 
