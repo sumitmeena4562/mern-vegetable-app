@@ -1286,7 +1286,7 @@ const FarmerRegistration = () => {
         </div>
       </div>
 
-      {/* OTP Modal */}
+      {/* OTP Modal with Matching Green Theme */}
       {showOtpModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
@@ -1297,15 +1297,19 @@ const FarmerRegistration = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-2">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-blue-50 mb-4">
-                <span className="material-symbols-outlined text-3xl text-blue-600">lock</span>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-green-100 to-emerald-50 mb-4 shadow-inner">
+                <span className="material-symbols-outlined text-3xl text-green-600">lock_clock</span>
               </div>
               <h3 className="text-2xl font-black text-gray-900">Mobile Verification</h3>
               <p className="text-gray-600 mt-2">
                 Enter the 4-digit OTP sent to
               </p>
-              <p className="font-bold text-gray-900 mt-1">
-                +91 {formData.mobile} • {formData.email}
+              <p className="font-bold text-gray-900 mt-1 flex items-center justify-center gap-2">
+                <span className="material-symbols-outlined text-sm text-green-600">smartphone</span>
+                +91 {formData.mobile}
+                <span className="text-gray-300">|</span>
+                <span className="material-symbols-outlined text-sm text-green-600">mail</span>
+                {formData.email}
               </p>
             </div>
 
@@ -1318,8 +1322,8 @@ const FarmerRegistration = () => {
                     ref={el => otpRefs.current[index] = el}
                     maxLength="1"
                     className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${otpError
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200'
+                      ? 'border-red-500 focus:border-red-500 ring-4 ring-red-100'
+                      : 'border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-100'
                       }`}
                     value={data}
                     onChange={(e) => handleOtpChange(e.target, index)}
@@ -1332,7 +1336,7 @@ const FarmerRegistration = () => {
               </div>
 
               {otpError && (
-                <p className="text-center text-red-600 text-sm font-semibold flex items-center justify-center gap-2">
+                <p className="text-center text-red-600 text-sm font-semibold flex items-center justify-center gap-2 animate-pulse">
                   <span className="material-symbols-outlined text-sm">error</span>
                   {otpError}
                 </p>
@@ -1345,17 +1349,23 @@ const FarmerRegistration = () => {
                 onClick={handleVerifyOtp}
                 disabled={otpLoading || otpInput.length !== 4}
                 className={`w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-2 ${otpInput.length === 4
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
-                  : 'bg-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-green-500/30 text-white transform hover:scale-[1.02]'
+                  : 'bg-gray-300 cursor-not-allowed text-gray-500'
                   }`}
               >
                 {otpLoading ? (
                   <>
-                    <Spinner />
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     Verifying...
                   </>
                 ) : (
-                  'Verify OTP'
+                  <>
+                    <span className="material-symbols-outlined">check_circle</span>
+                    Verify OTP
+                  </>
                 )}
               </button>
 
@@ -1368,30 +1378,31 @@ const FarmerRegistration = () => {
                       setTimer(60);
                       setCanResend(false);
                     }}
-                    className="text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center justify-center gap-2"
+                    className="text-green-600 font-bold hover:text-green-800 transition-colors flex items-center justify-center gap-2 w-full py-2 hover:bg-green-50 rounded-lg"
                   >
                     <span className="material-symbols-outlined text-lg">refresh</span>
-                    Resend Code
+                    Resend Verification Code
                   </button>
                 ) : (
                   <div className="space-y-2">
                     <span className="text-gray-500 text-sm">
-                      Resend code in <span className="font-bold">{timer}s</span>
+                      Resend code in <span className="font-bold text-green-600">{timer}s</span>
                     </span>
-                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-500 transition-all duration-1000"
+                        className="h-full bg-green-500 transition-all duration-1000 ease-linear rounded-full"
                         style={{ width: `${(timer / 60) * 100}%` }}
                       ></div>
                     </div>
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-100 mt-4">
                   <button
                     onClick={() => setShowOtpModal(false)}
-                    className="text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors"
+                    className="text-gray-400 hover:text-gray-600 font-bold text-sm transition-colors flex items-center justify-center gap-1 w-full"
                   >
+                    <span className="material-symbols-outlined text-sm">close</span>
                     Cancel Verification
                   </button>
                 </div>
