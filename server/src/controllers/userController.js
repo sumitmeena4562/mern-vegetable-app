@@ -294,19 +294,29 @@ export const verifyOtp = async (req, res) => {
 // ==========================================
 export const login = async (req, res) => {
     try {
-        const { mobile, password } = req.body;
-        console.log("Trying login for:", mobile);
+        let { mobile, email, identifier, password } = req.body;
+
+        // Normalize identifier
+        if (!identifier) {
+            identifier = mobile || email;
+        }
+
+        console.log("Trying login for:", identifier);
+
+        // Determine verify field (Email or Mobile)
+        const isEmail = identifier && identifier.includes('@');
+        const query = isEmail ? { email: identifier.toLowerCase() } : { mobile: identifier };
 
         // Find user & include password explicitly
-        const user = await User.findOne({ mobile }).select('+password');
+        const user = await User.findOne(query).select('+password');
 
         if (!user) {
-            return res.status(401).json({ success: false, message: 'Invalid mobile number or password' });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: 'Invalid mobile number or password' });
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
         if (!user.isActive) {
