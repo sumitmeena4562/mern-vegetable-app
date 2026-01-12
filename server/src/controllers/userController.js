@@ -347,6 +347,57 @@ export const login = async (req, res) => {
     }
 };
 
+export const loginWithOtp = async (req, res) => {
+    try {
+        const { mobile, otp } = req.body;
+
+        if (!mobile || !otp) {
+            return res.status(400).json({ success: false, message: 'Mobile and OTP are required' });
+        }
+
+        // 1. Verify OTP
+        const otpRecord = await Otp.findOne({ mobile, otp });
+        if (!otpRecord) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+        }
+
+        // 2. Find User
+        const user = await User.findOne({ mobile });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (!user.isActive) {
+            return res.status(401).json({ success: false, message: 'Account is deactivated' });
+        }
+
+        // 3. Generate Token
+        const token = user.generateAuthToken();
+
+        // 4. Delete Used OTP
+        await Otp.deleteOne({ _id: otpRecord._id });
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            data: {
+                user: {
+                    id: user._id,
+                    fullName: user.fullName,
+                    mobile: user.mobile,
+                    role: user.role,
+                    isVerified: user.isVerified
+                },
+                token
+            }
+        });
+
+    } catch (error) {
+        console.error('OTP Login error:', error);
+        res.status(500).json({ success: false, message: 'Login failed' });
+    }
+};
+
 // ==========================================
 // 4. PROFILE CONTROLLERS
 // ==========================================

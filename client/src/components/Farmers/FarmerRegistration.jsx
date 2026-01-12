@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../api/axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -110,7 +110,7 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
 
 
 const FarmerRegistration = () => {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
+  // const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth"; // REMOVED
   const navigate = useNavigate();
 
   // --- States ---
@@ -200,8 +200,7 @@ const FarmerRegistration = () => {
     // 1. States Fetch Karna
     const fetchStates = async () => {
       try {
-        const BASE_URL = "http://localhost:5000/api";
-        const res = await axios.get(`${BASE_URL}/locations/states`);
+        const res = await api.get('/locations/states');
 
         if (res.data.success) {
           // ✅ Fix: res.data.state ki jagah res.data.states (Backend se match kiya)
@@ -363,8 +362,7 @@ const FarmerRegistration = () => {
       if (value) {
         setIsFetchingLocations(true);
         try {
-          const BASE_URL = "http://localhost:5000/api";
-          const res = await axios.get(`${BASE_URL}/locations/districts/${value}`);
+          const res = await api.get(`/locations/districts/${value}`);
           if (res.data.success) {
             setDistricts(res.data.districts);
           }
@@ -411,7 +409,7 @@ const FarmerRegistration = () => {
 
     setOtpLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/send-otp`, {
+      const res = await api.post('/auth/send-otp', {
         mobile: formData.mobile,
         email: formData.email
       });
@@ -461,7 +459,7 @@ const FarmerRegistration = () => {
     setOtpError("");
 
     try {
-      const res = await axios.post(`${API_URL}/verify-otp`, {
+      const res = await api.post('/auth/verify-otp', {
         mobile: formData.mobile,
         otp: otpInput
       });
@@ -627,7 +625,7 @@ const FarmerRegistration = () => {
         preferredPickupTime: formData.pickup // ✅ Fix: key matched with backend
       };
 
-      const response = await axios.post(`${API_URL}/register/farmer`, payload);
+      const response = await api.post('/auth/register/farmer', payload);
 
       if (response.data.success) {
         toast.success("✅ Registration Successful! Redirecting to login...");

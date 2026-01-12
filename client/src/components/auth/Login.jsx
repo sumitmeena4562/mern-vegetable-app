@@ -1,7 +1,6 @@
-// components/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast, Toaster } from 'react-hot-toast';
 
@@ -107,8 +106,8 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/send-otp`,
+      const response = await api.post(
+        '/auth/send-otp',
         { mobile: formData.identifier }
       );
 
@@ -149,8 +148,8 @@ const Login = () => {
           password: formData.password
         };
 
-        response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/login`,
+        response = await api.post(
+          '/auth/login',
           payload,
           {
             headers: { 'Content-Type': 'application/json' },
@@ -158,8 +157,8 @@ const Login = () => {
           }
         );
       } else {
-        response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/login-with-otp`,
+        response = await api.post(
+          '/auth/login-with-otp',
           { mobile: formData.identifier, otp }
         );
       }

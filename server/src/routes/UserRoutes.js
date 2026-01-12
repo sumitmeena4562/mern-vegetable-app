@@ -9,7 +9,8 @@ import {
     verifyOtp,
     sendForgotPasswordOtp,
     verifyResetOtp,
-    resetPasswordWithOtp
+    resetPasswordWithOtp,
+    loginWithOtp
 } from "../controllers/userController.js";
 import auth from "../middleware/auth.js";
 const router = express.Router();
@@ -28,6 +29,8 @@ router.post('/register/farmer', register);
 router.get('/me', auth(), getMe);
 
 router.post('/send-otp', sendOtp);
+router.post('/verify-otp', verifyOtp);
+router.post('/login-with-otp', loginWithOtp);
 // Forgot Password Routes
 router.post('/forgot-password-otp', sendForgotPasswordOtp);
 router.post('/verify-reset-otp', verifyResetOtp);

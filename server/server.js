@@ -35,7 +35,7 @@ app.use(cors({
 }));
 
 // 3. BODY PARSERS (JSON & URL Encoded)
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 4. CUSTOM LOGGING (Body parse hone ke baad)
@@ -70,14 +70,14 @@ connectDB();
 // Static Routes (Ab ye CORS ke baad hain, toh error nahi aayega)
 app.use("/api/auth", UserRoutes);
 //ye Routes Location fetch krne k liye 
-app.use("/api/locations",locationRoutes);
+app.use("/api/locations", locationRoutes);
 
 // Dynamic Route Loading
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const routesDir = path.join(__dirname, 'src', 'routes');
 
 const routeMap = {
-  'auth.js': '/api/auth',
+  // 'auth.js': '/api/auth', // REMOVED: Conflict with UserRoutes.js which is loaded explicitly
   'farmers.js': '/api/farmers',
   'product.js': '/api/products',
   'vendor.js': '/api/vendors',
@@ -151,20 +151,20 @@ const io = new SocketIO(server, {
 
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
-  
+
   socket.on('join-user', (userId) => {
     socket.join(userId);
     console.log(`User ${userId} joined their room`);
   });
-  
+
   socket.on('send-notification', (data) => {
     io.to(data.userId).emit('receive-notification', data);
   });
-  
+
   socket.on('market-update', (data) => {
     io.emit('market-price-update', data);
   });
-  
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
