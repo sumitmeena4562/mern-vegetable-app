@@ -40,6 +40,62 @@ const getTemplate = (type, data) => {
                     </div>
                 </div>`
             };
+        case 'PASSWORD_RESET_OTP':
+            return {
+                subject: '🔑 Password Reset OTP - AgriConnect',
+                html: `
+                <div style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <div style="${mainContainer}">
+                        <div style="${headerStyle} background: linear-gradient(135deg, #d97706, #b45309);">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 1px;">AgriConnect</h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 14px;">Password Reset Request</p>
+                        </div>
+                        <div style="${bodyStyle}">
+                            <h2 style="${headingStyle} text-align: center;">Reset Your Password</h2>
+                            <p style="text-align: center; color: #64748b; margin-bottom: 30px;">We received a request to reset your password. Use the OTP below to proceed.</p>
+                            
+                            <div style="background: #fffbeb; border: 2px dashed #d97706; border-radius: 12px; padding: 20px; text-align: center; margin: 0 auto 30px auto; max-width: 250px;">
+                                <span style="font-size: 32px; font-weight: 800; color: #b45309; letter-spacing: 6px; font-family: monospace;">${data.otp}</span>
+                            </div>
+
+                            <p style="text-align: center; font-size: 13px; color: #94a3b8;">If you did not request a password reset, please secure your account immediately.</p>
+                        </div>
+                        <div style="${footerStyle}">
+                            <p style="margin: 0;">&copy; ${new Date().getFullYear()} AgriConnect. Security Alert.</p>
+                        </div>
+                    </div>
+                </div>`
+            };
+        case 'PASSWORD_RESET_SUCCESS':
+            return {
+                subject: '✅ Password Changed - AgriConnect',
+                html: `
+                <div style="background-color: #f1f5f9; padding: 40px 10px;">
+                    <div style="${mainContainer}">
+                        <div style="${headerStyle}">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 1px;">AgriConnect</h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 14px;">Security Notification</p>
+                        </div>
+                        <div style="${bodyStyle}">
+                            <h2 style="${headingStyle}">Password Changed</h2>
+                            <p>Hello <strong>${data.name}</strong>,</p>
+                            <p style="color: #475569;">Your AgriConnect account password was successfully changed just now.</p>
+                            
+                            <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 15px; margin: 20px 0; color: #0c4a6e; font-size: 14px;">
+                                If you did not make this change, please contact support immediately to secure your account.
+                            </div>
+
+                            <p>You can now login with your new password.</p>
+                            <div style="text-align: center;">
+                                <a href="${process.env.CLIENT_URL}/login" style="${buttonStyle}">Login Now</a>
+                            </div>
+                        </div>
+                        <div style="${footerStyle}">
+                            <p style="margin: 0;">&copy; ${new Date().getFullYear()} AgriConnect. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>`
+            };
 
         case 'WELCOME':
             return {
@@ -91,15 +147,10 @@ export const sendMail = async (email, type, data) => {
         const template = getTemplate(type, data);
 
         const transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // true for 465, false for other ports
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            },
-            tls: {
-                rejectUnauthorized: false // Fix for self-signed certificate issues in dev
             }
         });
 

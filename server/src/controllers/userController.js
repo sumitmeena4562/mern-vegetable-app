@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
 import Notification from '../models/Notification.js';
 import Otp from '../models/otp.js';
+import jwt from 'jsonwebtoken';
 import { validationResult, body } from 'express-validator';
 import nodemailer from 'nodemailer';
 import path from 'path';
@@ -504,4 +505,132 @@ export const getUserName = async (req, res) => {
 
 export const test = (req, res) => {
     res.status(200).json({ success: true, message: 'Auth routes working!' });
+};
+
+// ==========================================
+// 6. FORGOT PASSWORD SYSTEM (OTP BASED)
+// ==========================================
+
+// Step 1: Send OTP to Registered Email/Mobile
+export const sendForgotPasswordOtp = async (req, res) => {
+    try {
+        const { identifier } = req.body; // Can be mobile or email
+
+        if (!identifier) {
+            return res.status(400).json({ success: false, message: "Please provide mobile or email" });
+        }
+
+        // Logic to detect if Email or Mobile
+        const isEmail = identifier.includes('@');
+        const query = isEmail ? { email: identifier.toLowerCase() } : { mobile: identifier };
+
+        // 1. Check if User Exists
+        const user = await User.findOne(query);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found with this ID" });
+        }
+
+        // 2. Generate OTP
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // 3. Save OTP (Delete old ones first)
+        const otpPayload = { otp: otpCode };
+        if (isEmail) otpPayload.email = user.email;
+        else otpPayload.mobile = user.mobile;
+
+        // Clear old OTPs
+        if (isEmail) await Otp.deleteMany({ email: user.email });
+        else await Otp.deleteMany({ mobile: user.mobile });
+
+        await Otp.create(otpPayload);
+
+        // 4. Send Email
+        if (isEmail) {
+            await sendMail(user.email, 'PASSWORD_RESET_OTP', { otp: otpCode });
+            console.log(`🔑 Reset OTP sent to ${user.email}`);
+        } else {
+            console.log(`📱 SMS logic placeholder for ${user.mobile}. OTP: ${otpCode}`);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `OTP sent to ${isEmail ? 'email' : 'mobile'}`
+        });
+
+    } catch (error) {
+        console.error("Forgot Password OTP Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+
+// Step 2: Verify OTP & Return Temporary Token
+export const verifyResetOtp = async (req, res) => {
+    try {
+        const { identifier, otp } = req.body;
+
+        const isEmail = identifier.includes('@');
+        const query = isEmail ? { email: identifier, otp } : { mobile: identifier, otp };
+
+        const validOtp = await Otp.findOne(query);
+        if (!validOtp) {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
+        }
+
+        // OTP Valid Hai! User ID find karo
+        const user = await User.findOne(isEmail ? { email: identifier } : { mobile: identifier });
+
+        // Generate Temprorary Token (Valid for 5 mins only)
+        const tempToken = jwt.sign(
+            { id: user._id, type: 'reset_password' },
+            process.env.JWT_SECRET,
+            { expiresIn: '5m' }
+        );
+
+        // OTP ka kaam khatam -> Delete it
+        await Otp.deleteOne({ _id: validOtp._id });
+
+        res.status(200).json({
+            success: true,
+            message: "OTP Verified",
+            tempToken // Important!
+        });
+
+    } catch (error) {
+        console.error("Verify Reset OTP Error:", error);
+        res.status(500).json({ success: false, message: "Verification Failed" });
+    }
+};
+
+// Step 3: Set New Password
+export const resetPasswordWithOtp = async (req, res) => {
+    try {
+        // Auth Middleware se user automatic mil jayega (agar token valid hai)
+        const { newPassword } = req.body;
+        const userId = req.user.id; // From Temp Token
+
+        // Validate
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: "Password must be 6+ chars" });
+        }
+
+        // Find & Update
+        const user = await User.findById(userId);
+        user.password = newPassword; // Mongoose Pre-save hook will Hash it automatically!
+        await user.save();
+
+        // 7. Send Success Email
+        try {
+            if (user.email) {
+                await sendMail(user.email, 'PASSWORD_RESET_SUCCESS', { name: user.fullName });
+            }
+        } catch (mailError) {
+            console.error("Success Email Failed:", mailError);
+        }
+
+        res.status(200).json({ success: true, message: "Password Changed Successfully! Please Login." });
+
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        res.status(500).json({ success: false, message: "Failed to reset password" });
+    }
 };

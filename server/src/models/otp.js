@@ -1,9 +1,13 @@
 import mongoose from 'mongoose';
 
 const otpSchema = new mongoose.Schema({
-  mobile: {
+    mobile: {
     type: String,
-    required: true
+    sparse: true  // 'required: true' hata dein
+  },
+  email: {        // Email field add karein
+    type: String,
+    sparse: true
   },
   otp: {
     type: String,
