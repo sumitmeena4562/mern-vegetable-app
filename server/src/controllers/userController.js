@@ -53,10 +53,10 @@ export const register = async (req, res) => {
             email: email || `${mobile}@user.com`,
             // User model mein bhi address save kar rahe hain (Login response ke liye fast access)
             address: otherData.address || {},
-            isVerified: true ,// ✅ Assuming frontend Verified OTP first
-            location:otherData.location||{
-                type:'Point',
-                coordinates:[0,0]
+            isVerified: true,// ✅ Assuming frontend Verified OTP first
+            location: otherData.location || {
+                type: 'Point',
+                coordinates: [0, 0]
             }
 
         });
@@ -88,7 +88,7 @@ export const register = async (req, res) => {
                     },
 
                     // ✅ FIXED: GPS Location (Future proofing ke liye default 0,0)
-                    location:otherData.location || {
+                    location: otherData.location || {
                         type: 'Point',
                         coordinates: [0, 0] // Future mein yahan frontend se coordinates bhej sakte hain
                     },
@@ -202,26 +202,59 @@ export const register = async (req, res) => {
 // ==========================================
 export const sendOtp = async (req, res) => {
     try {
-        const { mobile, email } = req.body;
+        const { mobile, email, type, identifier } = req.body; // Support identifier
+
+        // Support both old 'mobile' field and new 'identifier' field
+        const uniqueId = identifier || mobile || email;
+
+        if (!uniqueId) {
+            return res.status(400).json({ success: false, message: "Mobile number or Email is required." });
+        }
+
+        // Detect if Input is Email
+        const isEmail = uniqueId.toString().includes('@');
+        const query = isEmail ? { email: uniqueId.toLowerCase() } : { mobile: uniqueId };
 
         // Check if user already exists
-        const existingUser = await User.findOne({ mobile });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: "Mobile number already registered. Please Login." });
+        const existingUser = await User.findOne(query);
+
+        // Logic check
+        if (type === 'register' && existingUser) {
+            return res.status(400).json({ success: false, message: "User already registered. Please Login." });
         }
 
-        if (!email) {
+        if (type === 'login' && !existingUser) {
+            return res.status(404).json({ success: false, message: "User not found. Please Register first." });
+        }
+
+        // Determine Email for sending OTP
+        let userEmail = isEmail ? uniqueId : email;
+
+        if (type === 'login' && existingUser) {
+            userEmail = existingUser.email;
+        }
+
+        if (!userEmail) {
             return res.status(400).json({ success: false, message: "Email is required for verification." });
         }
+
+        // Determine Mobile (for saving in OTP collection)
+        const userMobile = !isEmail ? uniqueId : (existingUser?.mobile || "NA");
 
         // Generate 4-digit OTP
         const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // Save to DB (Refresh existing OTP)
-        await Otp.deleteMany({ mobile });
-        await Otp.create({ mobile, email, otp: otpCode }); // Email bhi save kiya recovery ke liye
+        // Save to DB (Refresh existing OTP) - Query by whatever ID we have
+        if (!isEmail) await Otp.deleteMany({ mobile: uniqueId });
+        else await Otp.deleteMany({ email: uniqueId });
 
+        await Otp.create({
+            mobile: userMobile,
+            email: userEmail,
+            otp: otpCode
+        });
         // Configure Nodemailer
+
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -232,7 +265,7 @@ export const sendOtp = async (req, res) => {
 
         const mailOptions = {
             from: `"AgriConnect Security" <${process.env.EMAIL_USER}>`,
-            to: email,
+            to: userEmail,
             subject: 'AgriConnect Verification Code',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #f9f9f9;">
@@ -261,7 +294,7 @@ export const sendOtp = async (req, res) => {
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent to ${email} with OTP: ${otpCode}`);
+        console.log(`✅ Email sent to ${userEmail} with OTP: ${otpCode}`);
 
         res.status(200).json({
             success: true,
@@ -354,20 +387,28 @@ export const login = async (req, res) => {
 
 export const loginWithOtp = async (req, res) => {
     try {
-        const { mobile, otp } = req.body;
+        const { mobile, email, otp, identifier } = req.body;
 
-        if (!mobile || !otp) {
-            return res.status(400).json({ success: false, message: 'Mobile and OTP are required' });
+        const uniqueId = identifier || mobile || email;
+
+        if (!uniqueId || !otp) {
+            return res.status(400).json({ success: false, message: 'Recent Identifier and OTP are required' });
         }
 
+        const isEmail = uniqueId.toString().includes('@');
+
         // 1. Verify OTP
-        const otpRecord = await Otp.findOne({ mobile, otp });
+        const otpQuery = isEmail ? { email: uniqueId.toLowerCase(), otp } : { mobile: uniqueId, otp };
+        const otpRecord = await Otp.findOne(otpQuery);
+
         if (!otpRecord) {
             return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
         }
 
         // 2. Find User
-        const user = await User.findOne({ mobile });
+        const userQuery = isEmail ? { email: uniqueId.toLowerCase() } : { mobile: uniqueId };
+        const user = await User.findOne(userQuery);
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }

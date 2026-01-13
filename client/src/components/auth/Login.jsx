@@ -47,9 +47,10 @@ const Login = () => {
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.identifier);
     const isMobile = /^[6-9]\d{9}$/.test(formData.identifier);
 
-    if (loginMethod === 'otp' && !isMobile) {
-      return "For OTP Login, please enter a valid 10-digit mobile number";
+    if (loginMethod === 'otp' && !isMobile && !isEmail) {
+      return "For OTP Login, please enter a valid mobile number or email";
     }
+
 
     if (!isEmail && !isMobile) {
       return "Please enter a valid mobile number or email address";
@@ -60,7 +61,7 @@ const Login = () => {
       if (formData.password.length < 6) return "Password must be at least 6 characters";
     } else {
       if (!otp) return "OTP is required";
-      if (!/^\d{6}$/.test(otp)) return "OTP must be 6 digits";
+      if (!/^\d{4}$/.test(otp)) return "OTP must be 6 digits";
     }
     return null;
   };
@@ -99,8 +100,10 @@ const Login = () => {
 
   const sendOTP = async () => {
     const isMobile = /^[6-9]\d{9}$/.test(formData.identifier);
-    if (!isMobile) {
-      toast.error("Please enter a valid mobile number for OTP verification");
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.identifier);
+
+    if (!isMobile && !isEmail) {
+      toast.error("Please enter a valid mobile number or email for OTP");
       return;
     }
 
@@ -108,7 +111,7 @@ const Login = () => {
     try {
       const response = await api.post(
         '/auth/send-otp',
-        { mobile: formData.identifier }
+        { mobile: formData.identifier, type: 'login' }
       );
 
       if (response.data.success) {
