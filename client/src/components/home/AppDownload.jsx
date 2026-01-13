@@ -8,10 +8,10 @@ const AppDownload = () => {
 
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-3xl md:text-5xl font-black mb-6">
-              Trade on the go.
+              Grow on the go.
             </h2>
             <p className="text-green-100 text-lg mb-8 max-w-lg mx-auto md:mx-0">
-              Get the AgriConnect app for real-time rates, voice commands, and instant payments.
+              Manage your farm and business from anywhere. Real-time rates and instant payments on any device.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">

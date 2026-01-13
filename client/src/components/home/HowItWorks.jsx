@@ -4,9 +4,9 @@ const HowItWorks = () => {
   const steps = [
     {
       num: '01',
-      title: 'Farmers List',
-      desc: 'Farmers record voice notes or list stock availability.',
-      icon: 'mic'
+      title: 'List Produce',
+      description: 'Farmers upload photos and details of their fresh harvest in seconds.',
+      icon: 'add_a_photo'
     },
     {
       num: '02',
@@ -23,7 +23,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-24 bg-gray-50">
+    <section id="how-it-works" className="py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-black text-gray-900">How It Works</h2>
@@ -44,7 +44,7 @@ const HowItWorks = () => {
 
               <span className="text-sm font-bold text-green-600 mb-2">Step {step.num}</span>
               <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-              <p className="text-gray-600 max-w-xs">{step.desc}</p>
+              <p className="text-gray-600 max-w-xs">{step.description || step.desc}</p>
             </div>
           ))}
         </div>

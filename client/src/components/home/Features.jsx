@@ -3,32 +3,32 @@ import React from 'react';
 const Features = () => {
   const features = [
     {
-      icon: 'mic',
-      title: 'Voice Assistant',
-      description: 'Speak in your local language to list or find produce.',
+      icon: 'diversity_3',
+      title: 'Verified Community',
+      description: '100% KYC verified Farmers and Vendors for a safe and trusted trading environment.',
       color: 'text-blue-600',
       bg: 'bg-blue-50'
     },
     {
-      icon: 'location_on',
-      title: 'Smart Maps',
-      description: 'Locate nearest farmers and vendors with precision.',
-      color: 'text-red-600',
-      bg: 'bg-red-50'
+      icon: 'currency_rupee',
+      title: 'Live Mandi Rates',
+      description: 'Real-time APMC market prices to help you negotiate better and sell smarter.',
+      color: 'text-green-600',
+      bg: 'bg-green-50'
     },
     {
-      icon: 'qr_code_scanner',
-      title: 'QR Traceability',
-      description: 'Scan code to know the farm source and harvest date.',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50'
+      icon: 'local_shipping',
+      title: 'Integrated Logistics',
+      description: 'We handle the pickup from farm gate to vendor doorstep. No transport hassle.',
+      color: 'text-orange-600',
+      bg: 'bg-orange-50'
     },
     {
       icon: 'verified_user',
-      title: 'Secure Payments',
-      description: 'Escrow system ensures safe and trusted transactions.',
-      color: 'text-green-600',
-      bg: 'bg-green-50'
+      title: 'Digital Traceability',
+      description: 'Scan QR code to see the farm origin, harvest date, and farmer profile.',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50'
     }
   ];
 
@@ -48,7 +48,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
+              className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
             >
               <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-6`}>
                 <span className={`material-symbols-outlined text-3xl ${feature.color}`}>

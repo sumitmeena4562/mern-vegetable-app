@@ -15,7 +15,7 @@ const WhyChooseAgriConnect = () => {
 
         <div className="grid md:grid-cols-2 gap-12">
           {/* Old Way */}
-          <div className="p-8 rounded-3xl border border-red-100 bg-red-50/50">
+          <div className="p-6 md:p-8 rounded-3xl border border-red-100 bg-red-50/50">
             <h3 className="text-xl font-bold text-red-900 mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined">cancel</span>
               Traditional Mandi
@@ -37,7 +37,7 @@ const WhyChooseAgriConnect = () => {
           </div>
 
           {/* New Way */}
-          <div className="p-8 rounded-3xl border border-green-100 bg-green-50 shadow-sm relative overflow-hidden">
+          <div className="p-6 md:p-8 rounded-3xl border border-green-100 bg-green-50 shadow-sm relative overflow-hidden">
             <h3 className="text-xl font-bold text-green-900 mb-6 flex items-center gap-2">
               <span className="material-symbols-outlined">check_circle</span>
               AgriConnect

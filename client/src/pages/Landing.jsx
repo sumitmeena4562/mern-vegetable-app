@@ -8,6 +8,7 @@ import Features from '../components/home/Features'
 import Stats from '../components/home/Stats'
 import AppDownload from '../components/home/AppDownload'
 import Footer from '../components/common/Footer'
+import Testimonials from '../components/home/Testimonials'
 
 function Landingpage() {
   return (
@@ -18,6 +19,7 @@ function Landingpage() {
       <WhyChooseAgriConnect />
       <HowItWorks />
       <Features />
+      <Testimonials />
       <Stats />
       <AppDownload />
       <Footer />

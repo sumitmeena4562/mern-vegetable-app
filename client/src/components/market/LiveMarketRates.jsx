@@ -10,7 +10,7 @@ const LiveMarketRates = () => {
   ];
 
   return (
-    <div className="bg-gray-900 py-3 overflow-hidden whitespace-nowrap">
+    <div id="market-rates" className="bg-gray-900 py-3 overflow-hidden whitespace-nowrap">
       <div className="inline-block animate-marquee">
         {marketItems.map((item, index) => (
           <span key={index} className="inline-flex items-center mx-8 text-sm font-medium text-gray-300">

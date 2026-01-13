@@ -80,14 +80,14 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400">
                             <li className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg">call</span>
-                                <span>+91 98765 43210</span>
+                                <span>+91 6261 652446</span>
                             </li>
                             <li className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-lg">mail</span>
-                                <span>support@agriconnect.in</span>
+                                <span>agriconnect.tech@gmail.com</span>
                             </li>
                             <li>
-                                <button className="mt-2 flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-800 text-sm font-bold hover:bg-green-200 transition-colors w-full justify-center">
+                                <button className="mt-2 flex items-center gap-2 px-4 py-2 rounded-md bg-green-100 text-green-800 text-sm font-bold hover:bg-green-200 transition-colors w-full justify-center">
                                     <span className="material-symbols-outlined text-lg">chat</span>
                                     <span>WhatsApp Support</span>
                                 </button>
