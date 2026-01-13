@@ -68,10 +68,10 @@ app.use('/api', apiLimiter);
 // Auth routes ke liye extra strict limit (Optional but Recommended)
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Sirf 20 login/otp attempts per hour
+  max: 500, // Increased limit to prevent 429 on profile fetch during dev
   message: {
     status: 'error',
-    message: 'Too many login attempts, please try again after an hour'
+    message: 'Too many attempts, please try again after an hour'
   }
 });
 app.use('/api/auth', authLimiter);
