@@ -53,7 +53,12 @@ export const register = async (req, res) => {
             email: email || `${mobile}@user.com`,
             // User model mein bhi address save kar rahe hain (Login response ke liye fast access)
             address: otherData.address || {},
-            isVerified: true // ✅ Assuming frontend Verified OTP first
+            isVerified: true ,// ✅ Assuming frontend Verified OTP first
+            location:otherData.location||{
+                type:'Point',
+                coordinates:[0,0]
+            }
+
         });
 
         console.log("✅ Base user created:", user._id);
@@ -83,7 +88,7 @@ export const register = async (req, res) => {
                     },
 
                     // ✅ FIXED: GPS Location (Future proofing ke liye default 0,0)
-                    location: {
+                    location:otherData.location || {
                         type: 'Point',
                         coordinates: [0, 0] // Future mein yahan frontend se coordinates bhej sakte hain
                     },

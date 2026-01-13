@@ -7,6 +7,7 @@ import http from 'http';
 import { Server as SocketIO } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 
 
@@ -46,6 +47,37 @@ app.use((req, res, next) => {
   }
   next();
 });
+// ====================================================
+// 1.5. RATE LIMITING (Security)
+// ====================================================
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes ka time window
+  max: 100, // Har IP se max 100 requests allow hongi 15 min mein
+  message: {
+    status: 'error',
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+  },
+  standardHeaders: true, // Return rate limit info in headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply to all /api routes
+app.use('/api', apiLimiter);
+
+// Auth routes ke liye extra strict limit (Optional but Recommended)
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // Sirf 20 login/otp attempts per hour
+  message: {
+    status: 'error',
+    message: 'Too many login attempts, please try again after an hour'
+  }
+});
+app.use('/api/auth', authLimiter);
+
+
+
 
 // ====================================================
 // 2. DATABASE & MODELS
