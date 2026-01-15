@@ -53,3 +53,29 @@ export const markAllAsRead = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
+// Test Notification Generator
+export const createTestNotification = async (req, res) => {
+    try {
+        const { title, message, type } = req.body;
+        const userId = req.user.id;
+        // 1. Create in DB
+        const newNotif = await Notification.create({
+            user: userId,
+            title: title || 'Test Notification',
+            message: message || 'This is a test message from server',
+            type: type || 'system',
+            read: false,
+            date: new Date()
+        });
+        // 2. Send Real-time via Socket
+        const io = req.app.get('io'); // Valid because `app.set('io', io)` in server.js
+        if (io) {
+            io.to(userId).emit('receive-notification', newNotif);
+            console.log(`📡 Socket sent to ${userId}`);
+        }
+        res.status(201).json({ success: true, data: newNotif });
+    } catch (error) {
+        console.error('Test notification error:', error);
+        res.status(500).json({ success: false, message: 'Error creating notification' });
+    }
+};

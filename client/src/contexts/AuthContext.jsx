@@ -50,12 +50,12 @@ export const AuthProvider = ({ children }) => {
     // 4. Fetch User Profile
     const fetchUserProfile = async () => {
         try {
-           const response = await axios.get(`${import.meta.env.VITE_API_URL}/me`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/me`);
 
             if (response.data.success) {
                 // Support both data structures
                 const userData = response.data.user || response.data.data?.user || response.data.data;
-                
+
                 if (userData) {
                     setUser(userData);
                     localStorage.setItem('user', JSON.stringify(userData));
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
     // 5. LOGIN FUNCTION (Fixed ✅)
     const login = (newToken, userData) => {
         console.log("🔐 Logging in...");
-        
+
         // A. Pehle LocalStorage update karo
         localStorage.setItem('token', newToken);
         localStorage.setItem('user', JSON.stringify(userData));

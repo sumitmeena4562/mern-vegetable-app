@@ -16,6 +16,7 @@ import locationRoutes from './src/routes/locationRoutes.js';
 import farmerRoutes from './src/routes/farmerRoutes.js';
 import vendorRoutes from './src/routes/vendorRoutes.js';
 import customerRoutes from './src/routes/customerRoutes.js';
+import notificationRoutes from './src/routes/NotificationRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -116,6 +117,7 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/farmers", farmerRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/customers", customerRoutes);
+app.use("/api/notifications",notificationRoutes);
 
 // Other Routes (Products, Orders, Market - keeping dynamic loading for them if they exist, or manual if preferred)
 // For now, let's keep the core role routes explicit as requested.

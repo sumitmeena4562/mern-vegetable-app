@@ -14,7 +14,7 @@ const data = [
 const LeftPanel = () => {
   return (
     <div className="lg:col-span-8 flex flex-col gap-6">
-      
+
       {/* Revenue Analytics (UPGRADED WITH RECHARTS) */}
       <div className="glass-panel p-6 rounded-2xl soft-shadow">
         <div className="flex justify-between items-center mb-6">
@@ -32,36 +32,36 @@ const LeftPanel = () => {
         </div>
 
         {/* Dynamic Chart */}
-        <div className="h-64 w-full">
+        <div style={{ width: '100%', height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#16a34a" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#16a34a" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{fill: '#94a3b8', fontSize: 12}} 
-                dy={10} 
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                dy={10}
               />
-              <Tooltip 
-                contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px'}}
-                itemStyle={{color: '#fff'}}
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                itemStyle={{ color: '#fff' }}
                 formatter={(value) => [`₹${value}`, "Revenue"]}
-                cursor={{stroke: '#16a34a', strokeWidth: 1, strokeDasharray: '4 4'}}
+                cursor={{ stroke: '#16a34a', strokeWidth: 1, strokeDasharray: '4 4' }}
               />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#16a34a" 
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#16a34a"
                 strokeWidth={3}
-                fillOpacity={1} 
-                fill="url(#colorValue)" 
+                fillOpacity={1}
+                fill="url(#colorValue)"
                 animationDuration={1500}
               />
             </AreaChart>
@@ -116,7 +116,7 @@ const LeftPanel = () => {
           <p className="text-xs text-slate-400">Updated: 10:00 AM</p>
         </div>
         {/* Same table code as before... */}
-         <div className="overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-slate-500 font-semibold border-b border-slate-200">
               <tr>
