@@ -621,6 +621,14 @@ const FarmerRegistration = () => {
     setLoading(true);
 
     try {
+      // Map pickup time to backend enum
+      const pickupMapping = {
+        'Morning (6 AM - 10 AM)': 'morning',
+        'Afternoon (12 PM - 4 PM)': 'afternoon',
+        'Evening (4 PM - 8 PM)': 'evening',
+        'Flexible': 'any'
+      };
+
       const payload = {
         fullName: formData.fullName,
         mobile: formData.mobile,
@@ -644,8 +652,8 @@ const FarmerRegistration = () => {
             }
             return { name: key.charAt(0).toUpperCase() + key.slice(1) };
           }),
-        preferredPickupTime: formData.pickup, // ✅ Fix: key matched with backend
-        location: formData.location
+        preferredPickupTime: pickupMapping[formData.pickup] || 'morning', // ✅ Fix: Map to lowercase enum
+        location: formData.location // Backend expects { type: 'Point', coordinates: [lng, lat] }
       };
 
       const response = await api.post('/farmers/register', payload);
