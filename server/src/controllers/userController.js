@@ -53,7 +53,9 @@ export const login = async (req, res) => {
                     mobile: user.mobile,
                     email: user.email,
                     role: user.role,
-                    isVerified: user.isVerified
+                    isVerified: user.isVerified,
+                    address: user.address,     // ✅ Included Address
+                    location: user.location    // ✅ Included Location
                 },
                 token
             }

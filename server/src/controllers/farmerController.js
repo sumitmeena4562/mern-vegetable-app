@@ -109,9 +109,14 @@ export const updateProfile = async (req, res) => {
   try {
     const { fullName, email, ...farmData } = req.body;
 
-    // Update User basic info
-    if (fullName || email) {
-      await User.findByIdAndUpdate(req.user.id, { fullName, email });
+    // Update User basic info including Address
+    if (fullName || email || farmData.address) {
+      const userUpdate = {};
+      if (fullName) userUpdate.fullName = fullName;
+      if (email) userUpdate.email = email;
+      if (farmData.address) userUpdate.address = farmData.address;
+
+      await User.findByIdAndUpdate(req.user.id, userUpdate);
     }
 
     // Update Farmer specific info

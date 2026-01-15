@@ -1,0 +1,85 @@
+AgriConnect Project Guide & Developer Handbook 📘
+Yeh guide aapko poore project ka structure samjhne aur aage ke features khud bina confusion ke implement karne mein madad karegi.
+
+1. Backend Structure (Server) ⚙️
+Location: server/src/
+
+Ab humne logic ko Roles ke hisaab se divide kar diya hai. Monolithic code nahi hai.
+
+📂 Controllers (server/src/controllers/)
+Yahan aapka main "business logic" rahega.
+
+farmerController.js: 🚜 Sirf Farmer ka logic.
+Example: New Crop add karna, Farmer Profile update, Farm details.
+Future Work: Agar "Sell Product" feature banana hai, toh code yahan likhein.
+vendorController.js: 🏪 Sirf Vendor ka logic.
+Example: Orders dekhna, Bulk buying request, Vendor Profile.
+customerController.js: 🛒 Sirf Customer ka logic.
+Example: Cart management, Buying vegetables, Address updates.
+userController.js: 🔐 Common Logic (Sabke liye same).
+Isme sirf Login, OTP, Password Reset, aur Common Profile Fetch (getProfile) ka code hai. Isme role-specific logic mat likhna.
+📂 Routes (server/src/routes/)
+Yahan API endpoints define hote hain jo Controllers ko call karte hain.
+
+farmerRoutes.js: Endpoints start with /api/farmers/...
+vendorRoutes.js: Endpoints start with /api/vendors/...
+customerRoutes.js: Endpoints start with /api/customers/...
+UserRoutes.js: Endpoints start with /api/auth/... (Login/OTP).
+📂 Models (server/src/models/)
+Database schemas.
+
+User.js: Base info (Name, Email, Mobile, Password, Role). Sab users ke paas ye hota hai.
+Farmer.js: Linked to User. Contains farmSize, crops, etc.
+Vendor.js: Linked to User. Contains shopName, capacity, etc.
+Customer.js: Linked to User. Contains preferences, cart, etc.
+2. Frontend Structure (Client) 🎨
+Location: client/src/
+
+Frontend bhi roles ke hisaab se sorted hai.
+
+📂 Components by Role
+src/components/Farmers/: Saare Farmer pages yahan hain (Dashboard, Registration, Product List).
+src/components/Vendors/: Vendor pages (Registration, Market View).
+src/components/Customers/: Customer pages (Shopping, Cart).
+📂 API Calls (client/src/api/)
+axios.js: Base configuration settings.
+userApi.js: Yahan saare API functions likhein.
+Tip: Aap chaho toh farmerApi.js, vendorApi.js alag bana sakte ho clarity ke liye.
+3. How To Implement New Features (Step-by-Step) 🛠️
+Agar aapko ek naya feature banana hai, man lijiye "Farmer Add Product", toh ye steps follow karein:
+
+Step 1: Backend Controller
+File: server/src/controllers/farmerController.js
+
+export const addProduct = async (req, res) => {
+    // Logic to save product in DB
+    // req.user.id se farmer pata chalega
+};
+Step 2: Backend Route
+File: server/src/routes/farmerRoutes.js
+
+import { addProduct } from '../controllers/farmerController.js';
+// Route banayein
+router.post('/add-product', auth('farmer'), addProduct);
+(Ab aapka API endpoint ban gaya: POST /api/farmers/add-product)
+
+Step 3: Frontend API Function
+File: client/src/api/userApi.js (ya new farmerApi.js)
+
+export const addProductApi = async (productData) => {
+    const response = await api.post('/farmers/add-product', productData);
+    return response.data;
+};
+Step 4: Frontend UI
+File: client/src/components/Farmers/AddProduct.jsx
+
+Form banayein.
+addProductApi function call karein button click par.
+4. Key Things to Remember 💡
+Auth Middleware: Backend routes mein auth('farmer') ya auth('vendor') zaroor lagayein taaki galat user access na kar sake.
+Common vs Specific:
+Login/OTP related kuch bhi ho -> userController.js / /api/auth
+Business related kuch bhi ho -> Role specific controller / /api/role
+Refactoring is Done: Ab aapka code clean hai. Purani monolithic approach use mat karna.
+Good luck implementing new features! 🚀
+

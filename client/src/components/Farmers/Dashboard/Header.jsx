@@ -41,8 +41,8 @@ const Header = ({
             {/* ✅ Step 2: Best Badge Design Implementation */}
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border uppercase select-none ${isVerified
-                  ? "bg-blue-50 text-blue-600 border-blue-200"    // 🔵 Verified Style
-                  : "bg-orange-50 text-orange-600 border-orange-200" // 🟠 New Listing Style
+                ? "bg-blue-50 text-blue-600 border-blue-200"    // 🔵 Verified Style
+                : "bg-orange-50 text-orange-600 border-orange-200" // 🟠 New Listing Style
                 }`}
             >
               {/* Icon Section */}
@@ -70,7 +70,7 @@ const Header = ({
           ) : (
             <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
               <span className="material-symbols-outlined text-sm">location_on</span>
-              <span className="truncate max-w-[150px] md:max-w-none">{subtitle}</span>
+              <span className="truncate max-w-[200px] xs:max-w-[250px] md:max-w-none text-[11px] xs:text-xs">{subtitle}</span>
             </div>
           )}
         </div>

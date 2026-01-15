@@ -37,7 +37,12 @@ app.use(morgan('dev'));
 
 // 2. CORS (Sabse Important - Routes se pehle aana chahiye)
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:5173'], // Array use kiya taaki env fail hone par bhi localhost chale
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Allow any origin for development/ngrok
+    return callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));

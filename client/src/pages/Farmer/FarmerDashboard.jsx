@@ -49,13 +49,33 @@ const extractVerifiedStatus = (userData) => {
 const extractUserLocation = (userData) => {
   if (!userData) return { city: "", state: "", hasLocation: false };
 
-  const city = userData.city || userData.location?.city || "";
-  const state = userData.state || userData.location?.state || "";
+  // Check extracting from nested address object (User DB structure match)
+  const city = userData.address?.city || userData.location?.address?.city || userData.city || "";
+  const state = userData.address?.state || userData.location?.address?.state || userData.state || "";
+
+  // Full address components
+  const village = userData.address?.village || userData.location?.address?.village || "";
+  const fullAddress = userData.address?.fullAddress || userData.location?.address?.fullAddress || "";
+
+  // Construct fallback if fullAddress is missing
+  let displayAddress = fullAddress;
+  if (!displayAddress) {
+    const parts = [];
+    if (village) parts.push(village);
+    if (city) parts.push(city);
+    if (state) parts.push(state);
+    displayAddress = parts.join(", ");
+  }
+
+  console.log("📍 Extracting Location from:", userData);
+  console.log("   Found City:", city, "State:", state);
+  console.log("   Full Address:", displayAddress);
 
   return {
-    city,
-    state,
-    hasLocation: !!(city && state)
+    city: city || "",
+    state: state || "",
+    fullAddress: displayAddress, // ✅ New Field
+    hasLocation: !!displayAddress // If we have ANY address string, it is valid
   };
 };
 
@@ -252,10 +272,9 @@ export default function FarmerDashboard() {
       }
 
       try {
-        await Promise.all([
-          loadUserProfile(),
-          loadUserLocation()
-        ]);
+        // Run Sequentially to avoid race conditions
+        await loadUserProfile();
+        await loadUserLocation();
       } catch (error) {
         console.error("Dashboard initialization failed:", error);
       } finally {
@@ -319,12 +338,30 @@ export default function FarmerDashboard() {
         // 🔥 Yaha aur data extract kar sakte ho:
         // setPhone(userData.mobile || "");
         // setFarmName(userData.farmName || "");
+        let savedLoc = extractUserLocation(userData);
+
+        // 🔥 FORCE REFRESH: If no location found in cached data, try fetching fresh from API
+        if (!savedLoc.hasLocation) {
+          console.log("⚠️ No location in cached user data. Fetching fresh from API...");
+          const token = localStorage.getItem("token");
+          if (token) {
+            const freshData = await fetchUserDataFromAPI(token);
+            if (freshData) {
+              userData = freshData; // Update local variable
+              localStorage.setItem("user", JSON.stringify(freshData)); // Update cache
+              savedLoc = extractUserLocation(freshData); // Retry extraction
+              console.log("✅ Fresh data fetched. Location found?", savedLoc.hasLocation);
+            }
+          }
+        }
+
         // setProfileImage(userData.profileImage || "");
-        const savedLoc = extractUserLocation(userData);
+
         if (savedLoc.hasLocation) {
           setUserLocation({
             city: savedLoc.city,
             state: savedLoc.state,
+            fullAddress: savedLoc.fullAddress, // ✅ Critical Fix: Store full address in state
             loading: false,
             hasLocation: true,
             showAddLocation: false,
@@ -352,9 +389,9 @@ export default function FarmerDashboard() {
    */
   const loadUserLocation = async () => {
     // If we already have location from user data, skip
-    if (userLocation.hasLocation && !userLocation.loading) {
-      return;
-    }
+    // if (userLocation.hasLocation && !userLocation.loading) {
+    //   return;
+    // }
 
     setUserLocation(prev => ({ ...prev, loading: true, error: null }));
 
@@ -407,14 +444,31 @@ export default function FarmerDashboard() {
       }
 
       // Step 3: No location available
-      setUserLocation({
-        city: "",
-        state: "",
-        loading: false,
-        hasLocation: false,
-        showAddLocation: true,
-        error: geoResult.error || "no_location",
-        errorMessage: geoResult.message || "Location not available"
+      setUserLocation(prev => {
+        // 🔥 Fix: Keep existing profile location if GPS fails
+        if (prev.hasLocation) {
+          console.log("📍 GPS failed, keeping Saved Profile Location");
+          return {
+            ...prev,
+            loading: false,
+            error: "gps_failed_keeping_saved",
+            // Ensure full address is shown
+            errorMessage: ""
+          };
+        }
+
+        // If NO location everywhere (even DB), show empty or "Location Unavailable"
+        // User requested removing "Add Location" prompt here, but we need to show SOMETHING.
+        return {
+          city: "",
+          state: "",
+          fullAddress: "Location Unavailable", // Default text
+          loading: false,
+          hasLocation: false,
+          showAddLocation: false, // ❌ Disable Add Location based on user request
+          error: geoResult.error || "no_location",
+          errorMessage: "Location not available"
+        };
       });
 
     } catch (error) {
@@ -541,24 +595,38 @@ export default function FarmerDashboard() {
   // =========== EVENT HANDLERS ===========
 
   const handleAddLocation = () => {
-    // Option 1: Navigate to settings
-    navigate('/farmer-dashboard/settings?tab=location');
+    // Temporary: Use prompts since Settings page isn't ready
+    const city = window.prompt("Enter your city:", userLocation.city || "");
+    if (!city) return;
 
-    // Option 2: Show modal (uncomment to use)
-    // const city = window.prompt("Enter your city:", userLocation.city || "");
-    // const state = window.prompt("Enter your state:", userLocation.state || "");
-    // if (city && state) {
-    //   setUserLocation({
-    //     city,
-    //     state,
-    //     loading: false,
-    //     hasLocation: true,
-    //     showAddLocation: false,
-    //     error: null,
-    //     errorMessage: ""
-    //   });
-    //   // Save to backend here
-    // }
+    const state = window.prompt("Enter your state:", userLocation.state || "");
+    if (!state) return;
+
+    if (city && state) {
+      // 1. Update UI immediately
+      setUserLocation(prev => ({
+        ...prev,
+        city,
+        state,
+        loading: false,
+        hasLocation: true,
+        showAddLocation: false,
+        error: null,
+        errorMessage: ""
+      }));
+
+      // 2. Update LocalStorage (to persist for testing)
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        parsed.city = city;
+        parsed.state = state;
+        localStorage.setItem("user", JSON.stringify(parsed));
+      }
+
+      // TODO: Call API to save to backend (updateProfile)
+      console.log("Location locally updated:", city, state);
+    }
   };
 
 
@@ -605,44 +673,12 @@ export default function FarmerDashboard() {
     let showRetryButton = false;
 
     if (!userLocation.loading) {
-      if (userLocation.city && userLocation.state) {
-        locationText = `${userLocation.city}, ${userLocation.state}`;
-        if (userLocation.errorMessage) {
-          locationText += ` (${userLocation.errorMessage})`;
-        }
-      } else if (userLocation.showAddLocation) {
-        if (userLocation.error === "timeout") {
-          locationText = (
-            <div className="flex items-center gap-2">
-              <span>Location timeout</span>
-              <button
-                onClick={handleRetryLocation}
-                className="text-blue-600 hover:text-blue-800 underline text-sm"
-              >
-                Retry
-              </button>
-              <span>or</span>
-              <button
-                onClick={handleAddLocation}
-                className="text-green-600 hover:text-green-800 underline text-sm"
-              >
-                Add Manually
-              </button>
-            </div>
-          );
-        } else {
-          locationText = (
-            <button
-              onClick={handleAddLocation}
-              className="text-blue-600 hover:text-blue-800 underline text-sm flex items-center gap-1"
-            >
-              <span className="material-icons text-xs">add_location</span>
-              Add Your Location
-            </button>
-          );
-        }
+      if (userLocation.hasLocation) {
+        // ✅ Show Full Address or City, State
+        locationText = userLocation.fullAddress || `${userLocation.city}, ${userLocation.state}`;
       } else {
-        locationText = "Pune, Maharashtra";
+        // Fallback if truly nothing is found
+        locationText = "Location Unavailable";
       }
     }
 
