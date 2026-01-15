@@ -64,6 +64,16 @@ export const registerFarmer = async (req, res) => {
       type: "success"
     });
 
+    // 6. Send Welcome Email 📧
+    if (email) {
+      await sendMail(email, 'WELCOME', {
+        name: fullName,
+        role: 'Farmer',
+        mobile: mobile,
+        location: `${farmerData.address?.city || 'Unknown City'}, ${farmerData.address?.state || ''}`
+      });
+    }
+
     // 6. Generate Token
     const token = user.generateAuthToken();
 
