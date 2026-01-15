@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'Name cannot be more than 100 characters']
   },
-  
+
   mobile: {
     type: String,
     required: [true, 'Please provide your mobile number'],
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^[6-9]\d{9}$/, 'Please provide a valid Indian mobile number']
   },
-  
+
   email: {
     type: String,
     trim: true,
@@ -27,47 +27,50 @@ const userSchema = new mongoose.Schema({
     sparse: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
-  
+
   password: {
     type: String,
     required: [true, 'Please provide a password'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false
   },
-  
+
   role: {
     type: String,
     enum: ['farmer', 'vendor', 'customer', 'admin'],
     required: true
   },
-  
+
   profilePhoto: {
     type: String,
     default: 'https://res.cloudinary.com/farm2vendor/image/upload/v1/defaults/profile.png'
   },
-  
-  isVerified: { 
-    type: Boolean, 
-    default: false 
+
+  isVerified: {
+    type: Boolean,
+    default: false
   },
-  
-  isActive: { 
-    type: Boolean, 
-    default: true 
+
+  isActive: {
+    type: Boolean,
+    default: true
   },
-  
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
   location: {
-    type: { 
-      type: String, 
-      enum: ['Point'], 
-      default: 'Point' 
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
     },
-    coordinates: { 
-      type: [Number], 
-      default: [0, 0] 
+    coordinates: {
+      type: [Number],
+      default: [0, 0]
     }
   },
-  
+
   address: {
     village: String,
     city: String,
@@ -76,16 +79,16 @@ const userSchema = new mongoose.Schema({
     pincode: String,
     fullAddress: String
   },
-  
-  otp: { 
-    code: String, 
-    expiresAt: Date 
+
+  otp: {
+    code: String,
+    expiresAt: Date
   },
-  
+
   fcmToken: String,
-  
+
   lastLogin: Date,
-  
+
   settings: {
     notifications: {
       email: { type: Boolean, default: true },
@@ -94,7 +97,7 @@ const userSchema = new mongoose.Schema({
     },
     language: { type: String, default: 'english' }
   }
-  
+
 }, {
   timestamps: true
 });
@@ -104,9 +107,9 @@ userSchema.index({ location: '2dsphere' });
 userSchema.index({ role: 1, isActive: 1 });
 
 // Hash password
-userSchema.pre('save', async function() {
+userSchema.pre('save', async function () {
   console.log("🔄 User pre-save hook called");
-  
+
   // Check if password is modified
   if (!this.isModified('password')) {
     console.log("Password not modified, skipping hash");
@@ -126,12 +129,12 @@ userSchema.pre('save', async function() {
 });
 
 // Compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Generate JWT token
-userSchema.methods.generateAuthToken = function() {
+userSchema.methods.generateAuthToken = function () {
   return jwt.sign(
     { id: this._id, role: this.role },
     process.env.JWT_SECRET,
@@ -141,7 +144,7 @@ userSchema.methods.generateAuthToken = function() {
 
 // Virtual for getting role-specific data
 userSchema.virtual('profile', {
-  ref: function() {
+  ref: function () {
     // Dynamic reference based on role
     if (this.role === 'farmer') return 'Farmer';
     if (this.role === 'customer') return 'Customer';

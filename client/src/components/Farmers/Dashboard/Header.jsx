@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../../../contexts/SocketContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const Header = ({
   toggleSidebar,
@@ -11,6 +13,34 @@ const Header = ({
   onAddLocation
 }) => {
   const navigate = useNavigate();
+  const socket = useSocket();
+  const { user } = useAuth();
+
+  // State for Online Status (default online when socket connects)
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Sync state if socket emits update (optional, but good for multi-tab)
+  useEffect(() => {
+    if (socket) {
+      socket.on('user-status-change', ({ userId, isOnline: status }) => {
+        if (userId === user?.id) {
+          setIsOnline(status);
+        }
+      });
+    }
+  }, [socket, user]);
+
+  const toggleStatus = () => {
+    const newStatus = !isOnline;
+    setIsOnline(newStatus);
+
+    if (socket && user) {
+      socket.emit('set-status', {
+        userId: user.id || user._id,
+        status: newStatus ? 'online' : 'offline'
+      });
+    }
+  };
 
   // ✅ Step 1: Logic safe karein (String "true" ya Boolean true dono chalega)
   const isVerified = Verified === true || Verified === "true";
@@ -78,12 +108,20 @@ const Header = ({
 
       {/* Right Side: Online Status & Profile */}
       <div className="flex items-center gap-2 md:gap-4">
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/50 rounded-full border border-slate-200">
+
+        {/* 🟢 Online Status Toggle */}
+        <div
+          onClick={toggleStatus}
+          className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer select-none transition-all ${isOnline
+            ? "bg-green-50 border-green-200 text-green-700"
+            : "bg-red-50 border-red-200 text-red-700"}`}
+          title="Click to toggle status"
+        >
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnline ? "bg-green-400" : "hidden"}`}></span>
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isOnline ? "bg-green-500" : "bg-red-500"}`}></span>
           </span>
-          <span className="text-xs font-semibold text-slate-600">Online</span>
+          <span className="text-xs font-semibold">{isOnline ? "Online" : "Busy"}</span>
         </div>
 
         {/* Notification Button with Badge */}

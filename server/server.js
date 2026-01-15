@@ -164,26 +164,38 @@ const io = new SocketIO(server, {
   }
 });
 
+
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
-
-  socket.on('join-user', (userId) => {
+  // 🟢 1. User Joined - Set Online
+  socket.on('join-user', async (userId) => {
     socket.join(userId);
-    console.log(`User ${userId} joined their room`);
+    console.log(`User ${userId} came Online`);
+    
+    // DB Update: isOnline = true
+    try {
+        await User.findByIdAndUpdate(userId, { isOnline: true });
+        io.emit('user-status-change', { userId, isOnline: true }); // Broadcast to others
+    } catch (e) {
+        console.error("Online update failed:", e);
+    }
   });
-
-  socket.on('send-notification', (data) => {
-    io.to(data.userId).emit('receive-notification', data);
+  
+  // 🔴 2. Manual Offline Toggle
+  socket.on('set-status', async ({ userId, status }) => {
+      // status: 'online' | 'offline' | 'busy'
+      const isOnline = status === 'online';
+      await User.findByIdAndUpdate(userId, { isOnline });
+      io.emit('user-status-change', { userId, isOnline });
   });
-
-  socket.on('market-update', (data) => {
-    io.emit('market-price-update', data);
-  });
-
-  socket.on('disconnect', () => {
+  // 🔌 3. Disconnect - Set Offline
+  socket.on('disconnect', async () => {
     console.log('Client disconnected:', socket.id);
+    // Note: Use a map to track socketId -> userId if needed for reliable disconnect implementation
+    // For simple version, rely on client "set-status" or heartbeat
   });
 });
+
 
 app.set('io', io);
 
