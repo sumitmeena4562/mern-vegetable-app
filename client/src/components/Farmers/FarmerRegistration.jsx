@@ -122,7 +122,9 @@ const FarmerRegistration = () => {
     confirmPassword: '',
     village: '',
     city: '',
+    city: '',
     state: '', // ✅ Fix: Default value empty rakhi taaki user khud select kare
+    farmSize: '', // ✅ Added farmSize
     pickup: 'Morning (6 AM - 10 AM)',
     otherCropName: '',
     crops: { tomato: false, potato: false, onion: false, carrot: false, leafyVeg: false, others: false },
@@ -175,10 +177,25 @@ const FarmerRegistration = () => {
         toast.success("Location captured successfully!");
         setGpsLoading(false);
       },
-      () => {
-        toast.error("Unable to retrieve your location");
+      (error) => {
         setGpsLoading(false);
-      }
+        let errorMsg = "Unable to retrieve your location";
+        switch (error.code) {
+          case 1: // PERMISSION_DENIED
+            errorMsg = "⚠️ Permission Denied! Please allow location access in your browser settings.";
+            break;
+          case 2: // POSITION_UNAVAILABLE
+            errorMsg = "📡 GPS Unavailable! Please ensure your device location is turned ON.";
+            break;
+          case 3: // TIMEOUT
+            errorMsg = "⏳ Request Timed Out! Please try again in an open area.";
+            break;
+          default:
+            errorMsg = `❌ Location Error: ${error.message}`;
+        }
+        toast.error(errorMsg, { duration: 5000 });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -215,7 +232,7 @@ const FarmerRegistration = () => {
     // 2. Progress Bar Calculation
     const calculateProgress = () => {
       let progress = 0;
-      const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state']; // Added state to required
+      const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state', 'farmSize']; // Added farmSize
 
       requiredFields.forEach(field => {
         if (formData[field] && formData[field].trim().length > 0) {
@@ -277,6 +294,9 @@ const FarmerRegistration = () => {
         break;
       case "otherCropName":
         if (formData.crops.others && !value.trim()) errorMsg = "Please specify the crop name.";
+        break;
+      case "farmSize":
+        if (!value || isNaN(value) || Number(value) <= 0) errorMsg = "Please enter a valid farm size (in acres).";
         break;
       default: break;
     }
@@ -568,7 +588,7 @@ const FarmerRegistration = () => {
     }
 
     // Check required fields
-    const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state'];
+    const requiredFields = ['fullName', 'mobile', 'email', 'password', 'confirmPassword', 'village', 'city', 'state', 'farmSize'];
     const missingField = requiredFields.find(field => !formData[field].trim());
     if (missingField) {
       toast.error(`Please fill in ${missingField.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
@@ -608,6 +628,7 @@ const FarmerRegistration = () => {
         password: formData.password,
         role: 'farmer',
         farmName: formData.fullName + "'s Farm",
+        farmSize: formData.farmSize, // ✅ Added Farm Size
         address: {
           village: formData.village,
           city: formData.city,
@@ -813,6 +834,33 @@ const FarmerRegistration = () => {
                     <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
                       <span className="material-symbols-outlined text-sm">error</span>
                       {errors.fullName}
+                    </p>
+                  )}
+                </div>
+
+                {/* Farm Size Input - New Addition */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Farm Size (Acres) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="farmSize"
+                    type="number"
+                    value={formData.farmSize}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={`w-full rounded-xl py-3 px-4 bg-white border outline-none transition-all duration-200 ${errors.farmSize
+                      ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                      : 'border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200'
+                      }`}
+                    placeholder="e.g. 2.5"
+                    min="0.1"
+                    step="0.1"
+                  />
+                  {errors.farmSize && (
+                    <p className="text-red-500 text-xs mt-2 font-semibold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      {errors.farmSize}
                     </p>
                   )}
                 </div>
