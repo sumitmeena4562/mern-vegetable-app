@@ -630,10 +630,42 @@ const FarmerRegistration = () => {
       const response = await api.post('/farmers/register', payload);
 
       if (response.data.success) {
-        toast.success("✅ Registration Successful! Redirecting to login...");
+        // Premium Custom Toast
+        toast.custom((t) => (
+          <div
+            className={`${t.visible ? 'animate-enter' : 'animate-leave'
+              } max-w-md w-full bg-white shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden border-l-4 border-green-500`}
+          >
+            <div className="flex-1 w-0 p-6">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 pt-0.5">
+                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center animate-bounce">
+                    <span className="material-symbols-outlined text-2xl text-green-600">celebration</span>
+                  </div>
+                </div>
+                <div className="ml-4 flex-1">
+                  <p className="text-lg font-bold text-gray-900">
+                    Welcome to the Family! 🌾
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500 leading-relaxed">
+                    Your account has been successfully created. Get ready to grow with <span className="font-bold text-green-600">AgriConnect</span>.
+                  </p>
+                  <p className="mt-3 text-xs font-semibold text-green-600 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                    Redirecting to login...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ), {
+          duration: 4000,
+          position: 'top-center',
+        });
+
         setTimeout(() => {
           navigate('/login');
-        }, 2000);
+        }, 3500);
       }
     } catch (error) {
       const errorMsg = error.response?.data?.message || "Registration failed!";

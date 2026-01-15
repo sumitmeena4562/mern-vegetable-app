@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api/axios.js';
 import { useSocket } from './SocketContext';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
@@ -10,8 +11,12 @@ export const NotificationProvider = ({ children }) => {
   const socket = useSocket();
   const [notifications, setNotifications] = useState([]);
 
+  const { user } = useAuth(); // Import useAuth
+
   // 1. Load Initial History from API
   useEffect(() => {
+    if (!user) return; // ✅ Block fetch if not logged in
+
     const fetchNotifications = async () => {
       try {
         const { data } = await api.get('/notifications');
@@ -23,7 +28,7 @@ export const NotificationProvider = ({ children }) => {
       }
     };
     fetchNotifications();
-  }, []);
+  }, [user]); // Re-run when user changes
 
   // 2. Listen for Real-time Socket Events
   useEffect(() => {
