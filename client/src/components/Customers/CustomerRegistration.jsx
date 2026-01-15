@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import api from '../../api/axios';
+import { toast, Toaster } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const CustomerRegistration = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     mobile: '',
@@ -19,10 +22,34 @@ const CustomerRegistration = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Customer registration submitted:', formData);
-    // Handle form submission logic here
+
+    try {
+      const payload = {
+        fullName: formData.fullName,
+        mobile: formData.mobile,
+        password: formData.password,
+        email: `${formData.mobile}@agriconnect.com`,
+        deliveryAddresses: [{
+          addressLine: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+          default: true
+        }],
+        preferences: formData.preferences ? formData.preferences.split(',').map(p => p.trim()) : []
+      };
+
+      const response = await api.post('/customers/register', payload);
+
+      if (response.data.success) {
+        toast.success("Customer Account Created!");
+        setTimeout(() => navigate('/login'), 2000);
+      }
+    } catch (error) {
+      console.error("Registration Error", error);
+      toast.error(error.response?.data?.message || "Registration Failed");
+    }
   };
 
   return (
@@ -35,6 +62,7 @@ const CustomerRegistration = () => {
         <div className="absolute top-[40%] left-[50%] w-[25%] h-[25%] bg-yellow-100/40 rounded-full blur-[90px]"></div>
       </div>
 
+      <Toaster position="top-center" />
       <div className="min-h-full flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
@@ -262,7 +290,7 @@ const CustomerRegistration = () => {
                   </div>
                   Preferences <span className="text-sm font-normal text-gray-500 ml-2">(Optional)</span>
                 </h3>
-                
+
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="preferences">
                     Preferred Vegetables
@@ -295,7 +323,7 @@ const CustomerRegistration = () => {
                 >
                   Create Account
                 </button>
-                
+
                 <div className="mt-6 flex justify-center items-center gap-2 p-4">
                   <span className="material-symbols-outlined text-green-600">verified_user</span>
                   <p className="text-sm text-gray-600 font-medium">
@@ -308,7 +336,7 @@ const CustomerRegistration = () => {
 
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-gray-500 font-medium">
-            Already have an account? 
+            Already have an account?
             <a className="font-bold text-green-700 hover:text-green-800 ml-1 underline decoration-2 decoration-green-300 underline-offset-2 transition-colors" href="#">
               Login here
             </a>

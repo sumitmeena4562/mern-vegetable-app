@@ -614,7 +614,7 @@ const FarmerRegistration = () => {
           state: formData.state,
           fullAddress: `${formData.village}, ${formData.city}, ${formData.state}`
         },
-        
+
         crops: Object.keys(formData.crops)
           .filter(key => formData.crops[key])
           .map(key => {
@@ -624,10 +624,10 @@ const FarmerRegistration = () => {
             return { name: key.charAt(0).toUpperCase() + key.slice(1) };
           }),
         preferredPickupTime: formData.pickup, // ✅ Fix: key matched with backend
-        location: formData.location 
+        location: formData.location
       };
 
-      const response = await api.post('/auth/register/farmer', payload);
+      const response = await api.post('/farmers/register', payload);
 
       if (response.data.success) {
         toast.success("✅ Registration Successful! Redirecting to login...");

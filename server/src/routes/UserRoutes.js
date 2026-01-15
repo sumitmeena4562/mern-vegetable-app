@@ -1,7 +1,6 @@
 import express from "express";
 import {
     login,
-    register,
     getUserName,
     getMe,
     getProfile,
@@ -23,8 +22,6 @@ router.post("/login", login);
 // ✅ New Route add karo (Auth middleware ke saath)
 router.get("/user-name", auth(), getUserName);
 
-router.post('/register/farmer', register);
-
 
 router.get('/me', auth(), getMe);
 
@@ -36,8 +33,7 @@ router.post('/forgot-password-otp', sendForgotPasswordOtp);
 router.post('/verify-reset-otp', verifyResetOtp);
 router.post('/reset-password-with-otp', auth(), resetPasswordWithOtp);
 
+// Unified Profile Route (Restored)
 router.get('/profile', auth(), getProfile);
-
-
 
 export default router;

@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import api from '../../api/axios';
+import { toast, Toaster } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const VendorRegistration = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     mobile: '',
@@ -22,10 +25,44 @@ const VendorRegistration = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Vendor registration submitted:', formData);
-    // Handle form submission logic here
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      const payload = {
+        fullName: formData.fullName,
+        mobile: formData.mobile,
+        password: formData.password,
+        email: `${formData.mobile}@agriconnect.com`, // Default email if not provided
+        shopName: formData.shopName,
+        dailyCapacity: Number(formData.capacity),
+        location: { type: 'Point', coordinates: [0, 0] }, // Default location, logic can be added later
+        address: { // Added to match schema if needed, but schema uses fields directly on Vendor
+          shopAddress: formData.shopAddress,
+          city: formData.city,
+          state: formData.state
+        },
+        // Flat fields for Vendor model
+        shopAddress: formData.shopAddress,
+        city: formData.city,
+        state: formData.state,
+        preferredPickupTime: formData.pickup
+      };
+
+      const response = await api.post('/vendors/register', payload);
+
+      if (response.data.success) {
+        toast.success("Vendor Registered Successfully!");
+        setTimeout(() => navigate('/login'), 2000);
+      }
+    } catch (error) {
+      console.error("Registration Error", error);
+      toast.error(error.response?.data?.message || "Registration Failed");
+    }
   };
 
   const states = [
@@ -53,6 +90,7 @@ const VendorRegistration = () => {
         <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-yellow-100/30 rounded-full blur-[80px]"></div>
       </div>
 
+      <Toaster position="top-center" />
       <div className="min-h-full flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
@@ -384,7 +422,7 @@ const VendorRegistration = () => {
                 >
                   Register as Vendor
                 </button>
-                
+
                 <div className="mt-6 flex items-start gap-3 p-4 bg-blue-50/80 border border-blue-200/60 rounded-xl">
                   <span className="material-symbols-outlined text-blue-600 shrink-0">info</span>
                   <p className="text-sm text-blue-800 font-medium">
@@ -397,7 +435,7 @@ const VendorRegistration = () => {
 
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-gray-500 font-medium">
-            Already have an account? 
+            Already have an account?
             <a className="font-bold text-green-700 hover:text-green-800 ml-1 underline decoration-2 decoration-green-300 underline-offset-2" href="#">
               Login here
             </a>
