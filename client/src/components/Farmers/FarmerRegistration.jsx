@@ -1098,8 +1098,8 @@ const FarmerRegistration = () => {
       focus:border-green-500 focus:ring-4 focus:ring-green-100 hover:border-green-400 cursor-pointer shadow-sm hover:shadow-md"
                       >
                         <option value="">Select State</option>
-                        {states.map((s) => (
-                          <option key={s.state_id} value={s.state_name}>{s.state_name}</option>
+                        {states.map((stateName) => (
+                          <option key={stateName} value={stateName}>{stateName}</option>
                         ))}
                       </select>
 

@@ -2,67 +2,37 @@ import React from 'react';
 
 const Features = () => {
   const features = [
-    {
-      icon: 'diversity_3',
-      title: 'Verified Community',
-      description: '100% KYC verified Farmers and Vendors for a safe and trusted trading environment.',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50'
-    },
-    {
-      icon: 'currency_rupee',
-      title: 'Live Mandi Rates',
-      description: 'Real-time APMC market prices to help you negotiate better and sell smarter.',
-      color: 'text-green-600',
-      bg: 'bg-green-50'
-    },
-    {
-      icon: 'local_shipping',
-      title: 'Integrated Logistics',
-      description: 'We handle the pickup from farm gate to vendor doorstep. No transport hassle.',
-      color: 'text-orange-600',
-      bg: 'bg-orange-50'
-    },
-    {
-      icon: 'verified_user',
-      title: 'Digital Traceability',
-      description: 'Scan QR code to see the farm origin, harvest date, and farmer profile.',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50'
-    }
+    { icon: 'diversity_3', title: 'Verified Community', description: '100% KYC verified Farmers and Vendors for safe trading.', emoji: '🤝', gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50' },
+    { icon: 'currency_rupee', title: 'Live Mandi Rates', description: 'Real-time APMC market prices for smarter selling.', emoji: '📈', gradient: 'from-green-500 to-emerald-600', bg: 'bg-green-50' },
+    { icon: 'local_shipping', title: 'Smart Logistics', description: 'Farm gate to vendor doorstep — zero transport hassle.', emoji: '🚛', gradient: 'from-orange-500 to-red-500', bg: 'bg-orange-50' },
+    { icon: 'verified_user', title: 'QR Traceability', description: 'Scan QR code to see farm origin and harvest date.', emoji: '🔍', gradient: 'from-purple-500 to-violet-600', bg: 'bg-purple-50' },
   ];
 
   return (
-    <section className="py-24 bg-gray-50 border-t border-gray-100">
+    <section className="py-16 sm:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-black text-gray-900 sm:text-4xl mb-4">
-            Powerful Features, <span className="text-gray-400">Simple to Use</span>
+        <div className="text-center mb-10 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 rounded-full text-purple-700 text-xs font-bold mb-4">
+            <span className="material-symbols-outlined text-sm">auto_awesome</span>
+            Features
+          </div>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900">
+            Powerful Features, <span className="text-slate-300">Simple to Use</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-slate-500 mt-3 text-sm sm:text-base max-w-lg mx-auto">
             Everything you need to buy and sell agricultural produce efficiently.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className={`w-14 h-14 rounded-xl ${feature.bg} flex items-center justify-center mb-6`}>
-                <span className={`material-symbols-outlined text-3xl ${feature.color}`}>
-                  {feature.icon}
-                </span>
+            <div key={index}
+              className="group bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 hover:border-transparent hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
+                <span className="text-xl sm:text-2xl">{feature.emoji}</span>
               </div>
-
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                {feature.title}
-              </h3>
-
-              <p className="text-gray-500 leading-relaxed text-sm">
-                {feature.description}
-              </p>
+              <h3 className="text-sm sm:text-lg font-bold text-slate-800 mb-1 sm:mb-2">{feature.title}</h3>
+              <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

@@ -24,3 +24,9 @@ export const resetPasswordWithOtp = async (tempToken, newPassword) => {
     );
     return response.data;
 };
+
+// Farmer Dashboard Stats
+export const getFarmerStats = async () => {
+    const response = await api.get('/farmers/stats');
+    return response.data;
+};

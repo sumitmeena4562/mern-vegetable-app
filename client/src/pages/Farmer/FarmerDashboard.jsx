@@ -8,6 +8,8 @@ import Header from "../../components/Farmers/Dashboard/Header";
 import Overview from "../../components/Farmers/Dashboard/Overview";
 import AddSabji from "./AddSabji";
 import Notifications from "../../components/Farmers/Dashboard/notification/Notifications";
+import FarmerOnboarding from "../../components/Farmers/Dashboard/FarmerOnboarding";
+import api from "../../api/axios";
 
 // ============================================
 // 🧠 HELPER FUNCTIONS (Extract kar sakte ho alag file me)
@@ -242,6 +244,7 @@ export default function FarmerDashboard() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isVerified, setVerified] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(null); // null = loading, true/false = checked
 
   // 🔥 Aage aur user data add kar sakte ho:
   // const [phone, setPhone] = useState("");
@@ -274,6 +277,7 @@ export default function FarmerDashboard() {
       try {
         // Run Sequentially to avoid race conditions
         await loadUserProfile();
+        await checkOnboardingStatus();
         await loadUserLocation();
       } catch (error) {
         console.error("Dashboard initialization failed:", error);
@@ -288,41 +292,51 @@ export default function FarmerDashboard() {
   // =========== CORE FUNCTIONS ===========
 
   /**
-   * Load user profile data from multiple sources
+   * Load user profile data — ALWAYS verify with backend first
    */
   const loadUserProfile = async () => {
     try {
       let userData = null;
+      const token = localStorage.getItem("token");
 
-      // Source 1: AuthContext (fastest)
-      if (user) {
-        userData = user;
-        console.log("✅ Using user from AuthContext");
+      // ALWAYS verify with backend API first (prevents stale/deleted user access)
+      if (token) {
+        try {
+          userData = await fetchUserDataFromAPI(token);
+          if (userData) {
+            localStorage.setItem("user", JSON.stringify(userData));
+            console.log("✅ User verified from API");
+          }
+        } catch (apiError) {
+          // If API returns 401/403/404 — user is deleted or token is invalid
+          if (apiError.response?.status === 401 || apiError.response?.status === 403 || apiError.response?.status === 404) {
+            console.error("❌ User not found or token invalid — forcing logout");
+            handleLogout();
+            return;
+          }
+          // Network error — fall through to cached data
+          console.warn("⚠️ API unreachable, falling back to cached data");
+        }
       }
 
-      // Source 2: LocalStorage (fallback)
+      // Fallback: Use cached data only if API was unreachable (network error)
       if (!userData) {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           try {
             userData = JSON.parse(storedUser);
-            console.log("✅ Using user from localStorage");
+            console.log("⚠️ Using cached user (offline mode)");
           } catch (e) {
             console.warn("Failed to parse stored user:", e);
           }
         }
       }
 
-      // Source 3: API call (last resort)
+      // No data at all — force logout
       if (!userData) {
-        const token = localStorage.getItem("token");
-        if (token) {
-          userData = await fetchUserDataFromAPI(token);
-          if (userData) {
-            localStorage.setItem("user", JSON.stringify(userData));
-            console.log("✅ Using user from API");
-          }
-        }
+        console.error("❌ No user data available — forcing logout");
+        handleLogout();
+        return;
       }
 
       // Extract and set data
@@ -689,6 +703,26 @@ export default function FarmerDashboard() {
     };
   };
 
+  // =========== ONBOARDING CHECK ===========
+  const checkOnboardingStatus = async () => {
+    try {
+      const response = await api.get('/farmers/profile');
+      if (response.data?.success && response.data?.data) {
+        const profile = response.data.data;
+        setOnboardingComplete(profile.onboardingComplete === true);
+      } else {
+        setOnboardingComplete(false);
+      }
+    } catch (error) {
+      console.error('Onboarding check error:', error);
+      setOnboardingComplete(false);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setOnboardingComplete(true);
+  };
+
   const headerData = getHeaderData();
 
   // =========== RENDER CONDITIONS ===========
@@ -722,6 +756,16 @@ export default function FarmerDashboard() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // =========== ONBOARDING GATE ===========
+  if (onboardingComplete === false) {
+    return (
+      <FarmerOnboarding
+        userName={name}
+        onComplete={handleOnboardingComplete}
+      />
     );
   }
 
@@ -764,10 +808,10 @@ export default function FarmerDashboard() {
             <Route path="notifications" element={<Notifications />} />
 
             {/* 🔥 Yaha aur routes add kar sakte ho: */}
-            {/* <Route path="products" element={<Products />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<Settings />} /> */}
+            <Route path="products" element={<div>Products Page (Coming Soon)</div>} />
+            <Route path="orders" element={<div>Orders Page (Coming Soon)</div>} />
+            <Route path="profile" element={<div>Profile Page (Coming Soon)</div>} />
+            <Route path="settings" element={<div>Settings Page (Coming Soon)</div>} />
           </Routes>
         </div>
 

@@ -1,6 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
+import Product from '../models/Product.js';
 import Notification from '../models/Notification.js';
 import { sendMail } from '../utils/sendMail.js';
 
@@ -39,21 +40,28 @@ export const registerFarmer = async (req, res) => {
       password,
       email: email || `${mobile}@agriconnect.com`,
       role: 'farmer',
-      isVerified: true, // Assuming OTP verified on frontend before this call
-      location: farmerData.location || { type: 'Point', coordinates: [0, 0] }
+      isVerified: true,
+      location: farmerData.location || { type: 'Point', coordinates: [0, 0] },
+      address: farmerData.address || {}
     });
 
-    // 4. Create Farmer Profile
+    // 4. Create Farmer Profile (Improved with specialized fields)
     const profile = await Farmer.create({
       user: user._id,
       farmName: farmerData.farmName || `${fullName}'s Farm`,
       farmSize: farmerData.farmSize,
       farmSizeUnit: farmerData.farmSizeUnit || 'acre',
+      farmingType: farmerData.farmingType || 'regular',
+      soilType: farmerData.soilType || 'other',
+      irrigationSystem: farmerData.irrigationSystem || 'manual',
+      waterSource: farmerData.waterSource || 'well',
+      hasColdStorage: farmerData.hasColdStorage || false,
+      landOwnership: farmerData.landOwnership || 'owned',
+      farmPhotos: farmerData.farmPhotos || [],
+      primaryCrop: farmerData.primaryCrop,
       crops: farmerData.crops || [],
       farmingExperience: farmerData.farmingExperience || 0,
-      preferredPickupTime: farmerData.preferredPickupTime || 'morning',
-      location: farmerData.location || { type: 'Point', coordinates: [0, 0] },
-      address: farmerData.address || {}
+      preferredPickupTime: farmerData.preferredPickupTime || 'morning'
     });
 
     // 5. Notifications
@@ -117,14 +125,15 @@ export const getMyProfile = async (req, res) => {
 // Update Farmer Profile
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, email, ...farmData } = req.body;
+    const { fullName, email, address, location, ...farmData } = req.body;
 
-    // Update User basic info including Address
-    if (fullName || email || farmData.address) {
+    // Update User common info
+    if (fullName || email || address || location) {
       const userUpdate = {};
       if (fullName) userUpdate.fullName = fullName;
       if (email) userUpdate.email = email;
-      if (farmData.address) userUpdate.address = farmData.address;
+      if (address) userUpdate.address = address;
+      if (location) userUpdate.location = location;
 
       await User.findByIdAndUpdate(req.user.id, userUpdate);
     }
@@ -142,9 +151,115 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// Get Dashboard Stats (Real Data for MVP)
+export const getDashboardStats = async (req, res) => {
+  try {
+    const farmerId = req.user.id;
+
+    // 1. Get Product Stats
+    const totalProducts = await Product.countDocuments({ farmer: farmerId, status: { $ne: 'removed' } });
+
+    // 2. Get Order Stats (Aggregate from Order Model)
+    // Note: Assuming 'Order' model exists as identified in models dir
+    const { default: Order } = await import('../models/Order.js');
+
+    const orders = await Order.find({ farmer: farmerId });
+    const pendingOrders = orders.filter(o => ['pending', 'confirmed', 'ready'].includes(o.status)).length;
+    const completedOrders = orders.filter(o => o.status === 'delivered').length;
+
+    // 3. Calculate Earnings
+    const totalEarnings = orders
+      .filter(o => o.status === 'delivered' || o.paymentStatus === 'paid')
+      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+    // 4. Get Farmer Profile for Onboarding
+    const profile = await Farmer.findOne({ user: farmerId });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: {
+          totalEarnings,
+          activeProducts: totalProducts,
+          pendingOrders,
+          completedOrders,
+          rating: profile?.averageRating || 0,
+          reviewsCount: 0 // Aage reviews model se ayega
+        },
+        onboarding: {
+          profileComplete: !!(profile?.farmName && profile?.farmSize),
+          productsCount: totalProducts,
+          isVerified: req.user.isVerified || profile?.kycVerified
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Stats fetch error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch stats' });
+  }
+};
+
+// Complete Onboarding (Mandatory First-Time Setup)
+export const completeOnboarding = async (req, res) => {
+  try {
+    const farmerId = req.user.id;
+    const {
+      farmName, farmSize, farmSizeUnit, landOwnership,
+      farmingType, soilType, irrigationSystem, waterSource, hasColdStorage,
+      primaryCrop, crops, farmingExperience, preferredPickupTime
+    } = req.body;
+
+    // Validate required fields
+    if (!farmName || !farmSize || !crops || crops.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Farm name, size, and at least one crop are required.'
+      });
+    }
+
+    const farmer = await Farmer.findOneAndUpdate(
+      { user: farmerId },
+      {
+        farmName,
+        farmSize: parseFloat(farmSize),
+        farmSizeUnit: farmSizeUnit || 'acre',
+        landOwnership: landOwnership || 'owned',
+        farmingType: farmingType || 'regular',
+        soilType: soilType || 'other',
+        irrigationSystem: irrigationSystem || 'manual',
+        waterSource: waterSource || 'well',
+        hasColdStorage: hasColdStorage || false,
+        primaryCrop: primaryCrop || '',
+        crops: crops || [],
+        farmingExperience: parseInt(farmingExperience) || 0,
+        preferredPickupTime: preferredPickupTime || 'morning',
+        onboardingComplete: true
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!farmer) {
+      return res.status(404).json({ success: false, message: 'Farmer profile not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Onboarding completed successfully!',
+      data: farmer
+    });
+
+  } catch (error) {
+    console.error('Onboarding completion error:', error);
+    res.status(500).json({ success: false, message: 'Failed to complete onboarding' });
+  }
+};
+
 export default {
   validateCreateFarmer,
   registerFarmer,
   getMyProfile,
-  updateProfile
+  updateProfile,
+  getDashboardStats,
+  completeOnboarding
 };

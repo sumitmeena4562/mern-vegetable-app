@@ -1,9 +1,9 @@
 import React from 'react';
 
-const RightPanel = () => {
+const RightPanel = ({ isNew }) => {
   return (
     <div className="lg:col-span-4 flex flex-col gap-6">
-      
+
       {/* Quick Actions */}
       <div className="glass-panel p-6 rounded-2xl soft-shadow sticky top-24">
         <h3 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
@@ -26,42 +26,44 @@ const RightPanel = () => {
         </div>
       </div>
 
-      {/* Pickups */}
-      <div className="glass-panel p-6 rounded-2xl soft-shadow">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-slate-800">Pickups Today</h3>
-          <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">2 Left</span>
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
-            <div className="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-center min-w-[3.5rem]">
-              <span className="block text-xs uppercase">Today</span>
-              <span className="block text-lg text-slate-800">2pm</span>
+      {/* Pickups - Hide if new */}
+      {!isNew && (
+        <div className="glass-panel p-6 rounded-2xl soft-shadow">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-slate-800">Pickups Today</h3>
+            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">2 Left</span>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+              <div className="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-center min-w-[3.5rem]">
+                <span className="block text-xs uppercase">Today</span>
+                <span className="block text-lg text-slate-800">2pm</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-800">Fresh Mart</h4>
+                <p className="text-xs text-slate-500">Order #8821 • 50kg Tomato</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <button className="text-xs font-bold text-white bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700">Call Driver</button>
+                  <button className="text-xs font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded hover:bg-green-200">Ready?</button>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-slate-800">Fresh Mart</h4>
-              <p className="text-xs text-slate-500">Order #8821 • 50kg Tomato</p>
-              <div className="flex items-center gap-2 mt-2">
-                <button className="text-xs font-bold text-white bg-slate-800 px-3 py-1.5 rounded hover:bg-slate-700">Call Driver</button>
-                <button className="text-xs font-bold text-green-700 bg-green-100 px-3 py-1.5 rounded hover:bg-green-200">Ready?</button>
+            <div className="flex items-start gap-3">
+              <div className="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-center min-w-[3.5rem]">
+                <span className="block text-xs uppercase">Today</span>
+                <span className="block text-lg text-slate-800">5pm</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-slate-800">Big Basket Hub</h4>
+                <p className="text-xs text-slate-500">Order #8825 • 20kg Okra</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <button className="text-xs font-bold text-slate-600 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50">Details</button>
+                </div>
               </div>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="bg-slate-100 p-2 rounded-lg text-slate-500 font-bold text-center min-w-[3.5rem]">
-              <span className="block text-xs uppercase">Today</span>
-              <span className="block text-lg text-slate-800">5pm</span>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-slate-800">Big Basket Hub</h4>
-              <p className="text-xs text-slate-500">Order #8825 • 20kg Okra</p>
-              <div className="flex items-center gap-2 mt-2">
-                <button className="text-xs font-bold text-slate-600 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50">Details</button>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* Weather Widget */}
       <div className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg shadow-blue-500/30">

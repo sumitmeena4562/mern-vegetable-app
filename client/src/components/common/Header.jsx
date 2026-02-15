@@ -1,215 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleLanguage = () => {
-    setIsLanguageOpen(!isLanguageOpen);
-  };
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false); // Close mobile menu after click
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    setIsMenuOpen(false);
   };
 
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'hi', name: 'हिंदी' },
-    { code: 'mr', name: 'मराठी' },
-    { code: 'ta', name: 'தமிழ்' },
-    { code: 'te', name: 'తెలుగు' },
-    { code: 'bn', name: 'বাংলা' }
+  const navLinks = [
+    { label: 'Home', id: 'home' },
+    { label: 'How it Works', id: 'how-it-works' },
+    { label: 'Market Rates', id: 'market-rates' },
+    { label: 'Contact', id: 'contact' },
   ];
 
-  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
-
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#f8fbf9]/95 backdrop-blur-md border-b border-[#e8f3ec] dark:bg-[#112117]/95 dark:border-[#1f3b29]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-20 items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-4xl">eco</span>
-            <span className="text-2xl font-black tracking-tight text-[#0e1b13] dark:text-white">
-              <Link to="/">AgriConnect</Link>
-            </span>
-          </div>
+    <>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+          ? 'bg-white/90 backdrop-blur-xl shadow-lg shadow-black/[0.04] border-b border-slate-100'
+          : 'bg-transparent'
+        }`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 sm:h-18 items-center justify-between">
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            <button
-              onClick={() => scrollToSection('home')}
-              className="text-sm font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 transition-colors"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => scrollToSection('how-it-works')}
-              className="text-sm font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 transition-colors"
-            >
-              How it Works
-            </button>
-            <button
-              onClick={() => scrollToSection('market-rates')}
-              className="text-sm font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 transition-colors"
-            >
-              Market Rates
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
-              className="text-sm font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 transition-colors"
-            >
-              Contact
-            </button>
-          </nav>
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-9 h-9 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50 group-hover:shadow-green-300/60 transition-shadow">
+                <span className="material-symbols-outlined text-white text-xl">eco</span>
+              </div>
+              <span className="text-xl font-black tracking-tight text-slate-800">
+                Agri<span className="text-green-600">Connect</span>
+              </span>
+            </Link>
 
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Language Dropdown */}
-            <div className="relative">
-              <button
-                onClick={toggleLanguage}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#e8f3ec] text-[#0e1b13] text-sm font-bold hover:bg-[#d1e7d9] transition-colors dark:bg-[#1f3b29] dark:text-white"
-              >
-                <span className="material-symbols-outlined text-lg">language</span>
-                <span>{selectedLanguage.name}</span>
-                <span className="material-symbols-outlined text-sm">
-                  {isLanguageOpen ? 'expand_less' : 'expand_more'}
-                </span>
-              </button>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-1">
+              {navLinks.map(link => (
+                <button
+                  key={link.id}
+                  onClick={() => scrollToSection(link.id)}
+                  className="px-4 py-2 text-[13px] font-semibold text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200"
+                >
+                  {link.label}
+                </button>
+              ))}
+            </nav>
 
-              {/* Language Dropdown Menu */}
-              {isLanguageOpen && (
-                <div className="absolute top-full mt-2 w-48 bg-white dark:bg-[#1f3b29] rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden z-50">
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        setSelectedLanguage(lang);
-                        setIsLanguageOpen(false);
-                      }}
-                      className={`w-full px-4 py-3 text-left hover:bg-[#f0fdf4] dark:hover:bg-[#14532d] transition-colors ${selectedLanguage.code === lang.code
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-[#0e1b13] dark:text-gray-300'
-                        }`}
-                    >
-                      {lang.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-2.5">
+              <Link to="/login"
+                className="px-5 py-2.5 text-[13px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all">
+                Log in
+              </Link>
+              <Link to="/farmer-registration"
+                className="px-5 py-2.5 text-[13px] font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl shadow-lg shadow-green-200/50 hover:shadow-green-300/60 transition-all active:scale-[0.97]">
+                Get Started
+              </Link>
             </div>
 
-            {/* Login/Signup Button */}
-
-            <Link
-              to="/login"
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
             >
-              <button className="px-6 py-2 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/30 hover:bg-green-700 transition-colors">
-                Login
-              </button>
-            </Link>
+              <span className="material-symbols-outlined text-slate-700">
+                {isMenuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden p-2 text-[#0e1b13] dark:text-white"
-          >
-            <span className="material-symbols-outlined">
-              {isMenuOpen ? 'close' : 'menu'}
-            </span>
-          </button>
         </div>
+      </header>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 right-0 bg-white dark:bg-[#112117] border-b border-gray-100 dark:border-gray-800 shadow-lg">
-            <div className="px-4 py-6 space-y-4">
-              <button
-                onClick={() => scrollToSection('home')}
-                className="block w-full text-left px-4 py-3 text-base font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a2e22] rounded-lg transition-colors"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => scrollToSection('how-it-works')}
-                className="block w-full text-left px-4 py-3 text-base font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a2e22] rounded-lg transition-colors"
-              >
-                How it Works
-              </button>
-              <button
-                onClick={() => scrollToSection('market-rates')}
-                className="block w-full text-left px-4 py-3 text-base font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a2e22] rounded-lg transition-colors"
-              >
-                Market Rates
-              </button>
-              <button
-                onClick={() => scrollToSection('contact')}
-                className="block w-full text-left px-4 py-3 text-base font-semibold text-[#0e1b13] hover:text-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1a2e22] rounded-lg transition-colors"
-              >
-                Contact
-              </button>
-
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                {/* Language Dropdown for Mobile */}
-                <div className="mb-4">
-                  <button
-                    onClick={toggleLanguage}
-                    className="flex items-center justify-between w-full px-4 py-3 bg-[#e8f3ec] dark:bg-[#1f3b29] text-[#0e1b13] dark:text-white rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined">language</span>
-                      <span>{selectedLanguage.name}</span>
-                    </div>
-                    <span className="material-symbols-outlined">
-                      {isLanguageOpen ? 'expand_less' : 'expand_more'}
-                    </span>
-                  </button>
-
-                  {isLanguageOpen && (
-                    <div className="mt-2 bg-white dark:bg-[#1a2e22] rounded-lg border border-gray-100 dark:border-gray-800 overflow-hidden">
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setSelectedLanguage(lang);
-                            setIsLanguageOpen(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left hover:bg-[#f0fdf4] dark:hover:bg-[#14532d] transition-colors ${selectedLanguage.code === lang.code
-                              ? 'bg-primary/10 text-primary'
-                              : 'text-[#0e1b13] dark:text-gray-300'
-                            }`}
-                        >
-                          {lang.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile Login Button */}
-                <Link
-                  to="/login"
-                  className="block w-full text-center px-6 py-3 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/30 hover:bg-green-700 transition-colors"
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
+          <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-100 shadow-xl"
+            style={{ animation: 'slideDown 0.25s ease-out' }}>
+            <div className="px-4 py-4 space-y-1">
+              {navLinks.map(link => (
+                <button
+                  key={link.id}
+                  onClick={() => scrollToSection(link.id)}
+                  className="block w-full text-left px-4 py-3.5 text-[15px] font-semibold text-slate-700 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all"
                 >
-                  Login
+                  {link.label}
+                </button>
+              ))}
+
+              <div className="pt-3 border-t border-slate-100 mt-2 flex gap-2">
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}
+                  className="flex-1 text-center px-4 py-3 text-sm font-bold text-slate-700 bg-slate-100 rounded-xl">
+                  Log in
+                </Link>
+                <Link to="/farmer-registration" onClick={() => setIsMenuOpen(false)}
+                  className="flex-1 text-center px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg shadow-green-200/40">
+                  Get Started
                 </Link>
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </header>
+        </div>
+      )}
+
+      {/* Spacer */}
+      <div className="h-16 sm:h-18" />
+
+      <style>{`
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </>
   );
 };
 

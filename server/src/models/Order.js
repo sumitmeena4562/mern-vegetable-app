@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema({
   orderId: {
@@ -6,43 +6,43 @@ const orderSchema = new mongoose.Schema({
     unique: true,
     required: true
   },
-  
+
   farmer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  
+
   buyer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  
+
   buyerType: {
     type: String,
     enum: ['vendor', 'customer'],
     required: true
   },
-  
+
   products: [{
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
       required: true
     },
-    
+
     name: String,
     quantity: {
       type: Number,
       required: true,
       min: [0.1, 'Quantity must be at least 0.1']
     },
-    
+
     unit: String,
     pricePerUnit: Number,
     totalPrice: Number,
-    
+
     // Status for individual product
     status: {
       type: String,
@@ -50,33 +50,33 @@ const orderSchema = new mongoose.Schema({
       default: 'pending'
     }
   }],
-  
+
   totalAmount: {
     type: Number,
     required: true,
     min: [1, 'Total amount must be at least ₹1']
   },
-  
+
   discount: {
     type: Number,
     default: 0
   },
-  
+
   tax: {
     type: Number,
     default: 0
   },
-  
+
   deliveryCharges: {
     type: Number,
     default: 0
   },
-  
+
   finalAmount: {
     type: Number,
     required: true
   },
-  
+
   // Delivery details
   deliveryAddress: {
     name: String,
@@ -87,7 +87,7 @@ const orderSchema = new mongoose.Schema({
     phone: String,
     coordinates: [Number]
   },
-  
+
   pickupAddress: {
     address: String,
     city: String,
@@ -95,25 +95,25 @@ const orderSchema = new mongoose.Schema({
     pincode: String,
     coordinates: [Number]
   },
-  
+
   // Delivery options
   deliveryType: {
     type: String,
     enum: ['pickup', 'delivery', 'platform_logistics'],
     default: 'pickup'
   },
-  
+
   preferredPickupTime: String,
   preferredDeliveryTime: String,
-  
+
   // Order status
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'processing', 'ready_for_pickup', 
-           'in_transit', 'delivered', 'cancelled', 'refunded'],
+    enum: ['pending', 'confirmed', 'processing', 'ready_for_pickup',
+      'in_transit', 'delivered', 'cancelled', 'refunded'],
     default: 'pending'
   },
-  
+
   // Payment details
   payment: {
     method: {
@@ -121,21 +121,21 @@ const orderSchema = new mongoose.Schema({
       enum: ['online', 'cod', 'wallet', 'credit'],
       required: true
     },
-    
+
     status: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded', 'partially_refunded'],
       default: 'pending'
     },
-    
+
     razorpayOrderId: String,
     razorpayPaymentId: String,
     razorpaySignature: String,
-    
+
     paidAt: Date,
     refundedAt: Date
   },
-  
+
   // Logistics
   logistics: {
     partner: String,
@@ -144,20 +144,20 @@ const orderSchema = new mongoose.Schema({
     actualDelivery: Date,
     deliveryProof: [String]
   },
-  
+
   // Review
   rating: {
     type: Number,
     min: 1,
     max: 5
   },
-  
+
   review: {
     text: String,
     images: [String],
     createdAt: Date
   },
-  
+
   // Cancellation
   cancellation: {
     reason: String,
@@ -165,9 +165,9 @@ const orderSchema = new mongoose.Schema({
     notes: String,
     cancelledAt: Date
   },
-  
+
   notes: String,
-  
+
   // Escrow for farmer payment
   escrow: {
     status: {
@@ -183,7 +183,7 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Generate order ID before saving
-orderSchema.pre('save', async function(next) {
+orderSchema.pre('save', async function (next) {
   if (!this.orderId) {
     const prefix = this.buyerType === 'vendor' ? 'V' : 'C';
     const timestamp = Date.now().toString().slice(-6);
@@ -200,8 +200,9 @@ orderSchema.index({ orderId: 1 });
 orderSchema.index({ createdAt: -1 });
 
 // Virtual for total items
-orderSchema.virtual('totalItems').get(function() {
+orderSchema.virtual('totalItems').get(function () {
   return this.products.reduce((sum, item) => sum + item.quantity, 0);
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+// ✅ CODE QUALITY FIX: Convert to ES6 module syntax for consistency
+export default mongoose.model('Order', orderSchema);

@@ -22,8 +22,9 @@ export const SocketProvider = ({ children }) => {
                 : undefined; // Let it auto-detect host for relative paths
 
             const newSocket = io(socketUrl, {
-                path: '/socket.io', // Standard socket.io path
-                transports: ['websocket'], // Force websocket
+                path: '/socket.io',
+                transports: ['polling', 'websocket'], // Allow polling for better compatibility
+                reconnectionAttempts: 5,
             });
 
             console.log("🔌 Connecting Socket...");

@@ -34,13 +34,17 @@ export const registerCustomer = async (req, res) => {
             email: email || `${mobile}@agriconnect.com`,
             role: 'customer',
             isVerified: true,
-            location: customerData.location || { type: 'Point', coordinates: [0, 0] }
+            location: customerData.location || { type: 'Point', coordinates: [0, 0] },
+            address: customerData.address || {}
         });
 
         const profile = await Customer.create({
             user: user._id,
             familySize: customerData.familySize || 1,
             subscription: customerData.subscription || 'none',
+            dietPreference: customerData.dietPreference || 'no_preference',
+            preferredLanguage: customerData.preferredLanguage || 'hindi',
+            referralCode: customerData.referralCode,
             deliveryAddresses: customerData.deliveryAddresses || []
         });
 

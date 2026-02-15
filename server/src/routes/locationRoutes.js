@@ -1,61 +1,54 @@
 import express from 'express';
-
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const router = express.Router();
 
-// Get directory name for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load data locally
-const DATA_PATH = path.join(__dirname, '../data/indian_states_districts.json');
-let statesData = [];
+// Load JSON data
+const dataPath = path.join(__dirname, '../data/indian_states_districts.json');
 
-try {
-    const rawData = fs.readFileSync(DATA_PATH, 'utf-8');
-    const parsed = JSON.parse(rawData);
-    statesData = parsed.states;
-    console.log("✅ Location Data Loaded Locally");
-} catch (error) {
-    console.error("❌ Failed to load location data:", error.message);
-}
-
-// 1. India ke States fetch karne ka endpoint
-router.get('/states', async (req, res) => {
+const loadLocationData = () => {
     try {
-        const simplifiedStates = statesData.map((item, index) => ({
-            state_id: index,
-            state_name: item.state
-        }));
-
-        res.json({ success: true, states: simplifiedStates });
+        const rawData = fs.readFileSync(dataPath, 'utf8');
+        return JSON.parse(rawData);
     } catch (error) {
-        console.error("Error fetching states:", error.message);
-        res.status(500).json({ success: false, message: "States fetch nahi ho paye" });
+        console.error("❌ Error reading location data:", error);
+        return { states: [] };
     }
+};
+
+// GET /api/locations/states
+router.get('/states', (req, res) => {
+    const data = loadLocationData();
+    const statesList = data.states.map(s => s.state);
+    res.status(200).json({
+        success: true,
+        states: statesList
+    });
 });
 
-// 2. State Name ke basis par Districts fetch karna
-router.get('/districts/:stateName', async (req, res) => {
-    try {
-        const { stateName } = req.params;
+// GET /api/locations/districts/:stateName
+router.get('/districts/:stateName', (req, res) => {
+    const { stateName } = req.params;
+    const data = loadLocationData();
 
-        // Find state in local data
-        const selectedState = statesData.find(item => item.state === stateName);
+    const stateObj = data.states.find(s => s.state.toLowerCase() === stateName.toLowerCase());
 
-        if (selectedState) {
-            res.json({ success: true, districts: selectedState.districts });
-        } else {
-            console.warn(`State not found: ${stateName}`);
-            res.status(404).json({ success: false, message: "State not found" });
-        }
-    } catch (error) {
-        console.error("Error fetching districts:", error.message);
-        res.status(500).json({ success: false, message: "Districts fetch nahi ho paye" });
+    if (!stateObj) {
+        return res.status(404).json({
+            success: false,
+            message: "State not found"
+        });
     }
+
+    res.status(200).json({
+        success: true,
+        districts: stateObj.districts
+    });
 });
 
 export default router;

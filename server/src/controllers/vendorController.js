@@ -36,17 +36,22 @@ export const registerVendor = async (req, res) => {
             email: email || `${mobile}@agriconnect.com`,
             role: 'vendor',
             isVerified: true,
-            location: vendorData.location || { type: 'Point', coordinates: [0, 0] }
+            location: vendorData.location || { type: 'Point', coordinates: [0, 0] },
+            address: vendorData.address || {}
         });
 
         const profile = await Vendor.create({
             user: user._id,
             shopName: vendorData.shopName || `${fullName}'s Shop`,
             businessType: vendorData.businessType || 'retailer',
+            shopType: vendorData.shopType || 'kirana',
             dailyCapacity: vendorData.dailyCapacity || 10,
             preferredVegetables: vendorData.preferredVegetables || ['all'],
             storeTimings: vendorData.storeTimings || { open: '08:00', close: '20:00' },
-            location: vendorData.location || { type: 'Point', coordinates: [0, 0] }
+            fssaiNumber: vendorData.fssaiNumber,
+            deliveryRadius: vendorData.deliveryRadius || 5,
+            acceptsOnlineOrders: vendorData.acceptsOnlineOrders !== undefined ? vendorData.acceptsOnlineOrders : true,
+            shopPhotos: vendorData.shopPhotos || []
         });
 
         await Notification.create({
@@ -97,10 +102,16 @@ export const getMyProfile = async (req, res) => {
 // Update Vendor Profile
 export const updateProfile = async (req, res) => {
     try {
-        const { fullName, email, ...vendorData } = req.body;
+        const { fullName, email, address, location, ...vendorData } = req.body;
 
-        if (fullName || email) {
-            await User.findByIdAndUpdate(req.user.id, { fullName, email });
+        if (fullName || email || address || location) {
+            const userUpdate = {};
+            if (fullName) userUpdate.fullName = fullName;
+            if (email) userUpdate.email = email;
+            if (address) userUpdate.address = address;
+            if (location) userUpdate.location = location;
+
+            await User.findByIdAndUpdate(req.user.id, userUpdate);
         }
 
         const vendor = await Vendor.findOneAndUpdate(

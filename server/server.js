@@ -12,11 +12,11 @@ import { fileURLToPath } from 'url';
 
 // Import Routes
 import UserRoutes from "./src/routes/UserRoutes.js";
-import locationRoutes from './src/routes/locationRoutes.js';
 import farmerRoutes from './src/routes/farmerRoutes.js';
 import vendorRoutes from './src/routes/vendorRoutes.js';
 import customerRoutes from './src/routes/customerRoutes.js';
 import notificationRoutes from './src/routes/NotificationRoutes.js';
+import locationRoutes from './src/routes/locationRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -37,20 +37,39 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // 2. CORS (Sabse Important - Routes se pehle aana chahiye)
+// ✅ SECURITY FIX: Whitelist specific domains instead of allowing all
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+  // Add your production domain here
+  // 'https://yourdomain.com'
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
-    // Allow any origin for development/ngrok
-    return callback(null, true);
+
+    // Check if origin is in whitelist
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`❌ Blocked CORS request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 
+
 // 3. BODY PARSERS (JSON & URL Encoded)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 3.5. INPUT SANITIZATION (Security)
+// app.use(mongoSanitize()); // Simplified usage if needed later
 
 // 4. CUSTOM LOGGING (Body parse hone ke baad)
 app.use((req, res, next) => {
@@ -60,6 +79,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+
 // ====================================================
 // 1.5. RATE LIMITING (Security)
 // ====================================================
@@ -78,14 +98,17 @@ const apiLimiter = rateLimit({
 // Apply to all /api routes
 app.use('/api', apiLimiter);
 
-// Auth routes ke liye extra strict limit (Optional but Recommended)
+// Auth routes ke liye extra strict limit (Recommended for production)
+// ✅ SECURITY FIX: Reduced from 500 to 20 to prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 500, // Increased limit to prevent 429 on profile fetch during dev
+  max: process.env.NODE_ENV === 'production' ? 20 : 100, // Strict in production, relaxed in dev
   message: {
     status: 'error',
-    message: 'Too many attempts, please try again after an hour'
-  }
+    message: 'Too many authentication attempts. Please try again after an hour.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
 });
 app.use('/api/auth', authLimiter);
 
@@ -113,11 +136,11 @@ connectDB();
 
 // Mount Routes
 app.use("/api/auth", UserRoutes);
-app.use("/api/locations", locationRoutes);
 app.use("/api/farmers", farmerRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/customers", customerRoutes);
-app.use("/api/notifications",notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/locations", locationRoutes);
 
 // Other Routes (Products, Orders, Market - keeping dynamic loading for them if they exist, or manual if preferred)
 // For now, let's keep the core role routes explicit as requested.
@@ -173,22 +196,22 @@ io.on('connection', (socket) => {
   socket.on('join-user', async (userId) => {
     socket.join(userId);
     console.log(`User ${userId} came Online`);
-    
+
     // DB Update: isOnline = true
     try {
-        await User.findByIdAndUpdate(userId, { isOnline: true });
-        io.emit('user-status-change', { userId, isOnline: true }); // Broadcast to others
+      await User.findByIdAndUpdate(userId, { isOnline: true });
+      io.emit('user-status-change', { userId, isOnline: true }); // Broadcast to others
     } catch (e) {
-        console.error("Online update failed:", e);
+      console.error("Online update failed:", e);
     }
   });
-  
+
   // 🔴 2. Manual Offline Toggle
   socket.on('set-status', async ({ userId, status }) => {
-      // status: 'online' | 'offline' | 'busy'
-      const isOnline = status === 'online';
-      await User.findByIdAndUpdate(userId, { isOnline });
-      io.emit('user-status-change', { userId, isOnline });
+    // status: 'online' | 'offline' | 'busy'
+    const isOnline = status === 'online';
+    await User.findByIdAndUpdate(userId, { isOnline });
+    io.emit('user-status-change', { userId, isOnline });
   });
   // 🔌 3. Disconnect - Set Offline
   socket.on('disconnect', async () => {
