@@ -1,53 +1,193 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast, Toaster } from 'react-hot-toast';
 import BasicInfo from '../../components/Farmers/Dashboard/add-sabji/BasicInfo';
-import AdditionalDetails from '../../components/Farmers/Dashboard/add-sabji/AdditionalDetails';
 import PhotoUpload from '../../components/Farmers/Dashboard/add-sabji/PhotoUpload';
+import AdditionalDetails from '../../components/Farmers/Dashboard/add-sabji/AdditionalDetails';
 import VisibilityCard from '../../components/Farmers/Dashboard/add-sabji/VisibilityCard';
+import api from '../../api/axios';
+
 const AddSabji = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    variety: '',
+    category: 'vegetable',
+    quantity: '',
+    unit: 'kg',
+    pricePerUnit: '',
+    harvestDate: new Date().toISOString().split('T')[0],
+    grade: 'A',
+    isOrganic: false,
+
+    // Additional
+    minOrder: 1,
+    pickupSlot: 'Morning (8 AM - 11 AM)',
+    description: '',
+    packaging: 'Jute Bags',
+    shelfLife: '3-5 Days',
+    isWashed: false,
+
+    // Images
+    images: [], // { url, file }
+
+    // Visibility
+    isVisible: true
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const potentialIncome = useMemo(() => {
+    const q = Number(formData.quantity) || 0;
+    const p = Number(formData.pricePerUnit) || 0;
+    return q * p;
+  }, [formData.quantity, formData.pricePerUnit]);
+
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.quantity || !formData.pricePerUnit) {
+      toast.error("Please fill all required fields!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = new FormData();
+
+      const productPayload = {
+        name: formData.name,
+        category: formData.category,
+        variety: formData.variety,
+        quantity: Number(formData.quantity),
+        unit: formData.unit,
+        pricePerUnit: Number(formData.pricePerUnit),
+        harvestDate: formData.harvestDate,
+        qualityGrade: formData.grade,
+        minimumOrder: Number(formData.minOrder),
+        description: formData.description,
+        packaging: formData.packaging,
+        shelfLife: formData.shelfLife,
+        isWashed: formData.isWashed,
+        tags: [
+          formData.pickupSlot,
+          formData.isOrganic ? 'organic' : 'standard',
+          formData.packaging,
+          formData.isWashed ? 'washed' : 'unwashed'
+        ],
+        location: { coordinates: [0, 0] },
+        status: formData.isVisible ? 'available' : 'hidden'
+      };
+
+      data.append('productData', JSON.stringify(productPayload));
+      formData.images.forEach((img) => {
+        if (img.file) data.append('images', img.file);
+      });
+
+      const response = await api.post('/farmers/products', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        toast.success("Harvest Published Successfully!");
+        setTimeout(() => navigate('/farmer-dashboard'), 1500);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to publish harvest");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-[1200px] mx-auto w-full flex flex-col gap-6">
-      {/* Page Title & Actions (Desktop) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-2">
+    <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pb-28 lg:pb-12 relative z-10">
+      <Toaster position="top-center" />
+
+      {/* Overview-style Header */}
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white">Add New Sabji</h1>
-          <p className="text-slate-500 text-lg font-medium mt-2">List your fresh produce for sale to vendors. Simple and quick!</p>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800">
+            Publish New Harvest 🌿
+          </h2>
+          <p className="text-slate-400 font-medium text-sm mt-1">
+            Create a premium listing to attract top quality vendors.
+          </p>
         </div>
-        <div className="hidden md:flex gap-2">
-          <button className="px-5 py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-colors">
-            Cancel
-          </button>
-          <button className="px-8 py-3 bg-primary text-slate-900 rounded-xl font-bold hover:bg-green-400 shadow-lg shadow-green-300/40 transition-all flex items-center gap-2">
-            <span className="material-symbols-outlined">check_circle</span>
-            List Sabji Now
-          </button>
+
+        {/* Dashboard-style Status Widgets */}
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
+            <span className="material-symbols-outlined text-green-500 text-base">emergency</span>
+            Urgent: No
+          </div>
+          <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
+            <span className="material-symbols-outlined text-blue-500 text-base">groups</span>
+            Reach: 40+ Vendors
+          </div>
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column (Forms) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <BasicInfo />
-          <AdditionalDetails />
+      {/* Main Grid - Synced with Dashboard Spacing */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Form Column (8/12) */}
+        <div className="lg:col-span-8 space-y-6">
+          <BasicInfo data={formData} onChange={handleChange} />
+          <AdditionalDetails data={formData} onChange={handleChange} />
         </div>
 
-        {/* Right Column (Photos & Visibility) */}
-        <div className="flex flex-col gap-6">
-          <PhotoUpload />
-          <VisibilityCard />
-        </div>
+        {/* Right Column (4/12) */}
+        <div className="lg:col-span-4 space-y-6">
+          <PhotoUpload data={formData} onChange={handleChange} />
 
+          <div className="lg:sticky lg:top-24 space-y-6">
+            <VisibilityCard data={formData} onChange={handleChange} income={potentialIncome} />
+
+            {/* Desktop Action Buttons - Elite Style */}
+            <div className="hidden lg:block space-y-3">
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-[0.98] flex items-center justify-center gap-2 group overflow-hidden relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                {loading ? <span className="material-symbols-outlined animate-spin">sync</span> : (
+                  <>
+                    <span className="material-symbols-outlined text-xl group-hover:scale-110 group-hover:rotate-12 transition-transform">rocket_launch</span>
+                    Publish Now
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => navigate('/farmer-dashboard')}
+                className="w-full bg-white text-slate-500 py-3.5 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-all active:scale-[0.98]"
+              >
+                Save for Later
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile Actions */}
-      <div className="md:hidden flex flex-col gap-3 pb-8">
-        <button className="w-full py-4 bg-primary text-slate-900 rounded-xl font-bold hover:bg-green-400 shadow-lg shadow-green-300/40 transition-all flex items-center justify-center gap-2 text-lg">
-          <span className="material-symbols-outlined">check_circle</span>
-          List Sabji Now
+      {/* 📱 Elite Mobile Bar - Thinner & Glassy */}
+      <div className="lg:hidden fixed bottom-6 left-6 right-6 p-2 bg-white/80 backdrop-blur-2xl border border-white/50 z-50 rounded-[28px] shadow-2xl flex items-center gap-2">
+        <button
+          onClick={() => navigate('/farmer-dashboard')}
+          className="w-12 h-12 flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl active:scale-95"
+        >
+          <span className="material-symbols-outlined text-xl">close</span>
         </button>
-        <button className="w-full py-4 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-colors">
-          Cancel
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="flex-1 bg-slate-900 text-white py-4 rounded-[20px] font-black active:scale-[0.98] shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 text-sm"
+        >
+          {loading ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : (
+            <>
+              <span className="material-symbols-outlined text-base">publish</span>
+              Publish Harvest
+            </>
+          )}
         </button>
       </div>
     </div>

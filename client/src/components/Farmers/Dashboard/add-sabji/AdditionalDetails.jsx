@@ -1,47 +1,109 @@
 import React from 'react';
 
-const AdditionalDetails = () => {
+const AdditionalDetails = ({ data, onChange }) => {
   return (
-    <div className="glass-panel rounded-2xl soft-shadow overflow-hidden">
-      <details className="group">
-        <summary className="flex items-center justify-between p-6 sm:p-8 cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-colors list-none">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-2 rounded-lg text-blue-700">
-              <span className="material-symbols-outlined text-2xl">tune</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-800">Additional Details</h3>
-              <p className="text-sm text-slate-500">Optional: Add more info to attract buyers</p>
-            </div>
-          </div>
-          <span className="material-symbols-outlined text-slate-400 transition-transform group-open:rotate-180 text-2xl">expand_more</span>
-        </summary>
-        
-        <div className="p-6 sm:p-8 pt-0 border-t border-slate-100 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Minimum Order Qty (MOQ)</label>
-              <div className="relative">
-                <input className="w-full text-lg p-3 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500" placeholder="e.g. 10" type="number" />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">Kg</span>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Preferred Pickup Slot</label>
-              <select className="w-full text-lg p-3 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500 text-slate-700">
-                <option>Any Time (8 AM - 6 PM)</option>
-                <option>Morning (8 AM - 11 AM)</option>
-                <option>Afternoon (2 PM - 5 PM)</option>
-                <option>Evening (5 PM - 8 PM)</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Description / Special Notes</label>
-            <textarea className="w-full p-4 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500 placeholder:text-slate-400" placeholder="e.g., Organic, Desi variety, grown without pesticides..." rows="3"></textarea>
+    <div className="glass-panel p-6 rounded-2xl soft-shadow space-y-6 relative overflow-hidden">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200/40">
+          <span className="material-symbols-outlined text-white text-xl">local_shipping</span>
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-800 leading-none">Logistics & Handling</h3>
+          <p className="text-xs text-slate-400 font-medium mt-1">Delivery and packaging preferences</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Min Order Qty</label>
+          <div className="relative group/input">
+            <input
+              value={data.minOrder}
+              onChange={(e) => onChange('minOrder', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all outline-none shadow-sm"
+              type="number"
+              placeholder="1"
+            />
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">shopping_basket</span>
           </div>
         </div>
-      </details>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Packaging Type</label>
+          <div className="relative group/input">
+            <select
+              value={data.packaging}
+              onChange={(e) => onChange('packaging', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
+            >
+              <option value="Jute Bags">Jute Bags (Bori)</option>
+              <option value="Plastic Crates">Plastic Crates</option>
+              <option value="Cardboard Boxes">Cardboard Boxes</option>
+              <option value="Net Bags">Net Bags</option>
+            </select>
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">package_2</span>
+            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Shelf Life</label>
+          <div className="relative group/input">
+            <select
+              value={data.shelfLife}
+              onChange={(e) => onChange('shelfLife', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
+            >
+              <option value="1-2 Days">1-2 Days</option>
+              <option value="3-5 Days">3-5 Days</option>
+              <option value="1 Week">1 Week</option>
+            </select>
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">hourglass_top</span>
+            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Pickup Slot</label>
+          <div className="relative group/input">
+            <select
+              value={data.pickupSlot}
+              onChange={(e) => onChange('pickupSlot', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
+            >
+              <option value="Morning (8 AM - 11 AM)">Morning (8 AM - 11 AM)</option>
+              <option value="Afternoon (12 PM - 3 PM)">Afternoon (12 PM - 3 PM)</option>
+              <option value="Evening (5 PM - 8 PM)">Evening (5 PM - 8 PM)</option>
+            </select>
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">schedule</span>
+            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust Badge - Synced with Dashboard Secondary Cards */}
+      <div className="pt-2">
+        <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between group/washed transition-all hover:bg-white hover:shadow-lg hover:shadow-indigo-100">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-200 group-hover/washed:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-2xl">water_drop</span>
+            </div>
+            <div>
+              <p className="font-black text-slate-800 text-sm">Washed & Clean</p>
+              <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Premium Trust Badge</p>
+            </div>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer active:scale-[0.9] transition-transform">
+            <input
+              type="checkbox"
+              checked={data.isWashed}
+              onChange={(e) => onChange('isWashed', e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 shadow-inner"></div>
+          </label>
+        </div>
+      </div>
     </div>
   );
 };

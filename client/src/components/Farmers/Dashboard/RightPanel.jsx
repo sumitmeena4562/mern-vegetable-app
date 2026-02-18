@@ -5,7 +5,7 @@ const RightPanel = ({ isNew }) => {
     <div className="lg:col-span-4 flex flex-col gap-6">
 
       {/* Quick Actions */}
-      <div className="glass-panel p-6 rounded-2xl soft-shadow sticky top-24">
+      <div className="glass-panel p-6 rounded-2xl soft-shadow  top-24">
         <h3 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-3">
           <button className="col-span-2 py-4 bg-primary hover:bg-[#25d360] text-slate-900 rounded-md font-bold shadow-lg shadow-green-300/50 flex items-center justify-center gap-2 transition-all active:scale-95 group">
@@ -77,7 +77,7 @@ const RightPanel = ({ isNew }) => {
             </div>
             <span className="material-symbols-outlined text-5xl text-yellow-300">wb_sunny</span>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 border border-white/10 mt-2">
+          <div className="bg-white/20 backdrop-blur-sm rounded p-3 border border-white/10 mt-2">
             <div className="flex items-start gap-2">
               <span className="material-symbols-outlined text-yellow-300 text-lg mt-0.5">warning</span>
               <div>
@@ -90,14 +90,14 @@ const RightPanel = ({ isNew }) => {
       </div>
 
       {/* Farming Tips */}
-      <div className="glass-panel p-6 rounded-2xl soft-shadow">
+      <div className="glass-panel p-6 rounded-xl soft-shadow">
         <h3 className="text-lg font-bold text-slate-800 mb-2">Farming Tips</h3>
         <div className="flex gap-3 overflow-x-auto pb-2">
-          <div className="min-w-[120px] h-32 bg-green-50 rounded-xl p-3 flex flex-col justify-between border border-green-100">
+          <div className="min-w-[120px] h-32 bg-green-50 rounded p-3 flex flex-col justify-between border border-green-100">
             <span className="material-symbols-outlined text-green-600">water_drop</span>
             <p className="text-xs font-bold text-slate-700">Irrigate tomatoes every 3 days</p>
           </div>
-          <div className="min-w-[120px] h-32 bg-orange-50 rounded-xl p-3 flex flex-col justify-between border border-orange-100">
+          <div className="min-w-[120px] h-32 bg-orange-50 rounded p-3 flex flex-col justify-between border border-orange-100">
             <span className="material-symbols-outlined text-orange-600">bug_report</span>
             <p className="text-xs font-bold text-slate-700">Check for stem borers in Corn</p>
           </div>

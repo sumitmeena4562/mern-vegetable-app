@@ -48,14 +48,20 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl)
+    // 1. Allow if no origin (Postman/Mobile)
     if (!origin) return callback(null, true);
 
-    // Check if origin is in whitelist
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // 2. Allow everything in Development for Easy Ngrok/Tunnel testing
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+
+    // 3. Whitelist check for Production
+    const isNgrok = origin.includes('.ngrok-free.app') || origin.includes('.ngrok.io');
+    if (allowedOrigins.indexOf(origin) !== -1 || isNgrok) {
       callback(null, true);
     } else {
-      console.warn(`❌ Blocked CORS request from unauthorized origin: ${origin}`);
+      console.error(`❌ CORS BLOCKED: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -183,7 +189,7 @@ app.use((err, req, res, next) => {
 const server = http.createServer(app);
 const io = new SocketIO(server, {
   cors: {
-    origin: [FRONTEND_URL, 'http://localhost:5173'],
+    origin: process.env.NODE_ENV === 'development' ? true : [FRONTEND_URL, 'http://localhost:5173'],
     methods: ['GET', 'POST'],
     credentials: true
   }

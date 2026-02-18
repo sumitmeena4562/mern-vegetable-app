@@ -1,38 +1,78 @@
 import React from 'react';
 
-const PhotoUpload = () => {
+const PhotoUpload = ({ data, onChange }) => {
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      if (files.length + data.images.length > 3) {
+        alert("Max 3 photos allowed.");
+        return;
+      }
+      const newImages = files.map(file => ({
+        file,
+        preview: URL.createObjectURL(file)
+      }));
+      onChange('images', [...data.images, ...newImages]);
+    }
+  };
+
+  const removeImage = (index) => {
+    const newImages = data.images.filter((_, i) => i !== index);
+    onChange('images', newImages);
+  };
+
   return (
-    <div className="glass-panel p-6 rounded-2xl soft-shadow h-fit">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="material-symbols-outlined text-slate-500">add_a_photo</span>
-        <h3 className="text-lg font-bold text-slate-800">Sabji Photos</h3>
-      </div>
-      
-      <div className="custom-file-upload border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center cursor-pointer transition-all bg-slate-50/50 group">
-        <div className="mb-4 bg-white p-4 rounded-full inline-block shadow-sm group-hover:scale-110 transition-transform">
-          <span className="material-symbols-outlined text-4xl text-green-500">cloud_upload</span>
+    <div className="glass-panel p-6 rounded-2xl soft-shadow h-fit space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-200/40">
+          <span className="material-symbols-outlined text-white text-xl">add_a_photo</span>
         </div>
-        <h4 className="text-slate-800 font-bold mb-1">Tap to upload photos</h4>
-        <p className="text-xs text-slate-500 mb-4">or drag and drop here</p>
-        <button className="bg-white border border-slate-200 text-slate-700 text-sm font-bold px-4 py-2 rounded-lg hover:bg-slate-50">Select Files</button>
-        <input type="file" className="hidden" multiple />
+        <div>
+          <h3 className="text-base font-bold text-slate-800 leading-none">Harvest Photos</h3>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Maximum 3</p>
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="aspect-square bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center relative group overflow-hidden">
-          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq_PcKdHAV-xvZ5XxrpKXB3QRdK-M6z-VAKGf6Smqb3y0LHjZKlU_CEdYXtA2p2tYpbkT5Rb2YAhRF84D_0YJHVxFxyMf3m6MuJo3YCglXXWw1z-ccBOLQBW1O7Pj9OtLffmTxl6KjuTxq5uMFDXeQMnJ5H4ISM1z1r7B8IXU8NgkAHy4B6jKlyUk0w6uV6lYBLgKJEcaGvg7obf-_2adr2J33GvYupa6G9vm5D8-b54LcpJI6SCvIxKog8vzrDX2Tg2xBBawpe0c" alt="preview" className="w-full h-full object-cover" />
-          <button className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="material-symbols-outlined text-[12px]">close</span>
-          </button>
+      <div className="border-2 border-dashed border-slate-100 rounded-2xl p-8 text-center cursor-pointer transition-all bg-slate-50/50 hover:bg-white hover:border-amber-400 group/upload relative isolate overflow-hidden shadow-inner">
+        <div className="mb-4 bg-white p-4 rounded-full inline-block shadow-md group-hover/upload:scale-110 group-hover/upload:rotate-6 transition-all ring-8 ring-slate-50">
+          <span className="material-symbols-outlined text-4xl text-amber-600">cloud_upload</span>
         </div>
-        <div className="aspect-square bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
-          <span className="material-symbols-outlined">image</span>
-        </div>
-        <div className="aspect-square bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
-          <span className="material-symbols-outlined">image</span>
-        </div>
+        <h4 className="text-slate-800 font-black text-sm mb-1">Click to Upload</h4>
+        <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">JPG, PNG (Max 5MB)</p>
+
+        <input
+          multiple
+          type="file"
+          className="absolute inset-0 opacity-0 cursor-pointer"
+          onChange={handleFileChange}
+          disabled={data.images.length >= 3}
+          accept="image/*"
+        />
       </div>
-      <p className="text-xs text-slate-400 mt-3 text-center">Supported: JPG, PNG (Max 5MB)</p>
+
+      <div className="grid grid-cols-3 gap-3">
+        {data.images.map((img, index) => (
+          <div key={index} className="aspect-square bg-white rounded-xl border border-slate-100 flex items-center justify-center relative group overflow-hidden shadow-sm">
+            <img
+              src={img.preview}
+              alt="preview"
+              className="w-full h-full object-cover transition-transform group-hover:scale-110"
+            />
+            <button
+              onClick={(e) => { e.preventDefault(); removeImage(index); }}
+              className="absolute top-1.5 right-1.5 bg-white/95 text-red-500 p-1 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity active:scale-90"
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+            </button>
+          </div>
+        ))}
+
+        {[...Array(3 - data.images.length)].map((_, i) => (
+          <div key={`empty-${i}`} className="aspect-square bg-slate-50/50 rounded-xl border border-dashed border-slate-100 flex items-center justify-center text-slate-200">
+            <span className="material-symbols-outlined text-xl opacity-10">image</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -5,6 +5,16 @@ import { getCoordinatesFromAddress } from '../utils/geocoding.js';
 // Create product (Farmer only)
 export const createProduct = async (req, res) => {
   try {
+    // 1. Handle Multipart JSON (AddSabji.jsx sends data in 'productData' field as string)
+    let productData = req.body;
+    if (req.body.productData) {
+      try {
+        productData = JSON.parse(req.body.productData);
+      } catch (e) {
+        return res.status(400).json({ status: 'error', message: 'Invalid productData JSON' });
+      }
+    }
+
     const {
       name,
       variety,
@@ -14,81 +24,98 @@ export const createProduct = async (req, res) => {
       pricePerUnit,
       organic,
       grade,
+      qualityGrade, // Frontend sends this
       harvestDate,
       expiryDate,
-      location
-    } = req.body;
-    
-    // Parse location if provided as string
+      location,
+      minimumOrder,
+      status,
+      tags
+    } = productData;
+
+    // 2. Location Logic
     let coordinates = [0, 0];
-    let locationData = {};
-    
-    if (location) {
-      const geoResult = await getCoordinatesFromAddress(location);
-      if (geoResult.success) {
-        coordinates = geoResult.coordinates;
-        locationData = {
-          coordinates,
-          address: location,
-          city: req.user.address?.city || '',
-          state: req.user.address?.state || '',
-          pincode: req.user.address?.pincode || ''
-        };
-      }
+    let locationData = { type: 'Point', coordinates: [0, 0] };
+
+    if (location && location.coordinates) {
+      locationData = {
+        type: 'Point',
+        coordinates: location.coordinates,
+        address: location.address || '',
+        city: location.city || req.user.address?.city || '',
+        state: location.state || req.user.address?.state || '',
+        pincode: location.pincode || req.user.address?.pincode || ''
+      };
     }
-    
-    // Create product
+
+    // 3. Calculated Dates
+    const hDate = new Date(harvestDate || Date.now());
+    // Default expiry if not provided (harvest + 7 days)
+    const eDate = expiryDate ? new Date(expiryDate) : new Date(hDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // 4. Create product
     const product = await Product.create({
       farmer: req.user.id,
-      name,
+      name: name?.toLowerCase(), // Model enum is lowercase
       variety,
       description,
       quantity: parseFloat(quantity),
-      unit,
+      unit: unit || 'kg',
       pricePerUnit: parseFloat(pricePerUnit),
       organic: organic === 'true' || organic === true,
-      grade,
-      harvestDate: new Date(harvestDate),
-      expiryDate: new Date(expiryDate),
-      location: {
-        type: 'Point',
-        coordinates,
-        ...locationData
-      },
-      status: 'available'
+      grade: grade || qualityGrade || 'A',
+      harvestDate: hDate,
+      expiryDate: eDate,
+      location: locationData,
+      minimumOrder: parseFloat(minimumOrder) || 1,
+      status: status || 'available',
+      tags: tags || []
     });
-    
-    // Upload images if provided
-    if (req.files && req.files.images) {
+
+    // 5. Upload images if provided (Handled by multer array 'images')
+    if (req.files && req.files.length > 0) {
       const images = [];
-      
-      for (const file of req.files.images) {
-        const result = await uploadToCloudinary(file, 'farm2vendor/products');
-        images.push({
-          url: result.secure_url,
-          publicId: result.public_id,
-          isPrimary: images.length === 0
+      let uploadErrors = 0;
+
+      for (const file of req.files) {
+        try {
+          const result = await uploadToCloudinary(file, 'farm2vendor/products');
+          images.push({
+            url: result.secure_url,
+            publicId: result.public_id,
+            isPrimary: images.length === 0
+          });
+        } catch (uploadError) {
+          console.error("Cloudinary Individual Upload Error:", uploadError.message);
+          uploadErrors++;
+        }
+      }
+
+      if (images.length > 0) {
+        product.images = images;
+        await product.save();
+      }
+
+      if (uploadErrors > 0) {
+        return res.status(201).json({
+          success: true,
+          message: `Product created, but ${uploadErrors} image(s) failed to upload. Please check Cloudinary credentials.`,
+          data: product,
+          warning: "Cloudinary upload failed"
         });
       }
-      
-      product.images = images;
-      await product.save();
     }
-    
-    // Add product to farmer's active products
-    if (req.user.userType === 'farmer') {
-      req.user.activeProducts.push(product._id);
-      await req.user.save();
-    }
-    
+
     res.status(201).json({
-      status: 'success',
+      success: true,
       message: 'Product created successfully',
-      data: { product }
+      data: product
     });
+
   } catch (error) {
+    console.error("Create Product Error:", error);
     res.status(500).json({
-      status: 'error',
+      success: false,
       message: 'Failed to create product',
       error: error.message
     });
@@ -113,21 +140,21 @@ export const getProducts = async (req, res) => {
       page = 1,
       limit = 20
     } = req.query;
-    
+
     const query = { status: 'available' };
-    
+
     if (category) query.category = category;
     if (name) query.name = { $regex: name, $options: 'i' }; // Search case-insensitive
     if (organic) query.organic = organic === 'true';
     if (farmerId) query.farmer = farmerId;
     if (status) query.status = status;
-    
+
     if (minPrice || maxPrice) {
       query.pricePerUnit = {};
       if (minPrice) query.pricePerUnit.$gte = parseFloat(minPrice);
       if (maxPrice) query.pricePerUnit.$lte = parseFloat(maxPrice);
     }
-    
+
     if (location) {
       const [lng, lat] = location.split(',').map(Number);
       if (!isNaN(lng) && !isNaN(lat)) {
@@ -142,19 +169,19 @@ export const getProducts = async (req, res) => {
         };
       }
     }
-    
+
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     const products = await Product.find(query)
       .populate('farmer', 'fullName profilePhoto averageRating')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
-    
+
     const total = await Product.countDocuments(query);
-    
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -189,14 +216,14 @@ export const getProduct = async (req, res) => {
           match: { status: 'available' }
         }
       });
-    
+
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
     }
-    
+
     product.views += 1;
     await product.save();
-    
+
     res.status(200).json({ status: 'success', data: { product } });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to fetch product', error: error.message });
@@ -207,22 +234,22 @@ export const getProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const updates = req.body;
-    
+
     delete updates.farmer;
     delete updates.soldQuantity;
     delete updates.views;
     delete updates.rating;
-    
+
     const product = await Product.findById(req.params.id);
-    
+
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
     }
-    
+
     if (product.farmer.toString() !== req.user.id) {
       return res.status(403).json({ status: 'error', message: 'Not authorized to update this product' });
     }
-    
+
     if (req.files && req.files.images) {
       const images = [];
       for (const file of req.files.images) {
@@ -235,13 +262,13 @@ export const updateProduct = async (req, res) => {
       }
       updates.images = [...product.images, ...images];
     }
-    
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updates,
       { new: true, runValidators: true }
     ).populate('farmer', 'fullName profilePhoto');
-    
+
     res.status(200).json({ status: 'success', message: 'Product updated successfully', data: { product: updatedProduct } });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to update product', error: error.message });
@@ -255,16 +282,16 @@ export const deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
     }
-    
+
     if (product.farmer.toString() !== req.user.id) {
       return res.status(403).json({ status: 'error', message: 'Not authorized to delete this product' });
     }
-    
+
     product.status = 'removed';
     await product.save();
-    
+
     await req.user.updateOne({ $pull: { activeProducts: product._id } });
-    
+
     res.status(200).json({ status: 'success', message: 'Product deleted successfully' });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to delete product', error: error.message });
@@ -275,11 +302,11 @@ export const deleteProduct = async (req, res) => {
 export const getFarmerProducts = async (req, res) => {
   try {
     const farmerId = req.params.farmerId || req.user.id;
-    const products = await Product.find({ 
+    const products = await Product.find({
       farmer: farmerId,
       status: { $ne: 'removed' }
     }).sort({ createdAt: -1 });
-    
+
     res.status(200).json({ status: 'success', data: { products } });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to fetch farmer products', error: error.message });
@@ -298,7 +325,7 @@ export const searchProducts = async (req, res) => {
         { description: { $regex: q, $options: 'i' } }
       ]
     };
-    
+
     if (location) {
       const [lng, lat] = location.split(',').map(Number);
       if (!isNaN(lng) && !isNaN(lat)) {
@@ -310,11 +337,11 @@ export const searchProducts = async (req, res) => {
         };
       }
     }
-    
+
     const products = await Product.find(query)
       .populate('farmer', 'fullName profilePhoto averageRating')
       .limit(20);
-    
+
     res.status(200).json({ status: 'success', data: { products } });
   } catch (error) {
     res.status(500).json({ status: 'error', message: 'Failed to search products', error: error.message });

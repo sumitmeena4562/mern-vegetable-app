@@ -1,93 +1,161 @@
 import React from 'react';
 
-const BasicInfo = () => {
+const BasicInfo = ({ data, onChange }) => {
+  const categories = [
+    { icon: "🥕", label: "Root Vegties", value: "root" },
+    { icon: "🥬", label: "Leafy Greens", value: "leafy" },
+    { icon: "🍅", label: "Vegetables", value: "vegetable" },
+    { icon: "🍎", label: "Fruits", value: "fruit" }
+  ];
+
   return (
-    <div className="glass-panel p-6 sm:p-8 rounded-2xl soft-shadow space-y-8">
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
-        <div className="bg-green-100 p-2 rounded-lg text-green-700">
-          <span className="material-symbols-outlined text-2xl">eco</span>
+    <div className="glass-panel p-6 rounded-2xl soft-shadow space-y-6 relative overflow-hidden">
+      {/* Dashboard-style Section Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-200/40">
+            <span className="material-symbols-outlined text-white text-xl">eco</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 leading-none">Product Identity</h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">Core details of your harvest</p>
+          </div>
         </div>
-        <h3 class="text-xl font-bold text-slate-800">Basic Information</h3>
-      </div>
 
-      <div className="space-y-6">
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Sabji Name <span className="text-red-500">*</span></label>
+        {/* Dashboard-style Status Toggle */}
+        <label className="flex items-center gap-2 cursor-pointer group">
+          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${data.isOrganic ? 'text-green-600' : 'text-slate-400'}`}>Organic</span>
           <div className="relative">
-            <input className="w-full text-lg p-4 pl-12 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500 transition-all placeholder:text-slate-400" placeholder="Enter Sabji Name (e.g., Tomato, Potato)" type="text" />
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input type="checkbox" checked={data.isOrganic} onChange={(e) => onChange('isOrganic', e.target.checked)} className="sr-only peer" />
+            <div className="w-10 h-5.5 bg-slate-100 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-green-600 border border-slate-200"></div>
+          </div>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Input Style - Synced with Dashboard Forms */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Sabji Name <span className="text-red-500">*</span></label>
+          <div className="relative group/input">
+            <input
+              value={data.name}
+              onChange={(e) => onChange('name', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none shadow-sm"
+              placeholder="Ex: Tomato, Onion..."
+              list="cropSuggestions"
+            />
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-green-600 transition-colors">search</span>
           </div>
         </div>
 
-        {/* Category Radio Grid */}
-        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-3">Select Category <span className="text-red-500">*</span></label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <CategoryOption icon="🥕" label="Root Veggies" />
-            <CategoryOption icon="🥬" label="Leafy Greens" />
-            <CategoryOption icon="🍅" label="Vegetables" />
-            <CategoryOption icon="🍎" label="Fruits" />
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Variety (Optional)</label>
+          <input
+            value={data.variety}
+            onChange={(e) => onChange('variety', e.target.value)}
+            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+            placeholder="Desi, Hybrid..."
+          />
+        </div>
+      </div>
+
+      {/* Categories - Dashboard Grid Style */}
+      <div className="space-y-3">
+        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Category Select</label>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {categories.map((cat) => (
+            <label key={cat.value} className="cursor-pointer group/cat active:scale-95 transition-transform snap-center">
+              <input
+                type="radio"
+                name="category"
+                className="peer sr-only"
+                checked={data.category === cat.value}
+                onChange={() => onChange('category', cat.value)}
+              />
+              <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-white peer-checked:shadow-lg peer-checked:shadow-green-500/10 transition-all flex flex-col items-center gap-2 group-hover/cat:shadow-md">
+                <span className="text-3xl filter grayscale group-hover/cat:grayscale-0 peer-checked:grayscale-0 transition-all">{cat.icon}</span>
+                <span className="font-bold text-slate-600 text-xs peer-checked:text-green-800">{cat.label}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Total Quantity</label>
+          <div className="flex bg-slate-50 border border-slate-100 rounded-xl overflow-hidden focus-within:bg-white focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-500/5 transition-all shadow-sm">
+            <input
+              value={data.quantity}
+              onChange={(e) => onChange('quantity', e.target.value)}
+              className="flex-1 bg-transparent py-3 px-4 font-black text-slate-800 outline-none w-full"
+              placeholder="0.00" type="number"
+            />
+            <select
+              value={data.unit}
+              onChange={(e) => onChange('unit', e.target.value)}
+              className="bg-slate-100/50 border-l border-slate-200 px-3 text-[10px] font-black uppercase text-slate-600 outline-none cursor-pointer"
+            >
+              <option value="kg">KG</option>
+              <option value="quintal">QTL</option>
+              <option value="ton">TON</option>
+              <option value="dozen">DZN</option>
+            </select>
           </div>
         </div>
 
-        {/* Qty & Price */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Available Quantity <span className="text-red-500">*</span></label>
-            <div className="flex rounded-xl shadow-sm">
-              <input className="flex-1 text-lg p-4 rounded-l-xl border-slate-200 border-r-0 bg-white/50 focus:border-green-500 focus:ring-green-500 placeholder:text-slate-400" placeholder="0" type="number" />
-              <select className="w-32 text-center font-bold text-slate-700 bg-slate-50 border-slate-200 border-l-0 rounded-r-xl focus:border-green-500 focus:ring-green-500 cursor-pointer">
-                <option>Kg</option>
-                <option>Quintal</option>
-                <option>Ton</option>
-                <option>Pieces</option>
-                <option>Bunches</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Price per Unit (₹) <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-lg">₹</span>
-              <input className="w-full text-lg p-4 pl-10 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500 placeholder:text-slate-400" placeholder="0.00" type="number" />
-            </div>
-            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">info</span> Market Avg: ₹18-22/kg
-            </p>
-          </div>
-        </div>
-
-        {/* Date */}
-        <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Harvest Date (Freshness) <span className="text-red-500">*</span></label>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <input className="w-full text-lg p-4 pl-12 rounded-xl border-slate-200 bg-white/50 focus:border-green-500 focus:ring-green-500 cursor-pointer" type="date" />
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">calendar_month</span>
-            </div>
-            <div className="flex gap-2">
-              <button className="px-4 py-3 bg-green-50 text-green-700 border border-green-200 rounded-xl font-semibold hover:bg-green-100 transition-colors whitespace-nowrap">Today</button>
-              <button className="px-4 py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition-colors whitespace-nowrap">Yesterday</button>
-            </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Price per {data.unit}</label>
+          <div className="relative group/price">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 group-focus-within/price:text-green-600 transition-colors">₹</span>
+            <input
+              value={data.pricePerUnit}
+              onChange={(e) => onChange('pricePerUnit', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-9 pr-4 font-black text-slate-800 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+              placeholder="0.00" type="number"
+            />
           </div>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Harvest Date</label>
+          <div className="relative group/date">
+            <input
+              type="date"
+              value={data.harvestDate}
+              onChange={(e) => onChange('harvestDate', e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+            />
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/date:text-green-600 transition-colors">calendar_today</span>
+          </div>
+        </div>
+
+        {/* Quality Selector - Dashboard Segment Style */}
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Quality Grade</label>
+          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+            {['A', 'B', 'C'].map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => onChange('grade', g)}
+                className={`flex-1 py-2 rounded-lg text-sm font-black transition-all ${data.grade === g ? 'bg-white text-green-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                Grade {g}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <datalist id="cropSuggestions">
+        <option value="Tomato" /><option value="Potato" /><option value="Onion" /><option value="Spinach" />
+        <option value="Carrot" /><option value="Cauliflower" /><option value="Brinjal" /><option value="Okra" />
+      </datalist>
     </div>
   );
 };
-
-const CategoryOption = ({ icon, label }) => (
-  <label className="cursor-pointer relative group">
-    <input type="radio" name="category" className="form-radio sr-only peer" />
-    <div className="p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-green-300 transition-all flex flex-col items-center gap-2 text-center h-full">
-      <span className="text-3xl">{icon}</span>
-      <span className="font-bold text-slate-600">{label}</span>
-    </div>
-    <div className="check-icon absolute top-2 right-2 opacity-0 text-green-600 transition-opacity">
-      <span className="material-symbols-outlined text-sm bg-white rounded-full">check_circle</span>
-    </div>
-  </label>
-);
 
 export default BasicInfo;

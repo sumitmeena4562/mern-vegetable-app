@@ -122,7 +122,6 @@ const FarmerRegistration = () => {
     confirmPassword: '',
     village: '',
     city: '',
-    city: '',
     state: '', // ✅ Fix: Default value empty rakhi taaki user khud select kare
     farmSize: '', // ✅ Added farmSize
     pickup: 'Morning (6 AM - 10 AM)',

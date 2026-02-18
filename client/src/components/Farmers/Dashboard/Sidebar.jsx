@@ -42,26 +42,26 @@ const Sidebar = ({
       {/* Sidebar */}
       <aside className={`fixed xl:static inset-y-0 left-0 w-64 h-full bg-white z-30 transition-transform duration-300 border-r border-slate-100 flex flex-col shadow-xl xl:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'}`}>
 
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-100 flex-shrink-0">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50">
-            <span className="material-symbols-outlined text-white text-lg">eco</span>
+        {/* Logo - Stitched from Mockup */}
+        <div className="flex items-center gap-3 p-6 pb-2">
+          <div className="bg-primary/20 p-2 rounded-xl">
+            <span className="material-symbols-outlined text-primary-dark text-3xl">agriculture</span>
           </div>
           <div>
-            <h1 className="text-base font-black tracking-tight text-slate-800">AgriConnect</h1>
-            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-widest -mt-0.5">Farmer Panel</p>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800">Farm2Vendor</h1>
+            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Farmer Panel</p>
           </div>
         </div>
 
-        {/* Profile Card */}
-        <div className="px-4 py-3 flex-shrink-0">
-          <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100/50">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-green-200/40">
-              {(userName || 'F')[0].toUpperCase()}
+        {/* Profile Card - Stitched from Mockup */}
+        <div className="px-4 py-4">
+          <div className="glass-panel p-3 rounded-xl flex items-center gap-3 mb-4 bg-green-50/50 border-green-100">
+            <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/50 flex items-center justify-center bg-white text-primary-dark font-black text-xs">
+              {userName ? userName[0].toUpperCase() : 'F'}
             </div>
             <div className="flex flex-col overflow-hidden">
-              <p className="text-sm font-bold truncate text-slate-800">{userName || 'Farmer'}</p>
-              <p className="text-[11px] text-slate-400 truncate">{userEmail || 'farmer@gmail.com'}</p>
+              <p className="text-sm font-bold truncate text-slate-800">{userName || 'Ramesh Kumar'}</p>
+              <p className="text-xs text-slate-500 truncate">{userEmail || 'ramesh@farm.in'}</p>
             </div>
           </div>
         </div>
@@ -90,32 +90,34 @@ const Sidebar = ({
       </aside>
 
       {/* Mobile Bottom Tab Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 xl:hidden bg-white border-t border-slate-100 px-2 pb-safe shadow-lg shadow-black/5">
-        <div className="flex items-center justify-around py-1">
-          {mainNav.slice(0, 5).map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all relative ${isActive(item)
-                ? 'text-green-600'
-                : 'text-slate-400'}`}
-            >
-              <span className={`material-symbols-outlined text-xl ${isActive(item) ? 'text-green-600' : ''}`}>
-                {item.icon}
-              </span>
-              <span className="text-[10px] font-semibold">{item.label.split(' ')[0]}</span>
-              {item.badge && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
-                  {item.badge}
+      {!location.pathname.includes('/add-sabji') && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 xl:hidden bg-white border-t border-slate-100 px-2 pb-safe shadow-lg shadow-black/5">
+          <div className="flex items-center justify-around py-1">
+            {mainNav.slice(0, 5).map((item) => (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all relative ${isActive(item)
+                  ? 'text-green-600'
+                  : 'text-slate-400'}`}
+              >
+                <span className={`material-symbols-outlined text-xl ${isActive(item) ? 'text-green-600' : ''}`}>
+                  {item.icon}
                 </span>
-              )}
-              {isActive(item) && (
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-1 bg-green-500 rounded-full" />
-              )}
-            </Link>
-          ))}
+                <span className="text-[10px] font-semibold">{item.label.split(' ')[0]}</span>
+                {item.badge && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+                {isActive(item) && (
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-1 bg-green-500 rounded-full" />
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
