@@ -42,16 +42,18 @@ const Sidebar = ({
       {/* Sidebar */}
       <aside className={`fixed xl:static inset-y-0 left-0 w-64 h-full bg-white z-30 transition-transform duration-300 border-r border-slate-100 flex flex-col shadow-xl xl:shadow-none ${isOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'}`}>
 
-        {/* Logo - Stitched from Mockup */}
-        <div className="flex items-center gap-3 p-6 pb-2">
-          <div className="bg-primary/20 p-2 rounded-xl">
-            <span className="material-symbols-outlined text-primary-dark text-3xl">agriculture</span>
+        {/* Logo - AgriConnect Branded */}
+        <Link to="/" className="flex items-center gap-3 p-4 sm:p-6 pb-2 group">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50 transition-all">
+            <span className="material-symbols-outlined text-white text-xl sm:text-2xl">eco</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">Farm2Vendor</h1>
-            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Farmer Panel</p>
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800">
+              Agri<span className="text-green-600">Connect</span>
+            </h1>
+            <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">Farmer Panel</p>
           </div>
-        </div>
+        </Link>
 
         {/* Profile Card - Stitched from Mockup */}
         <div className="px-4 py-4">

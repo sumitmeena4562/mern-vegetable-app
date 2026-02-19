@@ -1,10 +1,11 @@
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import Otp from '../models/otp.js';
+import Farmer from '../models/Farmer.js';
+import Vendor from '../models/Vendor.js';
+import Customer from '../models/Customer.js';
 import jwt from 'jsonwebtoken';
 import { validationResult, body } from 'express-validator';
-import nodemailer from 'nodemailer';
-import path from 'path';
 import { sendMail } from '../utils/sendMail.js';
 
 // ==========================================
@@ -227,13 +228,10 @@ export const getProfile = async (req, res) => {
         let profileData = null;
 
         if (role === 'farmer') {
-            const { default: Farmer } = await import('../models/Farmer.js');
             profileData = await Farmer.findOne({ user: userId }).populate('user', '-password');
         } else if (role === 'vendor') {
-            const { default: Vendor } = await import('../models/Vendor.js');
             profileData = await Vendor.findOne({ user: userId }).populate('user', '-password');
         } else if (role === 'customer') {
-            const { default: Customer } = await import('../models/Customer.js');
             profileData = await Customer.findOne({ user: userId }).populate('user', '-password');
         }
 

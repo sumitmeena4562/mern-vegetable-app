@@ -2,6 +2,7 @@ import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
 import Product from '../models/Product.js';
+import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import { sendMail } from '../utils/sendMail.js';
 
@@ -159,10 +160,7 @@ export const getDashboardStats = async (req, res) => {
     // 1. Get Product Stats
     const totalProducts = await Product.countDocuments({ farmer: farmerId, status: { $ne: 'removed' } });
 
-    // 2. Get Order Stats (Aggregate from Order Model)
-    // Note: Assuming 'Order' model exists as identified in models dir
-    const { default: Order } = await import('../models/Order.js');
-
+    // 2. Get Order Stats
     const orders = await Order.find({ farmer: farmerId });
     const pendingOrders = orders.filter(o => ['pending', 'confirmed', 'ready'].includes(o.status)).length;
     const completedOrders = orders.filter(o => o.status === 'delivered').length;

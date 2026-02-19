@@ -4,12 +4,12 @@ const VisibilityCard = ({ data, onChange, income }) => {
   return (
     <div className="glass-panel p-6 rounded-2xl soft-shadow space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-200/40">
-          <span className="material-symbols-outlined text-white text-xl">visibility</span>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-200/40">
+          <span className="material-symbols-outlined text-white text-lg">visibility</span>
         </div>
         <div>
           <h3 className="text-base font-bold text-slate-800 leading-none">Listing Status</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-time Visibility</p>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Real-time Visibility</p>
         </div>
       </div>
 

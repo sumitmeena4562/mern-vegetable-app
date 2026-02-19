@@ -4,12 +4,12 @@ const AdditionalDetails = ({ data, onChange }) => {
   return (
     <div className="glass-panel p-6 rounded-2xl soft-shadow space-y-6 relative overflow-hidden">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200/40">
-          <span className="material-symbols-outlined text-white text-xl">local_shipping</span>
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200/40">
+          <span className="material-symbols-outlined text-white text-lg">local_shipping</span>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-slate-800 leading-none">Logistics & Handling</h3>
-          <p className="text-xs text-slate-400 font-medium mt-1">Delivery and packaging preferences</p>
+          <h3 className="text-base font-bold text-slate-800 leading-none">Logistics & Handling</h3>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Delivery Settings</p>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ const AdditionalDetails = ({ data, onChange }) => {
             <select
               value={data.pickupSlot}
               onChange={(e) => onChange('pickupSlot', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm text-sm"
             >
               <option value="Morning (8 AM - 11 AM)">Morning (8 AM - 11 AM)</option>
               <option value="Afternoon (12 PM - 3 PM)">Afternoon (12 PM - 3 PM)</option>

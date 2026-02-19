@@ -33,12 +33,12 @@ const PhotoUpload = ({ data, onChange }) => {
         </div>
       </div>
 
-      <div className="border-2 border-dashed border-slate-100 rounded-2xl p-8 text-center cursor-pointer transition-all bg-slate-50/50 hover:bg-white hover:border-amber-400 group/upload relative isolate overflow-hidden shadow-inner">
-        <div className="mb-4 bg-white p-4 rounded-full inline-block shadow-md group-hover/upload:scale-110 group-hover/upload:rotate-6 transition-all ring-8 ring-slate-50">
-          <span className="material-symbols-outlined text-4xl text-amber-600">cloud_upload</span>
+      <div className="border-2 border-dashed border-slate-100 rounded-2xl p-6 text-center cursor-pointer transition-all bg-slate-50/50 hover:bg-white hover:border-amber-400 group/upload relative isolate overflow-hidden shadow-inner">
+        <div className="mb-3 bg-white p-3 rounded-full inline-block shadow-md group-hover/upload:scale-110 group-hover/upload:rotate-6 transition-all ring-6 ring-slate-50">
+          <span className="material-symbols-outlined text-3xl text-amber-600">cloud_upload</span>
         </div>
-        <h4 className="text-slate-800 font-black text-sm mb-1">Click to Upload</h4>
-        <p className="text-[9px] text-slate-400 font-bold tracking-widest uppercase">JPG, PNG (Max 5MB)</p>
+        <h4 className="text-slate-800 font-bold text-sm mb-0.5">Click to Upload</h4>
+        <p className="text-[8px] text-slate-400 font-bold tracking-widest uppercase">JPG, PNG (Max 5MB)</p>
 
         <input
           multiple

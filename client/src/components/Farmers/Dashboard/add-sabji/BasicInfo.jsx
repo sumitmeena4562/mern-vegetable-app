@@ -13,12 +13,12 @@ const BasicInfo = ({ data, onChange }) => {
       {/* Dashboard-style Section Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-200/40">
-            <span className="material-symbols-outlined text-white text-xl">eco</span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-200/40">
+            <span className="material-symbols-outlined text-white text-lg">eco</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-800 leading-none">Product Identity</h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">Core details of your harvest</p>
+            <h3 className="text-base font-bold text-slate-800 leading-none">Product Identity</h3>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-1">Core Harvest Details</p>
           </div>
         </div>
 
@@ -40,7 +40,7 @@ const BasicInfo = ({ data, onChange }) => {
             <input
               value={data.name}
               onChange={(e) => onChange('name', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none shadow-sm"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none shadow-sm text-sm"
               placeholder="Ex: Tomato, Onion..."
               list="cropSuggestions"
             />
@@ -53,7 +53,7 @@ const BasicInfo = ({ data, onChange }) => {
           <input
             value={data.variety}
             onChange={(e) => onChange('variety', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 px-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 px-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
             placeholder="Desi, Hybrid..."
           />
         </div>
@@ -72,9 +72,9 @@ const BasicInfo = ({ data, onChange }) => {
                 checked={data.category === cat.value}
                 onChange={() => onChange('category', cat.value)}
               />
-              <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-white peer-checked:shadow-lg peer-checked:shadow-green-500/10 transition-all flex flex-col items-center gap-2 group-hover/cat:shadow-md">
-                <span className="text-3xl filter grayscale group-hover/cat:grayscale-0 peer-checked:grayscale-0 transition-all">{cat.icon}</span>
-                <span className="font-bold text-slate-600 text-xs peer-checked:text-green-800">{cat.label}</span>
+              <div className="p-3 rounded-2xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-green-300 peer-checked:border-green-500 peer-checked:bg-white peer-checked:shadow-lg peer-checked:shadow-green-500/10 transition-all flex flex-col items-center gap-1.5 group-hover/cat:shadow-md">
+                <span className="text-2xl filter grayscale group-hover/cat:grayscale-0 peer-checked:grayscale-0 transition-all">{cat.icon}</span>
+                <span className="font-bold text-slate-600 text-[10px] peer-checked:text-green-800">{cat.label}</span>
               </div>
             </label>
           ))}
@@ -88,7 +88,7 @@ const BasicInfo = ({ data, onChange }) => {
             <input
               value={data.quantity}
               onChange={(e) => onChange('quantity', e.target.value)}
-              className="flex-1 bg-transparent py-3 px-4 font-black text-slate-800 outline-none w-full"
+              className="flex-1 bg-transparent py-2.5 px-4 font-black text-slate-800 outline-none w-full text-sm"
               placeholder="0.00" type="number"
             />
             <select
@@ -111,9 +111,16 @@ const BasicInfo = ({ data, onChange }) => {
             <input
               value={data.pricePerUnit}
               onChange={(e) => onChange('pricePerUnit', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-9 pr-4 font-black text-slate-800 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-9 pr-4 font-black text-slate-800 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
               placeholder="0.00" type="number"
             />
+          </div>
+          {/* Price Advisor Hint */}
+          <div className="flex items-center gap-1.5 ml-1 animate-in fade-in slide-in-from-left-2 duration-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+              Market Avg: <span className="text-green-600">₹22/kg</span>
+            </p>
           </div>
         </div>
       </div>
@@ -126,7 +133,7 @@ const BasicInfo = ({ data, onChange }) => {
               type="date"
               value={data.harvestDate}
               onChange={(e) => onChange('harvestDate', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm"
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
             />
             <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/date:text-green-600 transition-colors">calendar_today</span>
           </div>

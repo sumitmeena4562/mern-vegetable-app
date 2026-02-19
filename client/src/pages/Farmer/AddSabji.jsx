@@ -104,29 +104,7 @@ const AddSabji = () => {
     <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pb-28 lg:pb-12 relative z-10">
       <Toaster position="top-center" />
 
-      {/* Overview-style Header */}
-      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
-        <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800">
-            Publish New Harvest 🌿
-          </h2>
-          <p className="text-slate-400 font-medium text-sm mt-1">
-            Create a premium listing to attract top quality vendors.
-          </p>
-        </div>
 
-        {/* Dashboard-style Status Widgets */}
-        <div className="flex gap-2 w-full sm:w-auto">
-          <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
-            <span className="material-symbols-outlined text-green-500 text-base">emergency</span>
-            Urgent: No
-          </div>
-          <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
-            <span className="material-symbols-outlined text-blue-500 text-base">groups</span>
-            Reach: 40+ Vendors
-          </div>
-        </div>
-      </div>
 
       {/* Main Grid - Synced with Dashboard Spacing */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -169,18 +147,12 @@ const AddSabji = () => {
         </div>
       </div>
 
-      {/* 📱 Elite Mobile Bar - Thinner & Glassy */}
-      <div className="lg:hidden fixed bottom-6 left-6 right-6 p-2 bg-white/80 backdrop-blur-2xl border border-white/50 z-50 rounded-[28px] shadow-2xl flex items-center gap-2">
-        <button
-          onClick={() => navigate('/farmer-dashboard')}
-          className="w-12 h-12 flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl active:scale-95"
-        >
-          <span className="material-symbols-outlined text-xl">close</span>
-        </button>
+      {/* Global Action Button for Mobile (Inlined for consistency) */}
+      <div className="lg:hidden mt-8">
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="flex-1 bg-slate-900 text-white py-4 rounded-[20px] font-black active:scale-[0.98] shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 text-sm"
+          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black active:scale-[0.98] shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 text-sm"
         >
           {loading ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : (
             <>
