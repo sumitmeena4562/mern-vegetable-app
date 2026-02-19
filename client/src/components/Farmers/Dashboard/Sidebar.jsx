@@ -99,21 +99,21 @@ const Sidebar = ({
               <Link
                 key={item.label}
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all relative ${isActive(item)
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all relative min-w-0 ${isActive(item)
                   ? 'text-green-600'
                   : 'text-slate-400'}`}
               >
-                <span className={`material-symbols-outlined text-xl ${isActive(item) ? 'text-green-600' : ''}`}>
+                <span className={`material-symbols-outlined text-xl shrink-0 ${isActive(item) ? 'text-green-600' : ''}`}>
                   {item.icon}
                 </span>
-                <span className="text-[10px] font-semibold">{item.label.split(' ')[0]}</span>
+                <span className="text-[9px] sm:text-[10px] font-semibold truncate w-full text-center">{item.label.split(' ')[0]}</span>
                 {item.badge && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute top-1 right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-white">
                     {item.badge}
                   </span>
                 )}
                 {isActive(item) && (
-                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-1 bg-green-500 rounded-full" />
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-green-500 rounded-full" />
                 )}
               </Link>
             ))}
