@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({ identifier: '', password: '' });
@@ -139,6 +139,7 @@ const Login = () => {
         setTimeout(() => { setIsBlocked(false); setAttempts(0); }, 5 * 60 * 1000);
       }
       toast.error(err.response?.data?.message || 'Login failed. Please try again.');
+      // toast.error(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -146,10 +147,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-50">
-      <Toaster position="top-center" toastOptions={{
-        style: { background: '#333', color: '#fff', borderRadius: '12px' }
-      }} />
-
       {/* Premium Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 pointer-events-none" />
       <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-200/20 to-emerald-200/20 blur-[100px] animate-pulse" />

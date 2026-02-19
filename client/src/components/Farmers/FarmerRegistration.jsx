@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../../api/axios';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 // --- Custom Designer Dropdown Component ---
@@ -733,26 +733,6 @@ const FarmerRegistration = () => {
 
   return (
     <div className="min-h-screen font-display antialiased text-gray-900 bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 5000,
-          },
-        }}
-      />
 
       {/* Background Pattern */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">

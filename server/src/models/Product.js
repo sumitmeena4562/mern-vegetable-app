@@ -10,9 +10,7 @@ const productSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please provide product name'],
-    trim: true,
-    enum: ['tomato', 'potato', 'onion', 'carrot', 'spinach', 'cauliflower',
-      'brinjal', 'chili', 'cabbage', 'okra', 'cucumber', 'other']
+    trim: true
   },
 
   variety: String,

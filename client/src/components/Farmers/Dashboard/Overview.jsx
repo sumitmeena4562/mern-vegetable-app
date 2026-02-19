@@ -81,9 +81,12 @@ const Overview = () => {
               <span className="material-symbols-outlined text-green-500 text-base">check_circle</span>
               Tasks: 4/5
             </div>
-            <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
-              <span className="material-symbols-outlined text-blue-500 text-base">local_shipping</span>
-              Pickup: 2 PM
+            <div
+              className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-blue-500 border border-blue-100 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer hover:bg-blue-50 transition-all transition-transform active:scale-95"
+              onClick={() => window.location.hash = '#/farmer-dashboard/analytics'}
+            >
+              <span className="material-symbols-outlined text-blue-500 text-base">monitoring</span>
+              Market Insights
             </div>
           </div>
         </div>

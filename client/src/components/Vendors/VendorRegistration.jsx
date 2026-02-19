@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../../api/axios';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const VendorRegistration = () => {
@@ -91,7 +91,6 @@ const VendorRegistration = () => {
         <div className="absolute top-[40%] left-[60%] w-[30%] h-[30%] bg-yellow-100/30 rounded-full blur-[80px]"></div>
       </div>
 
-      <Toaster position="top-center" />
       <div className="min-h-full flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">

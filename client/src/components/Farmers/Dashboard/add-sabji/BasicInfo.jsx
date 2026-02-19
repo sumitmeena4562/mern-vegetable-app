@@ -158,8 +158,49 @@ const BasicInfo = ({ data, onChange }) => {
       </div>
 
       <datalist id="cropSuggestions">
-        <option value="Tomato" /><option value="Potato" /><option value="Onion" /><option value="Spinach" />
-        <option value="Carrot" /><option value="Cauliflower" /><option value="Brinjal" /><option value="Okra" />
+        <option value="Tomato" />
+        <option value="Potato" />
+        <option value="Onion" />
+        <option value="Spinach" />
+        <option value="Carrot" />
+        <option value="Cauliflower" />
+        <option value="Cabbage" />
+        <option value="Brinjal" />
+        <option value="Green Chili" />
+        <option value="Red Chili" />
+        <option value="Okra" />
+        <option value="Cucumber" />
+        <option value="Radish" />
+        <option value="Garlic" />
+        <option value="Ginger" />
+        <option value="Pumpkin" />
+        <option value="Bottle Gourd" />
+        <option value="Bitter Gourd" />
+        <option value="Ridge Gourd" />
+        <option value="Capsicum" />
+        <option value="Green Peas" />
+        <option value="Beetroot" />
+        <option value="Sweet Potato" />
+        <option value="Coriander" />
+        <option value="Mint" />
+        <option value="Fenugreek" />
+        <option value="Broccoli" />
+        <option value="Mushroom" />
+        <option value="Corn" />
+        <option value="Turnip" />
+        <option value="Lemon" />
+        <option value="Spring Onion" />
+        <option value="French Beans" />
+        <option value="Cluster Beans" />
+        <option value="Yam" />
+        <option value="Ash Gourd" />
+        <option value="Drumstick" />
+        <option value="Pointed Gourd" />
+        <option value="Ivy Gourd" />
+        <option value="Apple Gourd" />
+        <option value="Jackfruit" />
+        <option value="Amaranth" />
+        <option value="Curry Leaves" />
       </datalist>
     </div>
   );

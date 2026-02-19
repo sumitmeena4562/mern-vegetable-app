@@ -9,6 +9,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
+  <script>
+    // Silence 3rd party browser extension errors (like ping.js)
+    (function () {
+      const originalError = console.error;
+      console.error = function (...args) {
+        const msg = args[0] ? String(args[0]) : '';
+        if (msg.includes('ping.js') || msg.includes('CONTENT_SCRIPT_INJECTED') || msg.includes('sendRuntimeCommand')) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    })();
+  </script>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-text-main font-display antialiased overflow-x-hidden">

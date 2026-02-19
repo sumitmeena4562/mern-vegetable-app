@@ -198,6 +198,104 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
+// @desc    Get detailed analytics for farmer
+// @access  Private (Farmer)
+export const getFarmerAnalytics = async (req, res) => {
+  try {
+    const farmerId = req.user.id;
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    // 1. Revenue Over Time (Aggregated by Month)
+    const revenueStats = await Order.aggregate([
+      {
+        $match: {
+          farmer: new mongoose.Types.ObjectId(farmerId),
+          status: 'delivered',
+          createdAt: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" }
+          },
+          revenue: { $sum: "$finalAmount" },
+          orders: { $count: {} }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    // 2. Product Performance
+    const productPerformance = await Order.aggregate([
+      {
+        $match: {
+          farmer: new mongoose.Types.ObjectId(farmerId),
+          status: 'delivered'
+        }
+      },
+      { $unwind: "$products" },
+      {
+        $group: {
+          _id: "$products.name",
+          sales: { $sum: "$products.quantity" },
+          revenue: { $sum: "$products.totalPrice" }
+        }
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // 3. Buyer Types Distribution
+    const buyerStats = await Order.aggregate([
+      {
+        $match: {
+          farmer: new mongoose.Types.ObjectId(farmerId),
+          status: 'delivered'
+        }
+      },
+      {
+        $group: {
+          _id: "$buyerType",
+          count: { $count: {} },
+          totalSpent: { $sum: "$finalAmount" }
+        }
+      }
+    ]);
+
+    // 4. Market Trends (Simulated based on categories)
+    const categoryDemand = await Product.aggregate([
+      { $group: { _id: "$category", count: { $count: {} } } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        revenueStats: revenueStats.map(s => ({
+          name: new Date(s._id.year, s._id.month - 1).toLocaleString('default', { month: 'short' }),
+          revenue: s.revenue,
+          orders: s.orders
+        })),
+        productPerformance: productPerformance.map(p => ({
+          name: p._id,
+          sales: p.sales,
+          revenue: p.revenue
+        })),
+        buyerStats,
+        categoryDemand: categoryDemand.map(c => ({
+          category: c._id,
+          demand: c.count * 10 // Simulated demand multiplier
+        }))
+      }
+    });
+  } catch (error) {
+    console.error("Analytics Error:", error);
+    res.status(500).json({ success: false, message: 'Failed to fetch analytics', error: error.message });
+  }
+};
+
 // Complete Onboarding (Mandatory First-Time Setup)
 export const completeOnboarding = async (req, res) => {
   try {
@@ -259,5 +357,6 @@ export default {
   getMyProfile,
   updateProfile,
   getDashboardStats,
+  getFarmerAnalytics,
   completeOnboarding
 };

@@ -110,6 +110,18 @@ const farmerSchema = new mongoose.Schema({
     default: 0
   },
 
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+
+  pendingPayouts: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+
   preferredPickupTime: {
     type: String,
     enum: ['morning', 'afternoon', 'evening', 'any'],

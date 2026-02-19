@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { sendForgotPasswordOtp, verifyResetOtp, resetPasswordWithOtp } from '../../api/userApi';
 
 const ForgotPassword = () => {
@@ -101,9 +101,6 @@ const ForgotPassword = () => {
 
     return (
         <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-50">
-            <Toaster position="top-center" toastOptions={{
-                style: { background: '#333', color: '#fff', borderRadius: '12px' }
-            }} />
 
             {/* Background Animations */}
             <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 pointer-events-none" />

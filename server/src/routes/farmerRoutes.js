@@ -5,9 +5,25 @@ import {
     getMyProfile,
     updateProfile,
     getDashboardStats,
+    getFarmerAnalytics,
     completeOnboarding
 } from '../controllers/farmerController.js';
-import { createProduct } from '../controllers/productController.js';
+import {
+    getWalletStats,
+    getTransactionHistory,
+    requestWithdrawal
+} from '../controllers/walletController.js';
+import {
+    getFarmerOrders,
+    getOrderDetails,
+    updateOrderStatus
+} from '../controllers/orderController.js';
+import {
+    createProduct,
+    getFarmerProducts,
+    updateProductStatus,
+    deleteProduct
+} from '../controllers/productController.js';
 import auth from '../middleware/auth.js';
 import { uploadMultiple } from '../middleware/upload.js';
 
@@ -20,9 +36,23 @@ router.post('/register', validateCreateFarmer, registerFarmer);
 router.get('/profile', auth('farmer'), getMyProfile);
 router.put('/profile', auth('farmer'), updateProfile);
 router.get('/stats', auth('farmer'), getDashboardStats);
+router.get('/analytics', auth('farmer'), getFarmerAnalytics);
 router.put('/complete-onboarding', auth('farmer'), completeOnboarding);
 
 // Protected: Product Management
 router.post('/products', auth('farmer'), uploadMultiple('images', 5), createProduct);
+router.get('/products', auth('farmer'), getFarmerProducts);
+router.put('/products/:id/status', auth('farmer'), updateProductStatus);
+router.delete('/products/:id', auth('farmer'), deleteProduct);
+
+// Protected: Wallet & Finance
+router.get('/wallet/stats', auth('farmer'), getWalletStats);
+router.get('/wallet/transactions', auth('farmer'), getTransactionHistory);
+router.post('/wallet/withdraw', auth('farmer'), requestWithdrawal);
+
+// Protected: Order Management
+router.get('/orders', auth('farmer'), getFarmerOrders);
+router.get('/orders/:id', auth('farmer'), getOrderDetails);
+router.put('/orders/:id/status', auth('farmer'), updateOrderStatus);
 
 export default router;

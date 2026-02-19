@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 import Landingpage from "@/pages/Landing.jsx"
 import FarmerRegistrationPage from "./pages/auth/FarmerRegistrationPage";
 import VendorRegistration from "./components/Vendors/VendorRegistration";
@@ -10,6 +11,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 export default function App() {
     return (
         <NotificationProvider>
+            <Toaster position="top-right" reverseOrder={false} />
             <div>
                 <Routes>
                     <Route path="/" element={<Landingpage />} />

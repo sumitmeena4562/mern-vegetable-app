@@ -1,11 +1,15 @@
 import Product from '../models/Product.js';
 import { uploadToCloudinary } from '../middleware/upload.js';
-import { getCoordinatesFromAddress } from '../utils/geocoding.js';
+import fs from 'fs';
+import path from 'path';
+// Removed unused import if not needed, but keeping for compatibility
+// import { getCoordinatesFromAddress } from '../utils/geocoding.js';
 
-// Create product (Farmer only)
+/**
+ * @desc    Create product (Farmer only)
+ */
 export const createProduct = async (req, res) => {
   try {
-    // 1. Handle Multipart JSON (AddSabji.jsx sends data in 'productData' field as string)
     let productData = req.body;
     if (req.body.productData) {
       try {
@@ -24,7 +28,7 @@ export const createProduct = async (req, res) => {
       pricePerUnit,
       organic,
       grade,
-      qualityGrade, // Frontend sends this
+      qualityGrade,
       harvestDate,
       expiryDate,
       location,
@@ -33,10 +37,7 @@ export const createProduct = async (req, res) => {
       tags
     } = productData;
 
-    // 2. Location Logic
-    let coordinates = [0, 0];
     let locationData = { type: 'Point', coordinates: [0, 0] };
-
     if (location && location.coordinates) {
       locationData = {
         type: 'Point',
@@ -48,15 +49,12 @@ export const createProduct = async (req, res) => {
       };
     }
 
-    // 3. Calculated Dates
     const hDate = new Date(harvestDate || Date.now());
-    // Default expiry if not provided (harvest + 7 days)
     const eDate = expiryDate ? new Date(expiryDate) : new Date(hDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // 4. Create product
     const product = await Product.create({
       farmer: req.user.id,
-      name: name?.toLowerCase(), // Model enum is lowercase
+      name: name, // Preserving original casing as per user request
       variety,
       description,
       quantity: parseFloat(quantity),
@@ -72,37 +70,35 @@ export const createProduct = async (req, res) => {
       tags: tags || []
     });
 
-    // 5. Upload images if provided (Handled by multer array 'images')
     if (req.files && req.files.length > 0) {
       const images = [];
-      let uploadErrors = 0;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
 
       for (const file of req.files) {
         try {
-          const result = await uploadToCloudinary(file, 'farm2vendor/products');
+          // 1. Try Cloudinary Upload
+          const result = await uploadToCloudinary(file.path, 'farm2vendor/products');
           images.push({
             url: result.secure_url,
             publicId: result.public_id,
             isPrimary: images.length === 0
           });
+          // Optional: Cleanup local file after successful upload to Cloudinary
+          // fs.unlinkSync(file.path); 
         } catch (uploadError) {
-          console.error("Cloudinary Individual Upload Error:", uploadError.message);
-          uploadErrors++;
+          console.error("Cloudinary Upload Failed, falling back to local storage:", uploadError.message);
+
+          // 2. Fallback to Local URL (Best for proxies/ngrok)
+          images.push({
+            url: `/uploads/${file.filename}`, // Clean relative URL
+            publicId: 'local',
+            isPrimary: images.length === 0
+          });
         }
       }
-
       if (images.length > 0) {
         product.images = images;
         await product.save();
-      }
-
-      if (uploadErrors > 0) {
-        return res.status(201).json({
-          success: true,
-          message: `Product created, but ${uploadErrors} image(s) failed to upload. Please check Cloudinary credentials.`,
-          data: product,
-          warning: "Cloudinary upload failed"
-        });
       }
     }
 
@@ -122,7 +118,9 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// Get all products with filters
+/**
+ * @desc    Get all products with filters
+ */
 export const getProducts = async (req, res) => {
   try {
     const {
@@ -134,7 +132,7 @@ export const getProducts = async (req, res) => {
       farmerId,
       status,
       location,
-      radius = 50, // km
+      radius = 50,
       sortBy = 'createdAt',
       sortOrder = 'desc',
       page = 1,
@@ -144,7 +142,7 @@ export const getProducts = async (req, res) => {
     const query = { status: 'available' };
 
     if (category) query.category = category;
-    if (name) query.name = { $regex: name, $options: 'i' }; // Search case-insensitive
+    if (name) query.name = { $regex: name, $options: 'i' };
     if (organic) query.organic = organic === 'true';
     if (farmerId) query.farmer = farmerId;
     if (status) query.status = status;
@@ -160,10 +158,7 @@ export const getProducts = async (req, res) => {
       if (!isNaN(lng) && !isNaN(lat)) {
         query.location = {
           $near: {
-            $geometry: {
-              type: "Point",
-              coordinates: [lng, lat]
-            },
+            $geometry: { type: "Point", coordinates: [lng, lat] },
             $maxDistance: radius * 1000
           }
         };
@@ -195,27 +190,17 @@ export const getProducts = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch products',
-      error: error.message
-    });
+    res.status(500).json({ status: 'error', message: 'Failed to fetch products', error: error.message });
   }
 };
 
-// Get single product
+/**
+ * @desc    Get single product
+ */
 export const getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('farmer', 'fullName profilePhoto farmName averageRating totalSales')
-      .populate({
-        path: 'farmer',
-        populate: {
-          path: 'activeProducts',
-          select: 'name pricePerUnit quantity images',
-          match: { status: 'available' }
-        }
-      });
+      .populate('farmer', 'fullName profilePhoto farmName averageRating totalSales');
 
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
@@ -230,113 +215,133 @@ export const getProduct = async (req, res) => {
   }
 };
 
-// Update product
+/**
+ * @desc    Update product
+ */
 export const updateProduct = async (req, res) => {
   try {
     const updates = req.body;
-
     delete updates.farmer;
     delete updates.soldQuantity;
-    delete updates.views;
-    delete updates.rating;
 
     const product = await Product.findById(req.params.id);
-
     if (!product) {
       return res.status(404).json({ status: 'error', message: 'Product not found' });
     }
 
     if (product.farmer.toString() !== req.user.id) {
-      return res.status(403).json({ status: 'error', message: 'Not authorized to update this product' });
-    }
-
-    if (req.files && req.files.images) {
-      const images = [];
-      for (const file of req.files.images) {
-        const result = await uploadToCloudinary(file, 'farm2vendor/products');
-        images.push({
-          url: result.secure_url,
-          publicId: result.public_id,
-          isPrimary: false
-        });
-      }
-      updates.images = [...product.images, ...images];
+      return res.status(403).json({ status: 'error', message: 'Not authorized' });
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updates,
       { new: true, runValidators: true }
-    ).populate('farmer', 'fullName profilePhoto');
+    );
 
-    res.status(200).json({ status: 'success', message: 'Product updated successfully', data: { product: updatedProduct } });
+    res.status(200).json({ status: 'success', data: { product: updatedProduct } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to update product', error: error.message });
+    res.status(500).json({ status: 'error', message: 'Update failed', error: error.message });
   }
 };
 
-// Delete product
+/**
+ * @desc    Delete product (Hard delete)
+ */
 export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({ _id: req.params.id, farmer: req.user.id });
     if (!product) {
-      return res.status(404).json({ status: 'error', message: 'Product not found' });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    if (product.farmer.toString() !== req.user.id) {
-      return res.status(403).json({ status: 'error', message: 'Not authorized to delete this product' });
+    // Cleanup local files if any
+    if (product.images && product.images.length > 0) {
+      for (const img of product.images) {
+        if (img.publicId === 'local' && img.url.startsWith('/uploads/')) {
+          const filename = img.url.split('/').pop();
+          const filePath = path.join(process.cwd(), 'uploads', filename);
+          if (fs.existsSync(filePath)) {
+            try {
+              fs.unlinkSync(filePath);
+            } catch (err) {
+              console.error(`Failed to delete local file: ${filePath}`, err);
+            }
+          }
+        }
+        // Note: For Cloudinary cleanup, we would use cloudinary.uploader.destroy(img.publicId)
+      }
     }
 
-    product.status = 'removed';
-    await product.save();
+    await Product.findByIdAndDelete(req.params.id);
 
-    await req.user.updateOne({ $pull: { activeProducts: product._id } });
-
-    res.status(200).json({ status: 'success', message: 'Product deleted successfully' });
+    res.status(200).json({ success: true, message: 'Product deleted permanently' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to delete product', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });
   }
 };
 
-// Get farmer's products
+/**
+ * @desc    Get farmer's own products
+ */
 export const getFarmerProducts = async (req, res) => {
   try {
-    const farmerId = req.params.farmerId || req.user.id;
-    const products = await Product.find({
-      farmer: farmerId,
-      status: { $ne: 'removed' }
-    }).sort({ createdAt: -1 });
+    const farmerId = req.user.id;
+    const { status } = req.query;
+    let query = { farmer: farmerId, status: { $ne: 'removed' } };
 
-    res.status(200).json({ status: 'success', data: { products } });
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+
+    const products = await Product.find(query).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch farmer products', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }
 };
 
-// Search products
+/**
+ * @desc    Update product status
+ */
+export const updateProductStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['available', 'sold', 'reserved', 'expired'];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, farmer: req.user.id },
+      { status },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
+  }
+};
+
+/**
+ * @desc    Search products
+ */
 export const searchProducts = async (req, res) => {
   try {
     const { q, location, radius = 50 } = req.query;
     const query = {
       status: 'available',
       $or: [
-        { name: { $regex: q, $options: 'i' } },
-        { variety: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } }
+        { name: { $regex: q || '', $options: 'i' } },
+        { variety: { $regex: q || '', $options: 'i' } }
       ]
     };
-
-    if (location) {
-      const [lng, lat] = location.split(',').map(Number);
-      if (!isNaN(lng) && !isNaN(lat)) {
-        query.location = {
-          $near: {
-            $geometry: { type: "Point", coordinates: [lng, lat] },
-            $maxDistance: radius * 1000
-          }
-        };
-      }
-    }
 
     const products = await Product.find(query)
       .populate('farmer', 'fullName profilePhoto averageRating')
@@ -344,6 +349,6 @@ export const searchProducts = async (req, res) => {
 
     res.status(200).json({ status: 'success', data: { products } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to search products', error: error.message });
+    res.status(500).json({ status: 'error', message: 'Search failed', error: error.message });
   }
 };

@@ -15,9 +15,10 @@ const Sidebar = ({
   const mainNav = [
     { to: '/farmer-dashboard', icon: 'dashboard', label: 'Dashboard', exact: true },
     { to: '/farmer-dashboard/add-sabji', icon: 'add_circle', label: 'Add Product' },
-    { to: '#', icon: 'inventory_2', label: 'Products' },
-    { to: '#', icon: 'shopping_cart', label: 'Orders', badge: '3' },
-    { to: '#', icon: 'payments', label: 'Finance' },
+    { to: '/farmer-dashboard/inventory', icon: 'inventory_2', label: 'Products' },
+    { to: '/farmer-dashboard/orders', icon: 'shopping_cart', label: 'Orders', badge: '3' },
+    { to: '/farmer-dashboard/wallet', icon: 'payments', label: 'Finance' },
+    { to: '/farmer-dashboard/analytics', icon: 'monitoring', label: 'Analytics' },
   ];
 
   const bottomNav = [

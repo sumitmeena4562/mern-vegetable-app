@@ -1,5 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
+
+// Load environment variables immediately
+dotenv.config();
+
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -10,6 +14,9 @@ import path from 'path';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Import Routes
 import UserRoutes from "./src/routes/UserRoutes.js";
 import farmerRoutes from './src/routes/farmerRoutes.js';
@@ -18,9 +25,16 @@ import customerRoutes from './src/routes/customerRoutes.js';
 import notificationRoutes from './src/routes/NotificationRoutes.js';
 import locationRoutes from './src/routes/locationRoutes.js';
 
-// Load environment variables
-dotenv.config();
 const app = express();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Serve static files
+app.use('/uploads', express.static(uploadsDir));
 
 // ====================================================
 // 1. CONFIGURATION & MIDDLEWARE (ORDER IS IMPORTANT)

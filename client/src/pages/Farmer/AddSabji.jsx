@@ -5,11 +5,13 @@ import BasicInfo from '../../components/Farmers/Dashboard/add-sabji/BasicInfo';
 import PhotoUpload from '../../components/Farmers/Dashboard/add-sabji/PhotoUpload';
 import AdditionalDetails from '../../components/Farmers/Dashboard/add-sabji/AdditionalDetails';
 import VisibilityCard from '../../components/Farmers/Dashboard/add-sabji/VisibilityCard';
+import SubmissionSuccess from '../../components/Farmers/Dashboard/add-sabji/SubmissionSuccess';
 import api from '../../api/axios';
 
 const AddSabji = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     variety: '',
@@ -90,8 +92,7 @@ const AddSabji = () => {
       });
 
       if (response.data.success) {
-        toast.success("Harvest Published Successfully!");
-        setTimeout(() => navigate('/farmer-dashboard'), 1500);
+        setIsSuccess(true);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to publish harvest");
@@ -102,8 +103,12 @@ const AddSabji = () => {
 
   return (
     <div className="max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 pb-28 lg:pb-12 relative z-10">
-      <Toaster position="top-center" />
-
+      {isSuccess && (
+        <SubmissionSuccess
+          productName={formData.name}
+          onComplete={() => navigate('/farmer-dashboard')}
+        />
+      )}
 
 
       {/* Main Grid - Synced with Dashboard Spacing */}

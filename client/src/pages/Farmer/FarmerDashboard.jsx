@@ -7,6 +7,10 @@ import Header from "../../components/Farmers/Dashboard/Header";
 import Overview from "../../components/Farmers/Dashboard/Overview";
 import FarmerOnboarding from "../../components/Farmers/Dashboard/FarmerOnboarding";
 import AddSabji from "./AddSabji";
+import Wallet from "../../components/Farmers/Dashboard/Wallet/Wallet";
+import OrderManagement from "../../components/Farmers/Dashboard/Orders/OrderManagement";
+import ProductInventory from "../../components/Farmers/Dashboard/Products/ProductInventory";
+import Analytics from "../../components/Farmers/Dashboard/Analytics/Analytics";
 import api from "../../api/axios"; // Import centralized API instance
 
 // ============================================
@@ -294,6 +298,18 @@ export default function FarmerDashboard() {
     if (location.pathname.includes("/add-sabji")) {
       return { title: "Add New Sabji", showBack: true, subtitle: "Add fresh vegetables to your inventory" };
     }
+    if (location.pathname.includes("/wallet")) {
+      return { title: "Finance & Wallet", showBack: true, subtitle: "Track your earnings and payouts" };
+    }
+    if (location.pathname.includes("/orders")) {
+      return { title: "Active Orders", showBack: true, subtitle: "Manage your logistics and pickups" };
+    }
+    if (location.pathname.includes("/inventory")) {
+      return { title: "Product Inventory", showBack: true, subtitle: "Manage your listed vegetables" };
+    }
+    if (location.pathname.includes("/analytics")) {
+      return { title: "Market Analytics", showBack: true, subtitle: "Data-driven insights for your farm" };
+    }
     const displayName = name || "Farmer";
     let locationText = !userLocation.loading ? (userLocation.hasLocation ? userLocation.fullAddress || `${userLocation.city}, ${userLocation.state}` : "Location Unavailable") : "Detecting location...";
     return { title: `${displayName}'s Organic Farm`, showBack: false, subtitle: locationText };
@@ -357,7 +373,7 @@ export default function FarmerDashboard() {
       <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} userName={name} userEmail={email} userLocation={userLocation} onLogout={handleLogout} onAddLocation={handleAddLocation} />
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col relative z-10 overflow-hidden">
+      <main className="flex-1 flex flex-col relative overflow-hidden">
         <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title={headerData.title} showBack={headerData.showBack} subtitle={headerData.subtitle} userName={name} Verified={isVerified} locationData={userLocation} onAddLocation={handleAddLocation} />
 
         {/* Scrollable Content */}
@@ -367,6 +383,10 @@ export default function FarmerDashboard() {
             <Routes>
               <Route path="/" element={<Overview />} />
               <Route path="add-sabji" element={<AddSabji />} />
+              <Route path="wallet" element={<Wallet />} />
+              <Route path="orders" element={<OrderManagement />} />
+              <Route path="inventory" element={<ProductInventory />} />
+              <Route path="analytics" element={<Analytics />} />
               <Route path="notifications" element={<div className="p-8 text-center text-slate-500">Notifications coming soon...</div>} />
               <Route path="*" element={<Overview />} />
             </Routes>
