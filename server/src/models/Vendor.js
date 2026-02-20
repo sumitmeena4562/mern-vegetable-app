@@ -128,12 +128,11 @@ vendorSchema.index({ businessType: 1 });
 vendorSchema.index({ user: 1 });
 
 // Middleware to update user role
-vendorSchema.pre('save', async function (next) {
+vendorSchema.pre('save', async function () {
   if (this.isNew) {
     const User = mongoose.model('User');
     await User.findByIdAndUpdate(this.user, { role: 'vendor' });
   }
-  next();
 });
 
 export default mongoose.model('Vendor', vendorSchema);

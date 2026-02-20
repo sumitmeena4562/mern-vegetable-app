@@ -7,6 +7,7 @@ import CustomerRegistrationPage from "./pages/auth/CustomerRegistrationPage";
 import LoginPage from "./pages/auth/Loginpage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import FarmerDashboard from "./pages/Farmer/FarmerDashboard";
+import VendorDashboard from "./pages/Vendor/VendorDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
 export default function App() {
     return (
@@ -21,6 +22,7 @@ export default function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/farmer-dashboard/*" element={<FarmerDashboard />} />
+                    <Route path="/vendor-dashboard/*" element={<VendorDashboard />} />
                 </Routes>
             </div>
         </NotificationProvider>

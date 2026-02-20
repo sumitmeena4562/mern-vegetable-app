@@ -124,7 +124,7 @@ const Login = () => {
 
         const redirectPaths = {
           'farmer': '/farmer-dashboard/',
-          'vendor': '/vendor/dashboard',
+          'vendor': '/vendor-dashboard/',
           'customer': '/customer/dashboard',
           'admin': '/admin/dashboard'
         };
