@@ -94,13 +94,19 @@ export const updateOrderStatus = async (req, res) => {
         await order.save();
 
         // Notify Buyer (simplified notification for now)
-        await Notification.create({
+        const notif = await Notification.create({
             user: order.buyer,
             title: `Order Update: ${status.replace(/_/g, ' ')}`,
             message: `Your order #${order.orderId} has been marked as ${status.replace(/_/g, ' ')}.`,
             type: 'order_update',
             metadata: { orderId: order._id }
         });
+
+        // Emit real-time socket notification to buyer
+        const io = req.app.get('io');
+        if (io) {
+            io.to(order.buyer.toString()).emit('receive-notification', notif);
+        }
 
         res.status(200).json({
             success: true,

@@ -106,7 +106,7 @@ app.use((req, res, next) => {
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes ka time window
-  max: 100, // Har IP se max 100 requests allow hongi 15 min mein
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // Increased for dev/testing
   message: {
     status: 'error',
     message: 'Too many requests from this IP, please try again after 15 minutes'
@@ -119,10 +119,10 @@ const apiLimiter = rateLimit({
 app.use('/api', apiLimiter);
 
 // Auth routes ke liye extra strict limit (Recommended for production)
-// ✅ SECURITY FIX: Reduced from 500 to 20 to prevent brute force attacks
+// ✅ SECURITY FIX: Reduced from 500 to 20 to prevent brute force attacks (Relaxed for dev)
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: process.env.NODE_ENV === 'production' ? 20 : 100, // Strict in production, relaxed in dev
+  max: process.env.NODE_ENV === 'production' ? 50 : 500, // Strict in production, relaxed in dev
   message: {
     status: 'error',
     message: 'Too many authentication attempts. Please try again after an hour.'

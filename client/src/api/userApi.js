@@ -78,3 +78,25 @@ export const deleteProduct = async (productId) => {
     const response = await api.delete(`/farmers/products/${productId}`);
     return response.data;
 };
+
+export const updateProduct = async (productId, productData) => {
+    const response = await api.put(`/farmers/products/${productId}`, productData);
+    return response.data;
+};
+
+// Profile Management APIs
+export const getFarmerProfile = async () => {
+    const response = await api.get('/farmers/profile');
+    return response.data;
+};
+
+export const updateFarmerProfile = async (profileData) => {
+    const response = await api.put('/farmers/profile', profileData);
+    return response.data;
+};
+
+export const updateBankDetails = async (bankData) => {
+    const response = await api.put('/farmers/profile', { bankDetails: bankData });
+    return response.data;
+};
+

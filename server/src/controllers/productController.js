@@ -15,7 +15,7 @@ export const createProduct = async (req, res) => {
       try {
         productData = JSON.parse(req.body.productData);
       } catch (e) {
-        return res.status(400).json({ status: 'error', message: 'Invalid productData JSON' });
+        return res.status(400).json({ success: false, message: 'Invalid productData JSON' });
       }
     }
 
@@ -178,7 +178,7 @@ export const getProducts = async (req, res) => {
     const total = await Product.countDocuments(query);
 
     res.status(200).json({
-      status: 'success',
+      success: true,
       data: {
         products,
         pagination: {
@@ -190,7 +190,7 @@ export const getProducts = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch products', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }
 };
 
@@ -203,15 +203,15 @@ export const getProduct = async (req, res) => {
       .populate('farmer', 'fullName profilePhoto farmName averageRating totalSales');
 
     if (!product) {
-      return res.status(404).json({ status: 'error', message: 'Product not found' });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
     product.views += 1;
     await product.save();
 
-    res.status(200).json({ status: 'success', data: { product } });
+    res.status(200).json({ success: true, data: { product } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Failed to fetch product', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to fetch product', error: error.message });
   }
 };
 
@@ -226,11 +226,11 @@ export const updateProduct = async (req, res) => {
 
     const product = await Product.findById(req.params.id);
     if (!product) {
-      return res.status(404).json({ status: 'error', message: 'Product not found' });
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
     if (product.farmer.toString() !== req.user.id) {
-      return res.status(403).json({ status: 'error', message: 'Not authorized' });
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -239,9 +239,9 @@ export const updateProduct = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    res.status(200).json({ status: 'success', data: { product: updatedProduct } });
+    res.status(200).json({ success: true, data: { product: updatedProduct } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Update failed', error: error.message });
+    res.status(500).json({ success: false, message: 'Update failed', error: error.message });
   }
 };
 
@@ -347,8 +347,8 @@ export const searchProducts = async (req, res) => {
       .populate('farmer', 'fullName profilePhoto averageRating')
       .limit(20);
 
-    res.status(200).json({ status: 'success', data: { products } });
+    res.status(200).json({ success: true, data: { products } });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Search failed', error: error.message });
+    res.status(500).json({ success: false, message: 'Search failed', error: error.message });
   }
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import axios from "axios";
 import { useLocation, useNavigate, Routes, Route } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
@@ -11,6 +12,8 @@ import Wallet from "../../components/Farmers/Dashboard/Wallet/Wallet";
 import OrderManagement from "../../components/Farmers/Dashboard/Orders/OrderManagement";
 import ProductInventory from "../../components/Farmers/Dashboard/Products/ProductInventory";
 import Analytics from "../../components/Farmers/Dashboard/Analytics/Analytics";
+import Notifications from "../../components/Farmers/Dashboard/notification/Notifications";
+import Settings from "../../components/Farmers/Dashboard/Settings";
 import api from "../../api/axios"; // Import centralized API instance
 
 // ============================================
@@ -185,7 +188,6 @@ export default function FarmerDashboard() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          // Use fetchUserDataFromAPI which now has corrected URL
           userData = await fetchUserDataFromAPI(token);
           if (userData) localStorage.setItem("user", JSON.stringify(userData));
         } catch (apiError) {
@@ -202,15 +204,8 @@ export default function FarmerDashboard() {
       setEmail(extractUserEmail(userData));
       setVerified(extractVerifiedStatus(userData));
 
-      let savedLoc = extractUserLocation(userData);
-      if (!savedLoc.hasLocation && token) {
-        const freshData = await fetchUserDataFromAPI(token);
-        if (freshData) {
-          userData = freshData;
-          localStorage.setItem("user", JSON.stringify(freshData));
-          savedLoc = extractUserLocation(freshData);
-        }
-      }
+      // Use already-fetched userData for location (no duplicate API call)
+      const savedLoc = extractUserLocation(userData);
 
       if (savedLoc.hasLocation) {
         setUserLocation({
@@ -276,20 +271,23 @@ export default function FarmerDashboard() {
     } catch (error) { return { city: "", state: "" }; }
   };
 
+  const [locationModal, setLocationModal] = useState({ show: false, city: '', state: '' });
+
   const handleAddLocation = () => {
-    const city = window.prompt("Enter your city:", userLocation.city || "");
-    if (!city) return;
-    const state = window.prompt("Enter your state:", userLocation.state || "");
-    if (!state) return;
-    if (city && state) {
-      setUserLocation(prev => ({ ...prev, city, state, loading: false, hasLocation: true, showAddLocation: false, error: null, errorMessage: "" }));
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        parsed.city = city; parsed.state = state;
-        localStorage.setItem("user", JSON.stringify(parsed));
-      }
+    setLocationModal({ show: true, city: userLocation.city || '', state: userLocation.state || '' });
+  };
+
+  const handleLocationSave = () => {
+    const { city, state } = locationModal;
+    if (!city || !state) return;
+    setUserLocation(prev => ({ ...prev, city, state, loading: false, hasLocation: true, showAddLocation: false, error: null, errorMessage: "" }));
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      parsed.city = city; parsed.state = state;
+      localStorage.setItem("user", JSON.stringify(parsed));
     }
+    setLocationModal({ show: false, city: '', state: '' });
   };
 
   const handleLogout = () => { if (logout) logout(); localStorage.clear(); navigate("/login"); };
@@ -374,10 +372,10 @@ export default function FarmerDashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title={headerData.title} showBack={headerData.showBack} subtitle={headerData.subtitle} userName={name} Verified={isVerified} locationData={userLocation} onAddLocation={handleAddLocation} />
+        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title={headerData.title} showBack={headerData.showBack} subtitle={headerData.subtitle} userName={name} Verified={isVerified} locationData={userLocation} onAddLocation={handleAddLocation} onLogout={handleLogout} />
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto scroll-smooth">
+        {/* Scrollable Content (Added pb-24 on mobile to prevent bottom nav bar overlap) */}
+        <div className="flex-1 overflow-y-auto scroll-smooth pb-24 xl:pb-0">
           {/* Page Transition Wrapper - Animation disabled for AddSabji to fix 'fixed' positioning issues */}
           <div className={location.pathname.includes('add-sabji') ? "min-h-full" : "animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-full"}>
             <Routes>
@@ -387,12 +385,57 @@ export default function FarmerDashboard() {
               <Route path="orders" element={<OrderManagement />} />
               <Route path="inventory" element={<ProductInventory />} />
               <Route path="analytics" element={<Analytics />} />
-              <Route path="notifications" element={<div className="p-8 text-center text-slate-500">Notifications coming soon...</div>} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Overview />} />
             </Routes>
           </div>
         </div>
       </main>
+
+      {/* Location Modal */}
+      {locationModal.show && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setLocationModal({ ...locationModal, show: false })} />
+          <div className="relative bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1">Set Your Location</h3>
+            <p className="text-xs text-slate-400 font-medium mb-6">This helps us show local weather and pickups</p>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">City</label>
+                <input
+                  type="text" value={locationModal.city}
+                  onChange={(e) => setLocationModal({ ...locationModal, city: e.target.value })}
+                  placeholder="Enter your city"
+                  className="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">State</label>
+                <input
+                  type="text" value={locationModal.state}
+                  onChange={(e) => setLocationModal({ ...locationModal, state: e.target.value })}
+                  placeholder="Enter your state"
+                  className="w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setLocationModal({ ...locationModal, show: false })} className="flex-1 py-3.5 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-200 transition-all">
+                Cancel
+              </button>
+              <button
+                onClick={handleLocationSave}
+                disabled={!locationModal.city || !locationModal.state}
+                className="flex-1 py-3.5 bg-gradient-to-r from-green-600 to-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-green-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                Save Location
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

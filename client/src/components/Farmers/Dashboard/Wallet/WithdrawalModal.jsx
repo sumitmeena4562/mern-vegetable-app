@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { requestWithdrawal } from '@/api/userApi';
 
 const WithdrawalModal = ({ onClose, availableBalance, onSuccess }) => {
@@ -38,8 +39,8 @@ const WithdrawalModal = ({ onClose, availableBalance, onSuccess }) => {
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6">
             <div
                 className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onClose}
@@ -84,7 +85,7 @@ const WithdrawalModal = ({ onClose, availableBalance, onSuccess }) => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Withdraw to</p>
-                            <p className="text-xs font-bold text-slate-700">Bank Account (末4329)</p>
+                            <p className="text-xs font-bold text-slate-700">Bank Account</p>
                         </div>
                     </div>
 
@@ -108,7 +109,8 @@ const WithdrawalModal = ({ onClose, availableBalance, onSuccess }) => {
                     </p>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

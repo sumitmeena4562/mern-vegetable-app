@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { getWalletStats, getTransactionHistory, requestWithdrawal } from '@/api/userApi';
+import api from '@/api/axios';
 import TransactionList from './TransactionList';
 import WithdrawalModal from './WithdrawalModal';
+import BankDetailsModal from './BankDetailsModal';
 
 const Wallet = () => {
     const [stats, setStats] = useState({ balance: 0, totalEarned: 0, pendingPayouts: 0 });
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [showBankModal, setShowBankModal] = useState(false);
+    const [bankDetails, setBankDetails] = useState(null);
 
     useEffect(() => {
         fetchWalletData();
@@ -22,11 +26,39 @@ const Wallet = () => {
             ]);
             if (statsRes.success) setStats(statsRes.data);
             if (transRes.success) setTransactions(transRes.data);
+
+            // Fetch farmer profile for bank details
+            try {
+                const profileRes = await api.get('/farmers/profile');
+                if (profileRes.data?.success && profileRes.data?.data?.bankDetails) {
+                    setBankDetails(profileRes.data.data.bankDetails);
+                }
+            } catch (e) { /* Bank details not available yet */ }
         } catch (error) {
             console.error("Wallet loading error:", error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const exportCSV = () => {
+        if (!transactions.length) return;
+        const headers = ['Date', 'Type', 'Description', 'Amount', 'Status'];
+        const rows = transactions.map(t => [
+            new Date(t.createdAt).toLocaleDateString(),
+            t.type || '',
+            (t.description || '').replace(/,/g, ' '),
+            t.amount || 0,
+            t.status || '',
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     if (loading) {
@@ -66,10 +98,7 @@ const Wallet = () => {
                                 <h3 className="text-[3.5rem] font-black leading-none tracking-tighter mb-4">₹{stats.balance.toLocaleString()}</h3>
                                 <div className="flex items-center gap-3">
                                     <div className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-black uppercase tracking-wider">
-                                        Wallet Secured
-                                    </div>
-                                    <div className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-black uppercase tracking-wider">
-                                        Next Payout: 25 Feb
+                                        {stats.pendingPayouts > 0 ? `Payout Pending: ₹${stats.pendingPayouts.toLocaleString()}` : 'Wallet Secured'}
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +141,10 @@ const Wallet = () => {
                     <div className="bg-white/40 backdrop-blur-xl border border-white/50 rounded-[32px] p-6 shadow-xl shadow-slate-200/20">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-black text-slate-900 tracking-tight">Recent Transactions</h3>
-                            <button className="text-[10px] font-black text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors uppercase tracking-widest">Export History</button>
+                            <button onClick={exportCSV} className="text-[10px] font-black text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 hover:bg-green-100 transition-colors uppercase tracking-widest flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">download</span>
+                                Export CSV
+                            </button>
                         </div>
 
                         <TransactionList transactions={transactions} />
@@ -128,11 +160,21 @@ const Wallet = () => {
                         <div className="space-y-4 relative z-10">
                             <div className="p-4 bg-white/10 rounded-2xl border border-white/10">
                                 <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-1">Active Account</p>
-                                <p className="text-sm font-bold">State Bank of India</p>
-                                <p className="text-xs text-white/60">末 4329 (Ramesh Kumar)</p>
+                                {bankDetails ? (
+                                    <>
+                                        <p className="text-sm font-bold">{bankDetails.bankName || 'Bank Name'}</p>
+                                        <p className="text-xs text-white/60">末 {(bankDetails.accountNumber || '').slice(-4)} ({bankDetails.accountHolderName || 'Account Holder'})</p>
+                                    </>
+                                ) : (
+                                    <p className="text-xs text-white/60">No bank account linked yet</p>
+                                )}
                             </div>
-                            <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest transition-all">
-                                Change Bank Account
+                            <button
+                                onClick={() => setShowBankModal(true)}
+                                className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">edit</span>
+                                {bankDetails ? 'Change Bank Account' : 'Add Bank Account'}
                             </button>
                         </div>
                     </div>
@@ -168,6 +210,14 @@ const Wallet = () => {
                 <WithdrawalModal
                     onClose={() => setShowWithdrawModal(false)}
                     availableBalance={stats.balance}
+                    onSuccess={fetchWalletData}
+                />
+            )}
+
+            {showBankModal && (
+                <BankDetailsModal
+                    onClose={() => setShowBankModal(false)}
+                    existingDetails={bankDetails}
                     onSuccess={fetchWalletData}
                 />
             )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 
 const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
     const [updating, setUpdating] = useState(false);
@@ -17,8 +18,8 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
 
     const currentAction = statusFlow[order.status];
 
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onClose}
@@ -153,7 +154,8 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

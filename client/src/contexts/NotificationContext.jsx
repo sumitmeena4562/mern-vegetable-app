@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api/axios.js';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
+import { toast } from 'react-hot-toast';
 
 const NotificationContext = createContext();
 
@@ -35,9 +36,30 @@ export const NotificationProvider = ({ children }) => {
     if (!socket) return;
 
     socket.on('receive-notification', (newNotification) => {
-      // Sound play kar sakte hain yahan 🔔
-      const audio = new Audio('/notification.mp3'); // Optional
+      // Sound play 🔔
+      const audio = new Audio('/notification.mp3');
       audio.play().catch(e => console.log("Audio permission denied"));
+
+      // Toast alert 🍞
+      toast.custom(
+        (t) => (
+          <div
+            className={`${t.visible ? 'animate-in slide-in-from-top-2 fade-in' : 'animate-out slide-out-to-top-2 fade-out'} max-w-sm w-full bg-white shadow-2xl rounded-2xl border border-slate-100 p-4 flex items-start gap-3 cursor-pointer`}
+            onClick={() => toast.dismiss(t.id)}
+          >
+            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600 shrink-0">
+              <span className="material-symbols-outlined text-xl">
+                {newNotification.type === 'order_update' ? 'shopping_cart' : 'notifications'}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-slate-900 tracking-tight">{newNotification.title || 'New Notification'}</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 line-clamp-2">{newNotification.message}</p>
+            </div>
+          </div>
+        ),
+        { duration: 5000, position: 'top-center' }
+      );
 
       // List mein top par add karein
       setNotifications(prev => [newNotification, ...prev]);

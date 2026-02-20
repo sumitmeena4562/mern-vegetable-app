@@ -10,7 +10,7 @@ const WelcomeOnboarding = ({ userName, stats }) => {
             title: "Add Farm Details",
             desc: "Complete your farm profile to build trust with vendors.",
             icon: "home_work",
-            action: () => navigate('/farmer-dashboard/profile'), // Example link
+            action: () => navigate('/farmer-dashboard/settings'),
             completed: stats.profileComplete,
             btnText: "Update Profile"
         },

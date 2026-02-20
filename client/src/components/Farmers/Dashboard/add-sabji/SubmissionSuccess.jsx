@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
 const SubmissionSuccess = ({ productName, onComplete }) => {
@@ -13,8 +14,8 @@ const SubmissionSuccess = ({ productName, onComplete }) => {
         return () => clearTimeout(timer);
     }, [onComplete]);
 
-    return (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-500 ${show ? 'opacity-100 backdrop-blur-md bg-slate-900/40' : 'opacity-0 backdrop-blur-0 bg-transparent pointer-events-none'}`}>
+    return ReactDOM.createPortal(
+        <div className={`fixed inset-0 z-[999] flex items-center justify-center p-4 transition-all duration-500 ${show ? 'opacity-100 backdrop-blur-md bg-slate-900/40' : 'opacity-0 backdrop-blur-0 bg-transparent pointer-events-none'}`}>
             <div className={`bg-white rounded-[48px] p-8 md:p-12 max-w-sm w-full shadow-2xl shadow-green-900/20 transform transition-all duration-500 flex flex-col items-center text-center ${show ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-12 scale-90 opacity-0'}`}>
 
                 {/* Animated Check Circle */}
@@ -41,7 +42,8 @@ const SubmissionSuccess = ({ productName, onComplete }) => {
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Redirecting to Dashboard</p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

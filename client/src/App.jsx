@@ -11,7 +11,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 export default function App() {
     return (
         <NotificationProvider>
-            <Toaster position="top-right" reverseOrder={false} />
+            <Toaster position="top-center" reverseOrder={false} />
             <div>
                 <Routes>
                     <Route path="/" element={<Landingpage />} />

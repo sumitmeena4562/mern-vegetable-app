@@ -17,46 +17,18 @@ const Analytics = () => {
         try {
             setLoading(true);
             const res = await api.get('/farmers/analytics');
-            if (res.data.success) {
-                // Fallback to demo data if real data is insufficient for a beautiful dashboard
-                const hasData = res.data.data.revenueStats?.length > 0;
-                setData(hasData ? res.data.data : getDemoData());
+            if (res.data.success && res.data.data) {
+                setData(res.data.data);
+            } else {
+                setData({ revenueStats: [], productPerformance: [], buyerStats: [], categoryDemand: [] });
             }
         } catch (error) {
             console.error("Analytics fetch error:", error);
-            setData(getDemoData());
+            setData({ revenueStats: [], productPerformance: [], buyerStats: [], categoryDemand: [] });
         } finally {
             setLoading(false);
         }
     };
-
-    const getDemoData = () => ({
-        revenueStats: [
-            { name: 'Sep', revenue: 4500, orders: 12 },
-            { name: 'Oct', revenue: 5200, orders: 15 },
-            { name: 'Nov', revenue: 4800, orders: 14 },
-            { name: 'Dec', revenue: 6100, orders: 18 },
-            { name: 'Jan', revenue: 7500, orders: 22 },
-            { name: 'Feb', revenue: 8900, orders: 25 },
-        ],
-        productPerformance: [
-            { name: 'Tomato', revenue: 3200, sales: 150 },
-            { name: 'Onion', revenue: 2800, sales: 120 },
-            { name: 'Potato', revenue: 1500, sales: 200 },
-            { name: 'Carrot', revenue: 1100, sales: 80 },
-            { name: 'Peas', revenue: 900, sales: 40 },
-        ],
-        buyerStats: [
-            { _id: 'vendor', count: 45, totalSpent: 12000 },
-            { _id: 'customer', count: 82, totalSpent: 8500 },
-        ],
-        categoryDemand: [
-            { category: 'Vegetables', demand: 85 },
-            { category: 'Fruits', demand: 40 },
-            { category: 'Grains', demand: 60 },
-            { category: 'Pulses', demand: 35 },
-        ]
-    });
 
     if (loading) {
         return (
@@ -80,9 +52,18 @@ const Analytics = () => {
                     <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-6">
                         <span className="material-symbols-outlined font-black">trending_up</span>
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Impact</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Revenue</p>
                     <h3 className="text-3xl font-black text-slate-900 tracking-tight">₹{(data?.revenueStats?.reduce((a, b) => a + b.revenue, 0) || 0).toLocaleString()}</h3>
-                    <p className="text-xs text-green-600 font-bold mt-2">+12.5% vs last month</p>
+                    {(() => {
+                        const stats = data?.revenueStats || [];
+                        if (stats.length >= 2) {
+                            const curr = stats[stats.length - 1].revenue;
+                            const prev = stats[stats.length - 2].revenue;
+                            const pct = prev > 0 ? (((curr - prev) / prev) * 100).toFixed(1) : 0;
+                            return <p className={`text-xs font-bold mt-2 ${pct >= 0 ? 'text-green-600' : 'text-red-500'}`}>{pct >= 0 ? '+' : ''}{pct}% vs last month</p>;
+                        }
+                        return <p className="text-xs text-slate-400 font-bold mt-2">Not enough data</p>;
+                    })()}
                 </div>
 
                 <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
@@ -91,16 +72,16 @@ const Analytics = () => {
                     </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Unique Buyers</p>
                     <h3 className="text-3xl font-black text-slate-900 tracking-tight">{data?.buyerStats?.reduce((a, b) => a + b.count, 0) || 0}</h3>
-                    <p className="text-xs text-blue-600 font-bold mt-2">Growing community</p>
+                    <p className="text-xs text-blue-600 font-bold mt-2">{(data?.buyerStats?.length || 0) > 0 ? 'Growing community' : 'No buyers yet'}</p>
                 </div>
 
                 <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
                     <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
                         <span className="material-symbols-outlined font-black">shopping_bag</span>
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Market Capture</p>
-                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">Elite</h3>
-                    <p className="text-xs text-orange-600 font-bold mt-2">Top 5% in category</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Orders</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">{data?.revenueStats?.reduce((a, b) => a + (b.orders || 0), 0) || 0}</h3>
+                    <p className="text-xs text-orange-600 font-bold mt-2">{(data?.productPerformance?.length || 0)} products listed</p>
                 </div>
             </div>
 

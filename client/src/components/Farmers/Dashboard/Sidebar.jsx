@@ -16,13 +16,13 @@ const Sidebar = ({
     { to: '/farmer-dashboard', icon: 'dashboard', label: 'Dashboard', exact: true },
     { to: '/farmer-dashboard/add-sabji', icon: 'add_circle', label: 'Add Product' },
     { to: '/farmer-dashboard/inventory', icon: 'inventory_2', label: 'Products' },
-    { to: '/farmer-dashboard/orders', icon: 'shopping_cart', label: 'Orders', badge: '3' },
+    { to: '/farmer-dashboard/orders', icon: 'shopping_cart', label: 'Orders' },
     { to: '/farmer-dashboard/wallet', icon: 'payments', label: 'Finance' },
     { to: '/farmer-dashboard/analytics', icon: 'monitoring', label: 'Analytics' },
   ];
 
   const bottomNav = [
-    { to: '#', icon: 'settings', label: 'Settings' },
+    { to: '/farmer-dashboard/settings', icon: 'settings', label: 'Settings' },
   ];
 
   const isActive = (item) => {
@@ -93,7 +93,7 @@ const Sidebar = ({
       </aside>
 
       {/* Mobile Bottom Tab Bar */}
-      {!location.pathname.includes('/add-sabji') && (
+      {!location.pathname.includes('/add-sabji') && !isOpen && (
         <div className="fixed bottom-0 left-0 right-0 z-30 xl:hidden bg-white border-t border-slate-100 px-2 pb-safe shadow-lg shadow-black/5">
           <div className="flex items-center justify-around py-1">
             {mainNav.slice(0, 5).map((item) => (

@@ -1,4 +1,5 @@
 import { body, validationResult } from 'express-validator';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Farmer from '../models/Farmer.js';
 import Product from '../models/Product.js';
@@ -123,7 +124,7 @@ export const getMyProfile = async (req, res) => {
   }
 };
 
-// Update Farmer Profile
+// Update Farmer Profile (SECURED: Only whitelisted fields allowed)
 export const updateProfile = async (req, res) => {
   try {
     const { fullName, email, address, location, ...farmData } = req.body;
@@ -139,10 +140,21 @@ export const updateProfile = async (req, res) => {
       await User.findByIdAndUpdate(req.user.id, userUpdate);
     }
 
-    // Update Farmer specific info
+    // SECURITY FIX: Only allow safe fields to be updated
+    const allowedFarmFields = [
+      'farmName', 'farmSize', 'farmSizeUnit', 'farmingType', 'soilType',
+      'irrigationSystem', 'waterSource', 'hasColdStorage', 'landOwnership',
+      'farmPhotos', 'primaryCrop', 'crops', 'farmingExperience',
+      'preferredPickupTime', 'bankDetails'
+    ];
+    const safeFarmData = {};
+    for (const key of allowedFarmFields) {
+      if (farmData[key] !== undefined) safeFarmData[key] = farmData[key];
+    }
+
     const farmer = await Farmer.findOneAndUpdate(
       { user: req.user.id },
-      farmData,
+      safeFarmData,
       { new: true, runValidators: true }
     );
 
@@ -152,37 +164,53 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// Get Dashboard Stats (Real Data for MVP)
+// Get Dashboard Stats (Optimized — DB-level aggregation)
 export const getDashboardStats = async (req, res) => {
   try {
     const farmerId = req.user.id;
+    const farmerObjectId = new mongoose.Types.ObjectId(farmerId);
 
-    // 1. Get Product Stats
+    // 1. Product count
     const totalProducts = await Product.countDocuments({ farmer: farmerId, status: { $ne: 'removed' } });
 
-    // 2. Get Order Stats
-    const orders = await Order.find({ farmer: farmerId });
-    const pendingOrders = orders.filter(o => ['pending', 'confirmed', 'ready'].includes(o.status)).length;
-    const completedOrders = orders.filter(o => o.status === 'delivered').length;
+    // 2. Order stats + Earnings — single aggregate query instead of loading all orders
+    const [orderStats] = await Order.aggregate([
+      { $match: { farmer: farmerObjectId } },
+      {
+        $group: {
+          _id: null,
+          pendingOrders: {
+            $sum: { $cond: [{ $in: ['$status', ['pending', 'confirmed', 'ready_for_pickup']] }, 1, 0] }
+          },
+          completedOrders: {
+            $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0] }
+          },
+          totalEarnings: {
+            $sum: {
+              $cond: [
+                { $or: [{ $eq: ['$status', 'delivered'] }, { $eq: ['$payment.status', 'paid'] }] },
+                { $ifNull: ['$finalAmount', '$totalAmount'] },
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
 
-    // 3. Calculate Earnings
-    const totalEarnings = orders
-      .filter(o => o.status === 'delivered' || o.paymentStatus === 'paid')
-      .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-    // 4. Get Farmer Profile for Onboarding
+    // 3. Farmer profile
     const profile = await Farmer.findOne({ user: farmerId });
 
     res.status(200).json({
       success: true,
       data: {
         stats: {
-          totalEarnings,
+          totalEarnings: orderStats?.totalEarnings || 0,
           activeProducts: totalProducts,
-          pendingOrders,
-          completedOrders,
+          pendingOrders: orderStats?.pendingOrders || 0,
+          completedOrders: orderStats?.completedOrders || 0,
           rating: profile?.averageRating || 0,
-          reviewsCount: 0 // Aage reviews model se ayega
+          reviewsCount: 0
         },
         onboarding: {
           profileComplete: !!(profile?.farmName && profile?.farmSize),
