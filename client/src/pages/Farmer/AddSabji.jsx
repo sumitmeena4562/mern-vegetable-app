@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast, Toaster } from 'react-hot-toast';
 import BasicInfo from '../../components/Farmers/Dashboard/add-sabji/BasicInfo';
@@ -12,6 +12,22 @@ const AddSabji = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [userLocation, setUserLocation] = useState({ type: 'Point', coordinates: [0, 0] });
+
+  useEffect(() => {
+    const fetchProfileLocation = async () => {
+      try {
+        const response = await api.get('/farmers/profile');
+        if (response.data?.success && response.data?.data?.location) {
+          setUserLocation(response.data.data.location);
+        }
+      } catch (error) {
+        console.error("Profile location fetch error:", error);
+      }
+    };
+    fetchProfileLocation();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     variety: '',
@@ -78,7 +94,7 @@ const AddSabji = () => {
           formData.packaging,
           formData.isWashed ? 'washed' : 'unwashed'
         ],
-        location: { coordinates: [0, 0] },
+        location: userLocation,
         status: formData.isVisible ? 'available' : 'hidden'
       };
 

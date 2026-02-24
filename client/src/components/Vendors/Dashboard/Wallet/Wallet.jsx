@@ -9,15 +9,18 @@ const Wallet = () => {
         creditUsed: 0
     });
 
-    const transactions = [
-        { id: 'TXN-001', date: '2023-10-27', type: 'Payment', amount: -2700, status: 'Success', details: 'Order #ORD-9012' },
-        { id: 'TXN-002', date: '2023-10-26', type: 'Topup', amount: 5000, status: 'Success', details: 'Added via UPI' },
-        { id: 'TXN-003', date: '2023-10-20', type: 'Credit Use', amount: -1500, status: 'Success', details: 'Order #ORD-8711' },
+    const [transactions, setTransactions] = useState([]);
+
+    const dummyTransactions = [
+        { id: 'TXN-001', createdAt: '2023-10-27', type: 'Payment', amount: -2700, status: 'Success', description: 'Order #ORD-9012' },
+        { id: 'TXN-002', createdAt: '2023-10-26', type: 'Topup', amount: 5000, status: 'Success', description: 'Added via UPI' },
+        { id: 'TXN-003', createdAt: '2023-10-20', type: 'Credit Use', amount: -1500, status: 'Success', description: 'Order #ORD-8711' },
     ];
 
     useEffect(() => {
         setTimeout(() => {
             setWallet({ balance: 4500, creditLimit: 20000, creditUsed: 1500 });
+            setTransactions(dummyTransactions);
             setLoading(false);
         }, 800);
     }, []);
@@ -25,153 +28,211 @@ const Wallet = () => {
     const availableCredit = wallet.creditLimit - wallet.creditUsed;
     const creditUsagePercentage = (wallet.creditUsed / wallet.creditLimit) * 100;
 
-    return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    const exportCSV = () => {
+        if (!transactions.length) return;
+        const headers = ['Date', 'Type', 'Description', 'Amount', 'Status'];
+        const rows = transactions.map(t => [
+            new Date(t.createdAt).toLocaleDateString(),
+            t.type || '',
+            (t.description || '').replace(/,/g, ' '),
+            t.amount || 0,
+            t.status || '',
+        ]);
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
 
-            {/* Header */}
+    if (loading) {
+        return (
+            <div className="p-6 animate-pulse">
+                <div className="h-48 bg-slate-100 rounded-[32px] mb-6 shadow-sm"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="h-32 bg-slate-100 rounded-2xl"></div>
+                    <div className="h-32 bg-slate-100 rounded-2xl"></div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 relative z-10 animate-in fade-in duration-500">
+
+            {/* Page Header */}
             <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Finance</h1>
-                <p className="text-slate-500 font-medium mt-1">Manage wallet balance, credit limits, and transactions.</p>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Finance & Wallet</h2>
+                <p className="text-slate-500 font-medium text-sm mt-1">Manage your wallet balance and credit limits</p>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center items-center h-48">
-                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                    {/* Main Wallet Cards */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+                {/* Left Side: Stats & Main Wallet Card */}
+                <div className="lg:col-span-12 xl:col-span-8 flex flex-col gap-6">
 
-                            {/* Wallet Balance Card */}
-                            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-slate-900/20 flex flex-col justify-between min-h-[220px]">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div>
-                                        <h3 className="text-slate-400 font-semibold text-sm tracking-wider uppercase mb-1">Available Balance</h3>
-                                        <div className="text-4xl sm:text-5xl font-black tracking-tight">₹{wallet.balance}</div>
+                    {/* Main Wallet Balance Card */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-800 rounded-[32px] p-8 text-white shadow-2xl shadow-indigo-500/20 group">
+                        <div className="absolute -right-16 -top-16 w-64 h-64 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000"></div>
+                        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000"></div>
+
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                            <div>
+                                <p className="text-indigo-100/80 text-xs font-black uppercase tracking-widest mb-1">Available Balance</p>
+                                <h3 className="text-[3.5rem] font-black leading-none tracking-tighter mb-4">₹{wallet.balance.toLocaleString()}</h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-black uppercase tracking-wider">
+                                        Active Wallet
                                     </div>
-                                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                                        <span className="material-symbols-outlined text-white text-2xl">account_balance_wallet</span>
-                                    </div>
-                                </div>
-                                <div className="relative z-10 mt-8 flex flex-wrap gap-3">
-                                    <button className="flex-1 min-w-[120px] bg-white text-slate-900 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors shadow-lg shadow-white/10 active:scale-95">
-                                        <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                                        Topup Wallet
-                                    </button>
-                                    <button className="flex-1 min-w-[120px] bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-colors active:scale-95">
-                                        <span className="material-symbols-outlined text-[20px]">account_balance</span>
-                                        Withdraw
-                                    </button>
                                 </div>
                             </div>
 
-                            {/* Credit Line Card */}
-                            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-emerald-500/20 flex flex-col justify-between min-h-[220px]">
-                                <div className="absolute bottom-0 right-0 w-64 h-64 bg-black/10 rounded-full blur-3xl translate-y-1/2 translate-x-1/4"></div>
-                                <div className="relative z-10 flex justify-between items-start mb-6">
-                                    <div>
-                                        <h3 className="text-emerald-100 font-semibold text-sm tracking-wider uppercase mb-1 flex items-center gap-1.5">
-                                            <span className="material-symbols-outlined text-[16px]">verified</span>
-                                            Udhaar Limit
-                                        </h3>
-                                        <div className="text-3xl sm:text-4xl font-black tracking-tight">₹{availableCredit}</div>
-                                        <p className="text-sm text-emerald-100 mt-1 font-medium">Available to spend</p>
+                            <div className="flex gap-3 w-full md:w-auto">
+                                <button
+                                    className="flex-1 md:w-auto px-8 py-4 bg-white text-indigo-700 rounded-2xl font-black shadow-xl shadow-indigo-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group/btn"
+                                >
+                                    <span className="material-symbols-outlined font-black group-hover/btn:scale-110 transition-transform">add_circle</span>
+                                    Topup
+                                </button>
+                                <button
+                                    className="flex-1 md:w-auto px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl font-black hover:bg-white/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined font-black">payments</span>
+                                    Withdraw
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Credit Line Card */}
+                        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-5">
+                            <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                                <span className="material-symbols-outlined text-3xl font-bold">verified</span>
+                            </div>
+                            <div className="w-full">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Available Credit</p>
+                                <h4 className="text-2xl font-black text-slate-800 tracking-tight">₹{availableCredit.toLocaleString()}</h4>
+                                <div className="mt-2 w-full">
+                                    <div className="flex justify-between text-[9px] font-black text-slate-500 tracking-wider mb-1">
+                                        <span>USED: ₹{wallet.creditUsed}</span>
+                                        <span>MAX: ₹{wallet.creditLimit}</span>
                                     </div>
-                                </div>
-                                <div className="relative z-10 w-full space-y-2">
-                                    <div className="flex justify-between text-xs font-bold text-emerald-50">
-                                        <span>Used: ₹{wallet.creditUsed}</span>
-                                        <span>Max: ₹{wallet.creditLimit}</span>
-                                    </div>
-                                    <div className="h-2.5 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-white rounded-full transition-all duration-1000"
+                                            className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${creditUsagePercentage}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
-                        {/* Transaction History */}
-                        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-blue-600">history</span>
-                                Recent Transactions
-                            </h3>
-
-                            <div className="space-y-4">
-                                {transactions.map((txn, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border 
-                        ${txn.amount > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                                                <span className="material-symbols-outlined">
-                                                    {txn.amount > 0 ? 'call_received' : 'call_made'}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-slate-800">{txn.type}</h4>
-                                                <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mt-0.5">
-                                                    <span>{txn.date}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                    <span>{txn.details}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className={`font-black text-lg ${txn.amount > 0 ? 'text-emerald-600' : 'text-slate-800'}`}>
-                                                {txn.amount > 0 ? '+' : ''}₹{Math.abs(txn.amount)}
-                                            </p>
-                                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-0.5">{txn.status}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Recent Usage Card */}
+                        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-5">
+                            <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                                <span className="material-symbols-outlined text-3xl font-bold">receipt_long</span>
                             </div>
-                            <button className="w-full mt-4 py-3 text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors">
-                                View All Transactions
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Right Sidebar - Actions & Tips */}
-                    <div className="space-y-6">
-
-                        <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                                <span className="material-symbols-outlined text-9xl text-blue-500">trending_up</span>
-                            </div>
-                            <div className="relative z-10">
-                                <div className="w-12 h-12 bg-white rounded-xl shadow-sm text-blue-600 flex items-center justify-center mb-4">
-                                    <span className="material-symbols-outlined text-2xl">workspace_premium</span>
-                                </div>
-                                <h3 className="text-lg font-black text-slate-800 mb-2">Increase Udhaar Limit</h3>
-                                <p className="text-slate-600 text-sm font-medium mb-6">Pay your pending credit dues on time for 3 consecutive months to unlock limits up to ₹1,00,000.</p>
-                                <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm hover:shadow-md hover:shadow-blue-600/20 transition-all active:scale-95">
-                                    Check Eligibility
+                            <div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Dues</p>
+                                <h4 className="text-2xl font-black text-slate-800 tracking-tight">₹{wallet.creditUsed.toLocaleString()}</h4>
+                                <button className="mt-2 text-[10px] font-black text-indigo-600 px-3 py-1 bg-indigo-50 rounded-full border border-indigo-100 hover:bg-indigo-100 transition-colors uppercase tracking-widest">
+                                    Pay Now
                                 </button>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="bg-white border text-center border-slate-100 rounded-3xl p-6 shadow-sm">
-                            <div className="w-16 h-16 mx-auto bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-                                <span className="material-symbols-outlined text-3xl text-slate-400">account_balance</span>
-                            </div>
-                            <h3 className="font-bold text-slate-800 mb-1">Bank Account</h3>
-                            <p className="text-sm text-slate-500 mb-4">Required for withdrawals</p>
-                            <button className="text-blue-600 font-bold text-sm bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors w-full">
-                                + Add Bank Details
+                    {/* Transaction Section */}
+                    <div className="bg-white/40 backdrop-blur-xl border border-white/50 rounded-[32px] p-6 shadow-xl shadow-slate-200/20">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Recent Transactions</h3>
+                            <button onClick={exportCSV} className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 hover:bg-indigo-100 transition-colors uppercase tracking-widest flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">download</span>
+                                Export CSV
                             </button>
                         </div>
 
+                        <div className="space-y-3">
+                            {transactions.map((txn, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 group cursor-pointer hover:-translate-y-0.5">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-inner group-hover:scale-110 transition-transform duration-300
+                    ${txn.amount > 0 ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>
+                                            <span className="material-symbols-outlined text-[28px]">
+                                                {txn.amount > 0 ? 'arrow_downward' : 'arrow_upward'}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-black text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">{txn.type}</h4>
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
+                                                <span>{txn.createdAt}</span>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                                <span>{txn.description}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`font-black text-xl ${txn.amount > 0 ? 'text-emerald-500' : 'text-slate-800'}`}>
+                                            {txn.amount > 0 ? '+' : ''}₹{Math.abs(txn.amount)}
+                                        </p>
+                                        <div className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest mt-1 border border-emerald-100">
+                                            {txn.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Right Side: Quick Actions & Help */}
+                <div className="lg:col-span-12 xl:col-span-4 flex flex-col gap-6">
+                    <div className="bg-slate-900 rounded-[32px] p-8 text-white relative overflow-hidden">
+                        <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl"></div>
+                        <h3 className="text-xl font-black mb-4 relative z-10 tracking-tight">Purchase Credit</h3>
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className="w-14 h-14 bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center mb-6">
+                                <span className="material-symbols-outlined text-3xl">workspace_premium</span>
+                            </div>
+                            <p className="text-slate-300 text-sm font-medium mb-6 leading-relaxed">Increase your credit limit by maintaining a good payment history and clearing dues on time.</p>
+                            <button className="w-full py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                                <span className="material-symbols-outlined text-sm">trending_up</span>
+                                Check Eligibility
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/20">
+                        <h3 className="text-lg font-black text-slate-900 mb-4 tracking-tight">Help & Support</h3>
+                        <div className="space-y-3">
+                            {[
+                                { icon: 'help', text: 'Credit Limits & Rules' },
+                                { icon: 'info', text: 'Transaction Issues?' },
+                                { icon: 'security', text: 'Secure Payments' }
+                            ].map((item, idx) => (
+                                <button key={idx} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-slate-400 group-hover:text-indigo-600 transition-colors">{item.icon}</span>
+                                        <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{item.text}</span>
+                                    </div>
+                                    <span className="material-symbols-outlined text-slate-300 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-start gap-3">
+                            <span className="material-symbols-outlined text-indigo-500">lightbulb</span>
+                            <p className="text-[11px] font-bold text-indigo-700 leading-relaxed">
+                                Tip: Keep your wallet funded to ensure smooth purchases when market prices are favorable.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

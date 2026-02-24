@@ -89,7 +89,7 @@ const productSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['available', 'sold', 'reserved', 'expired', 'removed'],
+    enum: ['available', 'sold', 'reserved', 'expired', 'removed', 'hidden'],
     default: 'available'
   },
 

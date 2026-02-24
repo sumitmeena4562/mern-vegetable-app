@@ -5,11 +5,21 @@ const VendorOrders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ORDERS_PER_PAGE = 9;
 
     const dummyOrders = [
         { id: '#ORD-9012', date: '2023-10-27', farmer: 'Rajesh Kumar', items: 'Tomatoes (50kg), Onions (20kg)', total: 2700, status: 'Processing' },
         { id: '#ORD-8834', date: '2023-10-25', farmer: 'Vikram Das', items: 'Green Chili (10kg)', total: 600, status: 'Shipped' },
         { id: '#ORD-8711', date: '2023-10-20', farmer: 'Suresh Singh', items: 'Potatoes (100kg)', total: 2500, status: 'Delivered' },
+    ];
+
+    const statuses = [
+        { id: 'All', label: 'All Orders', icon: 'list' },
+        { id: 'Processing', label: 'Processing', icon: 'hourglass_empty' },
+        { id: 'Shipped', label: 'Shipped', icon: 'local_shipping' },
+        { id: 'Delivered', label: 'Delivered', icon: 'check_circle' },
     ];
 
     useEffect(() => {
@@ -21,108 +31,186 @@ const VendorOrders = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Processing': return 'bg-amber-100 text-amber-700 border-amber-200';
-            case 'Shipped': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'Delivered': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'Cancelled': return 'bg-red-100 text-red-700 border-red-200';
-            default: return 'bg-slate-100 text-slate-700 border-slate-200';
+            case 'Processing': return 'bg-amber-50 text-amber-600 border-amber-100';
+            case 'Shipped': return 'bg-blue-50 text-blue-600 border-blue-100';
+            case 'Delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+            case 'Cancelled': return 'bg-red-50 text-red-600 border-red-100';
+            default: return 'bg-slate-50 text-slate-600 border-slate-100';
         }
     };
 
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'Processing': return 'hourglass_empty';
-            case 'Shipped': return 'local_shipping';
-            case 'Delivered': return 'check_circle';
-            case 'Cancelled': return 'cancel';
-            default: return 'help';
-        }
-    };
+    // Client-side search and filter
+    const filteredOrders = orders.filter(o => {
+        const matchesFilter = filter === 'All' || o.status === filter;
+        const matchesSearch = !searchQuery.trim() || o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.farmer.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesFilter && matchesSearch;
+    });
 
-    const filteredOrders = orders.filter(o => filter === 'All' || o.status === filter);
+    const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
+    const paginatedOrders = filteredOrders.slice((currentPage - 1) * ORDERS_PER_PAGE, currentPage * ORDERS_PER_PAGE);
+
+    useEffect(() => { setCurrentPage(1); }, [searchQuery, filter]);
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
 
-            {/* Header & Filters */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Purchase History</h1>
-                    <p className="text-slate-500 font-medium mt-1">Track and manage your orders from farmers</p>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Purchase History</h2>
+                    <p className="text-slate-500 font-medium text-sm mt-1">Track and manage your orders from farmers</p>
                 </div>
-
-                <div className="flex gap-2 p-1.5 bg-slate-200/50 rounded-xl overflow-x-auto w-full sm:w-auto hide-scrollbar">
-                    {['All', 'Processing', 'Shipped', 'Delivered'].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setFilter(status)}
-                            className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-all ${filter === status ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
-                        >
-                            {status}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all w-64 md:w-80">
+                        <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by order ID or farmer..."
+                            className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full placeholder:text-slate-300"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Orders List */}
-            <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-                {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            {/* Status Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                {statuses.map((s) => (
+                    <button
+                        key={s.id}
+                        onClick={() => setFilter(s.id)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap border-2 ${filter === s.id
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200'
+                            : 'bg-white text-slate-500 border-white hover:border-slate-100 hover:bg-slate-50'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-lg">{s.icon}</span>
+                        {s.label}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="h-48 bg-slate-100 rounded-[32px]"></div>
+                    ))}
+                </div>
+            ) : filteredOrders.length === 0 ? (
+                <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white/40 backdrop-blur-xl border border-white rounded-[32px]">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 opacity-50">
+                        <span className="material-symbols-outlined text-5xl">{searchQuery ? 'search_off' : 'shopping_cart_off'}</span>
                     </div>
-                ) : filteredOrders.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-12 text-center h-64">
-                        <span className="material-symbols-outlined text-5xl text-slate-300 mb-3">receipt_long</span>
-                        <h3 className="text-lg font-bold text-slate-800">No orders found</h3>
-                        <p className="text-slate-500 text-sm mt-1">You haven't placed any orders with this status.</p>
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight">{searchQuery ? 'No matching orders' : 'No orders found'}</h3>
+                    <p className="text-sm font-medium mt-1">{searchQuery ? 'Try a different search term.' : 'Try changing the status filter or complete a new purchase.'}</p>
+                </div>
+            ) : (
+                <>
+                    {/* Result count */}
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-slate-400">
+                            Showing {paginatedOrders.length} of {filteredOrders.length} orders
+                            {searchQuery && <span> for "{searchQuery}"</span>}
+                        </p>
                     </div>
-                ) : (
-                    <div className="divide-y divide-slate-100">
-                        {filteredOrders.map(order => (
-                            <div key={order.id} className="p-5 sm:p-6 hover:bg-slate-50 transition-colors group flex flex-col md:flex-row gap-4 md:items-center justify-between">
-
-                                {/* Order Identity & Date */}
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200/60">
-                                        <span className="material-symbols-outlined text-slate-500">shopping_bag</span>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-base font-bold text-slate-800">{order.id}</h3>
-                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                            <p className="text-sm font-medium text-slate-500">{order.date}</p>
-                                        </div>
-                                        <p className="text-sm text-slate-600"><span className="font-semibold">Items:</span> {order.items}</p>
-                                        <p className="text-xs font-semibold text-blue-600 mt-1 flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-[14px]">agriculture</span>
-                                            Farmer: {order.farmer}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Amount, Status & Action */}
-                                <div className="flex items-center justify-between md:justify-end gap-6 ml-16 md:ml-0 md:min-w-[300px]">
-                                    <div className="text-left md:text-right flex-1">
-                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Amount</p>
-                                        <p className="text-lg font-black text-slate-800">₹{order.total}</p>
-                                    </div>
-
-                                    <div className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 ${getStatusColor(order.status)}`}>
-                                        <span className="material-symbols-outlined text-[14px]">{getStatusIcon(order.status)}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {paginatedOrders.map((order) => (
+                            <div
+                                key={order.id}
+                                className="bg-white group rounded-[32px] p-6 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden relative"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
                                         {order.status}
                                     </div>
-
-                                    <button className="w-10 h-10 rounded-full hover:bg-white hover:shadow-md border border-transparent hover:border-slate-200 flex items-center justify-center text-blue-600 transition-all active:scale-95 shrink-0">
-                                        <span className="material-symbols-outlined">chevron_right</span>
-                                    </button>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </p>
                                 </div>
 
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{order.id}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 overflow-hidden border border-slate-200">
+                                                <span className="material-symbols-outlined text-[12px]">agriculture</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-600 uppercase tracking-tighter">{order.farmer}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6 py-4 border-y border-slate-50">
+                                        <div className="flex-1">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Items Summary</p>
+                                            <p className="text-sm font-black text-slate-800 tracking-tight truncate pr-2">{order.items}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value</p>
+                                            <p className="text-sm font-black text-indigo-600 tracking-tight">₹{order.total}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button className="flex-1 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">
+                                            View Details
+                                        </button>
+                                        <button className="w-12 h-12 bg-white text-slate-400 rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
+                                            <span className="material-symbols-outlined text-lg">receipt_long</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Decorative Background Element */}
+                                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-slate-50 rounded-full group-hover:scale-150 group-hover:bg-indigo-50 transition-transform duration-700 pointer-events-none -z-0 opacity-50"></div>
                             </div>
                         ))}
                     </div>
-                )}
-            </div>
 
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 pt-4">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_left</span>
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                .map((page, idx, arr) => (
+                                    <React.Fragment key={page}>
+                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                            <span className="text-slate-300 text-sm font-bold">…</span>
+                                        )}
+                                        <button
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page
+                                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    </React.Fragment>
+                                ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_right</span>
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 };

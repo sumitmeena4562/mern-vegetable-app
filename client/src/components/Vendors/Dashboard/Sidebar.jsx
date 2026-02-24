@@ -40,26 +40,29 @@ const Sidebar = ({
 
                 {/* Logo - AgriConnect Branded */}
                 <Link to="/" className="flex items-center gap-3 p-4 sm:p-6 pb-2 group">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200/50 transition-all">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200/50 transition-all">
                         <span className="material-symbols-outlined text-white text-xl sm:text-2xl">local_mall</span>
                     </div>
                     <div>
                         <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800">
-                            Agri<span className="text-blue-600">Connect</span>
+                            Agri<span className="text-indigo-600">Connect</span>
                         </h1>
                         <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">Vendor Panel</p>
                     </div>
                 </Link>
 
-                {/* Profile Card */}
+                {/* Profile Card - Stitched from Mockup */}
                 <div className="px-4 py-4">
-                    <div className="glass-panel p-3 rounded-xl flex items-center gap-3 mb-4 bg-blue-50/50 border-blue-100">
-                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-blue-500/50 flex items-center justify-center bg-white text-blue-700 font-black text-xs">
+                    <div className="glass-panel p-3 rounded-xl flex items-center gap-3 mb-4 bg-indigo-50/50 border-indigo-100">
+                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-indigo-500/50 flex items-center justify-center bg-white text-indigo-700 font-black text-xs">
                             {userName ? userName[0].toUpperCase() : 'V'}
                         </div>
                         <div className="flex flex-col overflow-hidden">
                             <p className="text-sm font-bold truncate text-slate-800">{userName || 'Vendor'}</p>
-                            <p className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Verified Buyer</p>
+                            <div className="flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[10px] text-emerald-500">verified</span>
+                                <p className="text-[9px] uppercase font-bold text-emerald-600 tracking-wider">Verified Buyer</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -96,15 +99,20 @@ const Sidebar = ({
                                 key={item.label}
                                 to={item.to}
                                 className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all relative min-w-0 ${isActive(item)
-                                    ? 'text-blue-600'
+                                    ? 'text-indigo-600'
                                     : 'text-slate-400'}`}
                             >
-                                <span className={`material-symbols-outlined text-xl shrink-0 ${isActive(item) ? 'text-blue-600' : ''}`}>
+                                <span className={`material-symbols-outlined text-xl shrink-0 ${isActive(item) ? 'text-indigo-600' : ''}`}>
                                     {item.icon}
                                 </span>
                                 <span className="text-[9px] sm:text-[10px] font-semibold truncate w-full text-center">{item.label}</span>
+                                {item.badge && (
+                                    <span className="absolute top-1 right-2 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-white">
+                                        {item.badge}
+                                    </span>
+                                )}
                                 {isActive(item) && (
-                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-blue-500 rounded-full" />
+                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-4 h-1 bg-indigo-500 rounded-full" />
                                 )}
                             </Link>
                         ))}
@@ -119,11 +127,16 @@ const NavItem = ({ to, icon, label, active, badge }) => (
     <Link
         to={to}
         className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm ${active
-            ? 'bg-blue-50 text-blue-700 font-bold shadow-sm shadow-blue-100/50'
+            ? 'bg-indigo-50 text-indigo-700 font-bold shadow-sm shadow-indigo-100/50'
             : 'hover:bg-slate-50 text-slate-500 font-medium'}`}
     >
-        <span className={`material-symbols-outlined text-xl ${active ? 'text-blue-600' : 'text-slate-400'}`}>{icon}</span>
+        <span className={`material-symbols-outlined text-xl ${active ? 'text-indigo-600' : 'text-slate-400'}`}>{icon}</span>
         <span>{label}</span>
+        {badge && (
+            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                {badge}
+            </span>
+        )}
     </Link>
 );
 

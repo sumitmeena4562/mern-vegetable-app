@@ -168,7 +168,7 @@ app.use("/api/locations", locationRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Farm2Vendor API is running',
+    message: 'AgriConnect API is running',
     timestamp: new Date().toISOString()
   });
 });

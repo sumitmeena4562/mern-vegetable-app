@@ -4,15 +4,17 @@ import api from '../../../../api/axios';
 const Market = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
-    const [category, setCategory] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filter, setFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10; // Similar pagination
 
     // Dummy products until backend API is ready
     const dummyProducts = [
-        { id: 1, name: 'Fresh Tomatoes', farmer: 'Rajesh Kumar', price: 40, unit: 'kg', minOrder: 50, stock: 500, image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60', rating: 4.8, distance: '5 km' },
-        { id: 2, name: 'Organic Potatoes', farmer: 'Suresh Singh', price: 25, unit: 'kg', minOrder: 100, stock: 1000, image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60', rating: 4.5, distance: '12 km' },
-        { id: 3, name: 'Red Onions', farmer: 'Anil Patil', price: 35, unit: 'kg', minOrder: 50, stock: 800, image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop&q=60', rating: 4.9, distance: '3 km' },
-        { id: 4, name: 'Green Chili', farmer: 'Vikram Das', price: 60, unit: 'kg', minOrder: 10, stock: 150, image: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=500&auto=format&fit=crop&q=60', rating: 4.2, distance: '8 km' },
+        { _id: '1', name: 'Fresh Tomatoes', farmer: 'Rajesh Kumar', pricePerUnit: 40, unit: 'kg', minOrder: 50, availableQuantity: 500, images: [{ url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60' }], rating: 4.8, distance: '5 km', variety: 'Hybrid' },
+        { _id: '2', name: 'Organic Potatoes', farmer: 'Suresh Singh', pricePerUnit: 25, unit: 'kg', minOrder: 100, availableQuantity: 1000, images: [{ url: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60' }], rating: 4.5, distance: '12 km', variety: 'Organic' },
+        { _id: '3', name: 'Red Onions', farmer: 'Anil Patil', pricePerUnit: 35, unit: 'kg', minOrder: 50, availableQuantity: 800, images: [{ url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop&q=60' }], rating: 4.9, distance: '3 km', variety: 'Red' },
+        { _id: '4', name: 'Green Chili', farmer: 'Vikram Das', pricePerUnit: 60, unit: 'kg', minOrder: 10, availableQuantity: 150, images: [{ url: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=500&auto=format&fit=crop&q=60' }], rating: 4.2, distance: '8 km', variety: 'Spicy' },
     ];
 
     useEffect(() => {
@@ -23,67 +25,118 @@ const Market = () => {
         }, 1000);
     }, []);
 
-    const categories = ['All', 'Vegetables', 'Fruits', 'Grains', 'Exotic'];
+    // Client-side search and filter
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = !searchQuery.trim() || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.category?.toLowerCase().includes(searchQuery.toLowerCase()) || p.variety?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = filter === 'all' || p.category === filter; // Placeholder filter logic
+        return matchesSearch && matchesCategory;
+    });
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(search.toLowerCase()) &&
-        (category === 'All' || category === 'Vegetables') // Dummy logic for now
-    );
+    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    useEffect(() => { setCurrentPage(1); }, [searchQuery, filter]);
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto min-h-full flex flex-col">
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
 
-            {/* Top Bar: Search & Filters */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-8">
-                <div className="relative w-full md:w-96 group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-blue-500 transition-colors">search</span>
-                    <input
-                        type="text"
-                        placeholder="Search produce, farmers, or locations..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-700"
-                    />
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Mandi Market</h2>
+                    <p className="text-slate-500 font-medium text-sm mt-1">Browse fresh produce listed directly by farmers</p>
                 </div>
-
-                {/* Categories Tab */}
-                <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar">
-                    {categories.map(cat => (
-                        <button
-                            key={cat}
-                            onClick={() => setCategory(cat)}
-                            className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${category === cat ? 'bg-slate-800 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
-                    <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 flex items-center gap-2 font-bold text-sm transition-colors shadow-sm ml-auto md:ml-2">
-                        <span className="material-symbols-outlined text-lg">tune</span>
-                        Filters
-                    </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                        <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search produce, farmers..."
+                            className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full md:w-48 placeholder:text-slate-300"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        )}
+                    </div>
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="bg-white border-2 border-slate-100 rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-widest outline-none focus:border-indigo-500 transition-all shadow-sm shadow-slate-200"
+                    >
+                        <option value="all">All Categories</option>
+                        <option value="vegetables">Vegetables</option>
+                        <option value="fruits">Fruits</option>
+                        <option value="exotic">Exotic</option>
+                    </select>
                 </div>
             </div>
 
-            {/* Product Grid Layout */}
-            <div className="flex-1">
-                {loading ? (
-                    <div className="flex justify-center items-center h-64">
-                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <div key={i} className="h-72 bg-slate-100 rounded-[32px]"></div>
+                    ))}
+                </div>
+            ) : filteredProducts.length === 0 ? (
+                <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white/40 backdrop-blur-xl border border-white rounded-[40px]">
+                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 opacity-30">
+                        <span className="material-symbols-outlined text-5xl">{searchQuery ? 'search_off' : 'production_quantity_limits'}</span>
                     </div>
-                ) : filteredProducts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm text-center h-full">
-                        <span className="material-symbols-outlined text-6xl text-slate-300 mb-4">production_quantity_limits</span>
-                        <h3 className="text-xl font-bold text-slate-800 mb-2">No products found</h3>
-                        <p className="text-slate-500 max-w-sm">Try adjusting your search criteria or explore different categories.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                        {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight">{searchQuery ? 'No matching produce' : 'Market Empty'}</h3>
+                    <p className="text-sm font-medium mt-1">{searchQuery ? 'Try a different search term.' : "No farmers have listed produce yet."}</p>
+                </div>
+            ) : (
+                <>
+                    <p className="text-xs font-bold text-slate-400">Showing {paginatedProducts.length} of {filteredProducts.length} items</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {paginatedProducts.map((product) => (
+                            <ProductCard key={product._id} product={product} />
                         ))}
                     </div>
-                )}
-            </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 pt-4">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_left</span>
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                .map((page, idx, arr) => (
+                                    <React.Fragment key={page}>
+                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                            <span className="text-slate-300 text-sm font-bold">…</span>
+                                        )}
+                                        <button
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page
+                                                ? 'bg-indigo-900 text-white shadow-lg shadow-indigo-300'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    </React.Fragment>
+                                ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_right</span>
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
 
         </div>
     );
@@ -91,56 +144,95 @@ const Market = () => {
 
 const ProductCard = ({ product }) => {
     return (
-        <div className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300 overflow-hidden flex flex-col h-full hover:-translate-y-1">
+        <div className="bg-white group rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden flex flex-col cursor-pointer">
             {/* Image Container */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-                <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+            <div className="relative h-48 overflow-hidden bg-slate-100">
+                {product.images?.[0]?.url ? (
+                    <img
+                        src={product.images[0].url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                        }}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
+                        <span className="material-symbols-outlined text-4xl">inventory_2</span>
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+
                 {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-slate-800 shadow-sm flex items-center gap-1 border border-white/50">
-                        <span className="material-symbols-outlined text-[14px] text-amber-500">star</span>
+                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-800 shadow-lg flex items-center gap-1.5 border border-white/50">
+                        <span className="material-symbols-outlined text-[14px] text-amber-500 animate-pulse">star</span>
                         {product.rating}
                     </div>
                 </div>
-                <div className="absolute top-3 right-3">
-                    <div className="bg-blue-600/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-black text-white shadow-sm tracking-wide">
-                        {product.distance} away
+                <div className="absolute top-4 right-4">
+                    <div className="bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg border border-white/10 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px] text-blue-400">location_on</span>
+                        {product.distance}
                     </div>
                 </div>
             </div>
 
             {/* Content Container */}
-            <div className="p-5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-1">
-                    <h3 className="text-lg font-black text-slate-800 truncate pr-2">{product.name}</h3>
+            <div className="p-6 flex-1 flex flex-col">
+                <div className="mb-auto">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1 min-w-0 pr-2">
+                            <h4 className="text-xl font-black text-slate-900 tracking-tight leading-tight line-clamp-2">{product.name}</h4>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.variety || 'Standard'}</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <div className="bg-indigo-50 px-2.5 py-1.5 rounded-xl border border-indigo-100 flex items-center shadow-sm">
+                                <span className="text-indigo-700 font-black text-lg tracking-tighter">₹{product.pricePerUnit}</span>
+                                <span className="text-[10px] text-indigo-600/60 font-black ml-0.5 uppercase tracking-tighter">/{product.unit}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p className="text-sm font-bold text-slate-500 flex items-center gap-2 mb-4">
+                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                            <span className="material-symbols-outlined text-[10px]">agriculture</span>
+                        </div>
+                        <span className="truncate hover:text-indigo-600 transition-colors decoration-2 underline-offset-4">{product.farmer}</span>
+                    </p>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-2 mb-6">
+                        <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100/50">
+                            <div className="flex items-center gap-1.5 mb-1 opacity-60">
+                                <span className="material-symbols-outlined text-[14px]">inventory_2</span>
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Available</p>
+                            </div>
+                            <p className="text-xs font-black text-slate-700">{product.availableQuantity} <span className="text-[9px] text-slate-400 font-bold uppercase">{product.unit}</span></p>
+                        </div>
+                        <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100/50">
+                            <div className="flex items-center gap-1.5 mb-1 opacity-60">
+                                <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Min Order</p>
+                            </div>
+                            <p className="text-xs font-black text-slate-700">{product.minOrder} <span className="text-[9px] text-slate-400 font-bold uppercase">{product.unit}</span></p>
+                        </div>
+                    </div>
                 </div>
 
-                <p className="text-sm font-semibold text-slate-500 flex items-center gap-1.5 mb-4">
-                    <span className="material-symbols-outlined text-[16px]">agriculture</span>
-                    <span className="truncate hover:text-blue-600 cursor-pointer transition-colors">{product.farmer}</span>
-                </p>
-
-                {/* Pricing & Stock */}
-                <div className="grid grid-cols-2 gap-3 mb-5 mt-auto bg-slate-50 rounded-2xl p-3 border border-slate-100/50">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Price</span>
-                        <p className="text-slate-800 font-bold"><span className="text-lg">₹{product.price}</span><span className="text-xs text-slate-500">/{product.unit}</span></p>
-                    </div>
-                    <div className="flex flex-col pl-3 border-l border-slate-200/60">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Min. Order</span>
-                        <p className="text-slate-800 font-bold">{product.minOrder} <span className="text-xs text-slate-500">{product.unit}</span></p>
-                    </div>
+                <div className="flex items-center gap-2.5">
+                    <button className="flex-1 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 shadow-lg shadow-slate-900/20 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
+                        <span>View Details</span>
+                        <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-1.5">arrow_forward</span>
+                    </button>
+                    <button className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white border border-indigo-100 transition-all flex items-center justify-center shadow-sm">
+                        <span className="material-symbols-outlined text-lg">shopping_cart</span>
+                    </button>
                 </div>
-
-                {/* Action Button */}
-                <button className="w-full py-3 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2 group-hover:bg-slate-800 group-hover:text-white group-hover:border-slate-800">
-                    <span>View Details</span>
-                    <span className="material-symbols-outlined text-lg transition-transform group-hover:translate-x-1">arrow_forward</span>
-                </button>
             </div>
         </div>
     );

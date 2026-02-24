@@ -1,5 +1,5 @@
 import Product from '../models/Product.js';
-import { uploadToCloudinary } from '../middleware/upload.js';
+import { uploadToCloudinary, cloudinary } from '../middleware/upload.js';
 import fs from 'fs';
 import path from 'path';
 // Removed unused import if not needed, but keeping for compatibility
@@ -72,28 +72,19 @@ export const createProduct = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       const images = [];
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
 
       for (const file of req.files) {
         try {
-          // 1. Try Cloudinary Upload
-          const result = await uploadToCloudinary(file.path, 'farm2vendor/products');
+          // DIRECT Upload from Memory to Cloudinary
+          const result = await uploadToCloudinary(file.buffer, 'agriconnect/products');
           images.push({
             url: result.secure_url,
             publicId: result.public_id,
             isPrimary: images.length === 0
           });
-          // Optional: Cleanup local file after successful upload to Cloudinary
-          // fs.unlinkSync(file.path); 
         } catch (uploadError) {
-          console.error("Cloudinary Upload Failed, falling back to local storage:", uploadError.message);
-
-          // 2. Fallback to Local URL (Best for proxies/ngrok)
-          images.push({
-            url: `/uploads/${file.filename}`, // Clean relative URL
-            publicId: 'local',
-            isPrimary: images.length === 0
-          });
+          console.error("Cloudinary Upload Failed:", uploadError.message);
+          // Skipping image if Cloudinary fails since local storage is strictly disabled
         }
       }
       if (images.length > 0) {
@@ -255,9 +246,20 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // Cleanup local files if any
+    // Cleanup images from Cloudinary & Local (for older products)
     if (product.images && product.images.length > 0) {
       for (const img of product.images) {
+        // 1. Delete from Cloudinary
+        if (img.publicId && img.publicId !== 'local') {
+          try {
+            await cloudinary.uploader.destroy(img.publicId);
+            console.log(`Deleted from Cloudinary: ${img.publicId}`);
+          } catch (err) {
+            console.error(`Failed to delete from Cloudinary: ${img.publicId}`, err);
+          }
+        }
+
+        // 2. Local cleanup for backward compatibility
         if (img.publicId === 'local' && img.url.startsWith('/uploads/')) {
           const filename = img.url.split('/').pop();
           const filePath = path.join(process.cwd(), 'uploads', filename);
@@ -269,7 +271,6 @@ export const deleteProduct = async (req, res) => {
             }
           }
         }
-        // Note: For Cloudinary cleanup, we would use cloudinary.uploader.destroy(img.publicId)
       }
     }
 

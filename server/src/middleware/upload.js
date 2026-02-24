@@ -1,6 +1,9 @@
 import multer from 'multer';
 import path from 'path';
 import { v2 as cloudinary } from 'cloudinary';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 // Configure Cloudinary
 cloudinary.config({
@@ -37,9 +40,9 @@ const fileFilter = (req, file, cb) => {
   cb(new Error('Only images (JPEG, PNG, GIF, WEBP) are allowed'));
 };
 
-// Upload middleware (uses diskStorage by default for reliable local backup)
+// Upload middleware (Direct Memory Storage, NO LOCAL FILES)
 const upload = multer({
-  storage: diskStorage,
+  storage: memoryStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: fileFilter
 });
@@ -51,17 +54,17 @@ export const localUpload = multer({
   fileFilter: fileFilter
 });
 
-// Cloudinary upload helper (Enhanced to handle local file paths)
-export const uploadToCloudinary = async (filePath, folder = 'farm2vendor') => {
+// Cloudinary upload helper (Direct from Memory Buffer)
+export const uploadToCloudinary = async (fileBuffer, folder = 'agriconnect') => {
   return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload(
-      filePath,
-      { folder, resource_type: 'auto' },
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { resource_type: 'auto', folder },
       (error, result) => {
         if (error) reject(error);
         else resolve(result);
       }
     );
+    uploadStream.end(fileBuffer);
   });
 };
 

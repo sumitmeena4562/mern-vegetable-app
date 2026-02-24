@@ -21,7 +21,6 @@ const Settings = () => {
     });
 
     useEffect(() => {
-        // Fetch detailed vendor profile on mount
         fetchProfile();
     }, []);
 
@@ -75,135 +74,203 @@ const Settings = () => {
         { id: 'security', label: 'Security', icon: 'security' },
     ];
 
-    if (loading) return (
-        <div className="flex justify-center items-center h-[60vh]">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-        </div>
-    );
+    const selectClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all appearance-none";
+    const inputClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all";
+
+    if (loading) {
+        return (
+            <div className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto w-full space-y-6 animate-pulse">
+                <div className="h-10 bg-slate-100 rounded-2xl w-64"></div>
+                <div className="h-96 bg-slate-100 rounded-[32px]"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px] mx-auto min-h-full">
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
 
-            {/* Page Header */}
-            <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Settings & Profile</h1>
-                    <p className="mt-2 text-sm md:text-base font-medium text-slate-500">Manage your business profile, documents, and preferences.</p>
-                </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-2"
-                >
-                    {saving ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <span className="material-symbols-outlined text-[20px]">save</span>}
-                    {saving ? 'Saving...' : 'Save Changes'}
-                </button>
+            {/* Header */}
+            <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Settings</h2>
+                <p className="text-slate-500 font-medium text-sm mt-1">Manage your business profile, documents, and system preferences</p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
+            {/* Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap border-2 ${activeTab === tab.id
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200'
+                            : 'bg-white text-slate-500 border-white hover:border-slate-100 hover:bg-slate-50'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-lg">{tab.icon}</span>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-                {/* Sidebar Tabs */}
-                <div className="lg:w-64 shrink-0">
-                    <div className="flex lg:flex-col gap-2 overflow-x-auto pb-4 lg:pb-0 hide-scrollbar sticky top-24">
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${activeTab === tab.id
-                                        ? 'bg-slate-800 text-white shadow-md'
-                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-transparent hover:border-slate-200 shadow-sm'
-                                    }`}
-                            >
-                                <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-                                {tab.label}
-                            </button>
-                        ))}
+            {/* Personal Info Tab */}
+            {activeTab === 'profile' && (
+                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+                            <span className="material-symbols-outlined text-3xl">person</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Personal Information</h3>
+                            <p className="text-xs text-slate-400 font-medium">Update your basic profile details</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
+                            <input
+                                type="text"
+                                name="fullName"
+                                value={formData.fullName}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email</label>
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Mobile (Read Only)</label>
+                            <input
+                                type="text"
+                                name="mobile"
+                                value={formData.mobile}
+                                readOnly
+                                className="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-100 rounded-2xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed opacity-80"
+                            />
+                            <p className="text-[10px] text-slate-400 mt-2 px-1 font-semibold flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">lock</span> Mobile number is verified and cannot be changed.</p>
+                        </div>
                     </div>
                 </div>
+            )}
 
-                {/* Content Area */}
-                <div className="flex-1 min-w-0">
-
-                    {/* Personal Info Tab */}
-                    {activeTab === 'profile' && (
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2">
-                            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center material-symbols-outlined text-sm">person</span>
-                                Personal Information
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
-                                    <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile Number</label>
-                                    <input type="text" name="mobile" value={formData.mobile} readOnly className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-slate-500 font-medium cursor-not-allowed outline-none" />
-                                    <p className="text-[10px] text-slate-400 mt-1">Mobile number cannot be changed</p>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Email Address</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none" />
-                                </div>
-                            </div>
+            {/* Shop Details Tab */}
+            {activeTab === 'shop' && (
+                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                            <span className="material-symbols-outlined text-3xl">storefront</span>
                         </div>
-                    )}
-
-                    {/* Shop Details Tab */}
-                    {activeTab === 'shop' && (
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2">
-                            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-                                <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center material-symbols-outlined text-sm">storefront</span>
-                                Business Details
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shop Name</label>
-                                    <input type="text" name="shopName" value={formData.shopName} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Business Type</label>
-                                    <select name="businessType" value={formData.businessType} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none appearance-none">
-                                        <option value="retailer">Retailer</option>
-                                        <option value="wholesaler">Wholesaler</option>
-                                        <option value="restaurant">Restaurant</option>
-                                        <option value="hotel">Hotel</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Shop Format</label>
-                                    <select name="shopType" value={formData.shopType} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none appearance-none">
-                                        <option value="kirana">Kirana Shop</option>
-                                        <option value="supermarket">Supermarket</option>
-                                        <option value="mandi">Mandi Trader</option>
-                                        <option value="cart_vendor">Cart Vendor</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Daily Buying Capacity (kg)</label>
-                                    <input type="number" name="dailyCapacity" value={formData.dailyCapacity} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">FSSAI License No.</label>
-                                    <input type="text" name="fssaiNumber" value={formData.fssaiNumber} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-medium focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none" placeholder="Optional" />
-                                </div>
-                            </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Business Details</h3>
+                            <p className="text-xs text-slate-400 font-medium">Manage your shop visibility and operations</p>
                         </div>
-                    )}
+                    </div>
 
-                    {/* Placeholders for other tabs */}
-                    {(activeTab === 'bank' || activeTab === 'security') && (
-                        <div className="bg-white rounded-3xl p-12 shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center animate-in fade-in">
-                            <span className={`material-symbols-outlined text-6xl mb-4 ${activeTab === 'bank' ? 'text-blue-200' : 'text-purple-200'}`}>
-                                {activeTab === 'bank' ? 'account_balance' : 'encrypted'}
-                            </span>
-                            <h3 className="text-xl font-bold text-slate-800 mb-2">{activeTab === 'bank' ? 'Bank Details' : 'Security Settings'}</h3>
-                            <p className="text-slate-500 max-w-sm">This section is currently under development. You will be able to manage this soon.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Shop Name</label>
+                            <input
+                                type="text"
+                                name="shopName"
+                                value={formData.shopName}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
                         </div>
-                    )}
-
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Business Type</label>
+                            <select
+                                name="businessType"
+                                value={formData.businessType}
+                                onChange={handleInputChange}
+                                className={selectClass}
+                            >
+                                <option value="retailer">Retailer</option>
+                                <option value="wholesaler">Wholesaler</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="hotel">Hotel</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Shop Format</label>
+                            <select
+                                name="shopType"
+                                value={formData.shopType}
+                                onChange={handleInputChange}
+                                className={selectClass}
+                            >
+                                <option value="kirana">Kirana Shop</option>
+                                <option value="supermarket">Supermarket</option>
+                                <option value="mandi">Mandi Trader</option>
+                                <option value="cart_vendor">Cart Vendor</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Daily Cap (kg)</label>
+                            <input
+                                type="number"
+                                name="dailyCapacity"
+                                value={formData.dailyCapacity}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">FSSAI No.</label>
+                            <input
+                                type="text"
+                                name="fssaiNumber"
+                                value={formData.fssaiNumber}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                                placeholder="Optional"
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Placeholders for other tabs */}
+            {(activeTab === 'bank' || activeTab === 'security') && (
+                <div className="bg-white rounded-[32px] p-16 shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col items-center justify-center text-center">
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-inner ${activeTab === 'bank' ? 'bg-blue-50 text-blue-300' : 'bg-indigo-50 text-indigo-300'}`}>
+                        <span className="material-symbols-outlined text-5xl">
+                            {activeTab === 'bank' ? 'account_balance' : 'encrypted'}
+                        </span>
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">{activeTab === 'bank' ? 'Bank Details' : 'Security Settings'}</h3>
+                    <p className="text-slate-500 max-w-sm font-medium">This section is currently under development. You will be able to manage these settings soon.</p>
+                </div>
+            )}
+
+            {/* Save Button */}
+            {(activeTab === 'profile' || activeTab === 'shop') && (
+                <div className="flex justify-end mt-8">
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {saving ? (
+                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined text-lg">save</span>
+                                Save Changes
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
+
         </div>
     );
 };
