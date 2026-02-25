@@ -3,6 +3,10 @@ import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+import PersonalInfoSection from './Registration/PersonalInfoSection';
+import BusinessDetailsSection from './Registration/BusinessDetailsSection';
+import LocationSection from './Registration/LocationSection';
+
 const VendorRegistration = () => {
   const navigate = useNavigate();
 
@@ -522,252 +526,73 @@ const VendorRegistration = () => {
         </div>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-[1024px] relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-        <div className="bg-white/80 backdrop-blur-2xl shadow-2xl shadow-slate-200/50 rounded-[2.5rem] px-6 py-8 sm:px-12 sm:py-12 relative border border-white shadow-inner">
-          <form onSubmit={handleSubmit} className="space-y-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+      <div className="sm:mx-auto sm:w-full sm:max-w-[700px] relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 mb-20">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section 1: Personal Info (Indigo Theme) */}
+          <PersonalInfoSection
+            formData={formData}
+            errors={errors}
+            isTouched={isTouched}
+            handleChange={handleInputChange}
+            handleBlur={handleBlur}
+            isVerified={isVerified}
+            passwordStrength={passwordStrength}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            showConfirmPassword={showConfirmPassword}
+            setShowConfirmPassword={setShowConfirmPassword}
+            handleSendOtp={handleSendOtp}
+            loading={otpLoading}
+          />
 
-              {/* --- Left Column: Personal --- */}
-              <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <h3 className="font-black text-xl text-slate-800 flex items-center gap-3 tracking-tight">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm">
-                      <span className="material-symbols-outlined text-[22px]">person</span>
-                    </div>
-                    Personal Details
-                  </h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100/50">Required</span>
-                </div>
+          {/* Section 2: Location (Cyan Theme) */}
+          <LocationSection
+            formData={formData}
+            errors={errors}
+            isTouched={isTouched}
+            handleChange={handleInputChange}
+            handleBlur={handleBlur}
+            states={states}
+            districts={districts}
+            isFetchingLocations={isFetchingLocations}
+            gpsLoading={gpsLoading}
+            handleGetLocation={handleGetLocation}
+          />
 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Full Name <span className="text-rose-500">*</span></label>
-                    <input name="fullName" value={formData.fullName} onChange={handleInputChange} onBlur={handleBlur}
-                      className={`w-full rounded-2xl py-4 px-5 bg-slate-50 border outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 ${errors.fullName ? 'border-rose-300 bg-rose-50/50 focus:ring-4 focus:ring-rose-500/10' : 'border-slate-200/80 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300'}`}
-                      placeholder="Enter your full name" maxLength={50} />
-                    {errors.fullName && <p className="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1"><span className="material-symbols-outlined text-[14px]">error</span>{errors.fullName}</p>}
-                  </div>
+          {/* Section 3: Business Details (Violet Theme) */}
+          <BusinessDetailsSection
+            formData={formData}
+            errors={errors}
+            isTouched={isTouched}
+            handleChange={handleInputChange}
+            handleBlur={handleBlur}
+            businessTypes={businessTypes}
+          />
 
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Mobile Number <span className="text-rose-500">*</span></label>
-                    <div className="flex gap-3">
-                      <div className="flex-1 relative group">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                          <span className={`text-sm font-black ${isVerified ? 'text-emerald-600' : 'text-slate-400 group-focus-within:text-indigo-500'} transition-colors`}>+91</span>
-                        </div>
-                        <input name="mobile" value={formData.mobile} onChange={handleInputChange} onBlur={handleBlur}
-                          className={`w-full rounded-2xl py-4 pl-12 pr-4 border outline-none font-bold shadow-sm transition-all duration-300 ${errors.mobile ? 'bg-rose-50/50 border-rose-300 focus:ring-4 focus:ring-rose-500/10 text-rose-800' : isVerified ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-slate-50 border-slate-200/80 text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300'}`}
-                          placeholder="9876543210" maxLength={10} inputMode="numeric" />
-                        {errors.mobile && <p className="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1"><span className="material-symbols-outlined text-[14px]">error</span>{errors.mobile}</p>}
-                      </div>
-                      {!isVerified ? (
-                        <button type="button" onClick={handleSendOtp} disabled={otpLoading || !!errors.mobile || !formData.mobile}
-                          className="bg-slate-900 text-white px-6 rounded-2xl font-black text-sm hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 disabled:opacity-50 disabled:hover:bg-slate-900 disabled:hover:shadow-none min-w-[110px] shadow-md shadow-slate-900/10 active:scale-95 flex items-center justify-center">
-                          {otpLoading ? <Spinner /> : 'Verify'}
-                        </button>
-                      ) : (
-                        <div className="flex items-center justify-center min-w-[110px] bg-emerald-50 text-emerald-600 rounded-2xl font-black border border-emerald-200/80 px-4 shadow-sm">
-                          <span className="material-symbols-outlined text-[18px] mr-1.5 animate-pulse">check_circle</span> Verified
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          {/* Submit Section */}
+          <div className="pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            <button
+              type="submit"
+              disabled={loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100}
+              className={`w-full py-4 rounded-full text-white font-bold text-[16px] shadow-lg flex items-center justify-center gap-3 transition-all duration-300 active:scale-[0.98]
+                ${loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100
+                  ? 'bg-slate-300 cursor-not-allowed shadow-none'
+                  : 'bg-slate-900 hover:bg-slate-800 hover:shadow-xl shadow-slate-200'}
+              `}
+            >
+              {loading ? (
+                <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
+              ) : (
+                <><span className="material-symbols-outlined">how_to_reg</span> Complete Vendor Setup</>
+              )}
+            </button>
 
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Email Address <span className="text-rose-500">*</span></label>
-                    <input type="email" name="email" value={formData.email} onChange={handleInputChange} onBlur={handleBlur}
-                      className={`w-full rounded-2xl py-4 px-5 bg-slate-50 border outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 ${errors.email ? 'border-rose-300 bg-rose-50/50 focus:ring-4 focus:ring-rose-500/10' : 'border-slate-200/80 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300'}`}
-                      placeholder="vendor@company.com" />
-                    {errors.email && <p className="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1"><span className="material-symbols-outlined text-[14px]">error</span>{errors.email}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Password <span className="text-rose-500">*</span></label>
-                    <div className="relative group">
-                      <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleInputChange} onBlur={handleBlur}
-                        className={`w-full rounded-2xl py-4 pl-5 pr-12 bg-slate-50 border outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 ${errors.password ? 'border-rose-300 bg-rose-50/50 focus:ring-4 focus:ring-rose-500/10' : 'border-slate-200/80 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300'}`}
-                        placeholder="Create a strong password" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1 bg-white rounded-lg shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 focus:opacity-100">
-                        <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                      </button>
-                    </div>
-                    {formData.password && (
-                      <div className="mt-4 px-1 space-y-2.5 animate-in fade-in">
-                        <div className="flex justify-between items-center">
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${getStrengthTextColor()}`}>Strength: {getStrengthLabel()}</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                          <div className={`h-full ${getStrengthColor()} transition-all duration-700 ease-out`} style={{ width: `${(passwordStrength / 5) * 100}%` }}></div>
-                        </div>
-                      </div>
-                    )}
-                    {errors.password && <p className="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1"><span className="material-symbols-outlined text-[14px]">error</span>{errors.password}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Confirm Password <span className="text-rose-500">*</span></label>
-                    <div className="relative group">
-                      <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleInputChange} onBlur={handleBlur}
-                        className={`w-full rounded-2xl py-4 pl-5 pr-12 border outline-none font-bold shadow-sm transition-all duration-300 ${errors.confirmPassword ? 'bg-rose-50/50 border-rose-300 focus:ring-4 focus:ring-rose-500/10 text-rose-800' : formData.confirmPassword && formData.confirmPassword === formData.password ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-slate-50 border-slate-200/80 text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 hover:border-slate-300'}`}
-                        placeholder="Re-enter your password" />
-                      {formData.confirmPassword && formData.confirmPassword === formData.password && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-emerald-500">check_circle</span>
-                      )}
-                    </div>
-                    {errors.confirmPassword && <p className="text-rose-500 text-xs mt-2 font-bold flex items-center gap-1.5 px-1 animate-in slide-in-from-top-1"><span className="material-symbols-outlined text-[14px]">error</span>{errors.confirmPassword}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* --- Right Column: Shop & Location --- */}
-              <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <h3 className="font-black text-xl text-slate-800 flex items-center gap-3 tracking-tight">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
-                      <span className="material-symbols-outlined text-[22px]">store</span>
-                    </div>
-                    Shop Location
-                  </h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100/50">Required</span>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-5 rounded-2xl border border-white shadow-md shadow-indigo-100/40   flex items-center justify-between relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3 group-hover:bg-indigo-500/10 transition-colors duration-500"></div>
-                    <div className="relative z-10">
-                      <h4 className="text-[13px] font-black text-indigo-900 tracking-wide mb-1">Auto-detect Location</h4>
-                      <p className="text-[11px] font-bold text-indigo-500/80 uppercase tracking-widest">For exact market reach</p>
-                    </div>
-                    <button type="button" onClick={handleGetLocation} disabled={gpsLoading}
-                      className="relative z-10 bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-700/40 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-75 disabled:active:scale-100">
-                      {gpsLoading ? (
-                        <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Detecting...</>
-                      ) : (
-                        <><span className="material-symbols-outlined text-[16px]">my_location</span> Use GPS</>
-                      )}
-                    </button>
-                  </div>
-                  {formData.location?.coordinates?.[0] !== 0 && (
-                    <p className="text-xs text-emerald-600 font-bold ml-1 flex items-center gap-1 animate-in fade-in"><span className="material-symbols-outlined text-[14px]">my_location</span> Location coordinates captured accurately.</p>
-                  )}
-
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Shop/Business Name <span className="text-rose-500">*</span></label>
-                    <input name="shopName" value={formData.shopName} onChange={handleInputChange} onBlur={handleBlur}
-                      className="w-full rounded-2xl py-4 px-5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300"
-                      placeholder="E.g. Fresh Mart, The Grand Hotel" />
-                    {errors.shopName && <p className="text-rose-500 text-xs mt-2 font-bold px-1 animate-in slide-in-from-top-1 flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">error</span> {errors.shopName}</p>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">State <span className="text-rose-500">*</span></label>
-                      <div className="relative group">
-                        <select name="state" value={formData.state} onChange={handleInputChange} className="w-full rounded-2xl py-4 pl-5 pr-12 bg-slate-50 border border-slate-200/80 outline-none appearance-none font-bold text-slate-800 shadow-sm focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 hover:border-slate-300 cursor-pointer">
-                          <option value="" className="text-slate-400 font-medium">Select State</option>
-                          {states.map(stateName => <option key={stateName} value={stateName} className="font-bold">{stateName}</option>)}
-                        </select>
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none group-hover:text-emerald-500 transition-colors">expand_content</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">City/District <span className="text-rose-500">*</span></label>
-                      <div className="relative group">
-                        <select name="city" value={formData.city} onChange={handleInputChange} disabled={!formData.state || isFetchingLocations} onBlur={handleBlur}
-                          className={`w-full rounded-2xl py-4 pl-5 pr-12 border outline-none appearance-none font-bold shadow-sm transition-all duration-300 cursor-pointer ${!formData.state ? 'bg-slate-100 border-slate-200/50 text-slate-400 cursor-not-allowed' : 'bg-slate-50 border-slate-200/80 text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 hover:border-slate-300'}`}>
-                          <option value="" className="font-medium">Select District</option>
-                          {districts.map((d, i) => <option key={i} value={d} className="font-bold">{d}</option>)}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                          {isFetchingLocations ? <span className="w-4 h-4 border-2 border-slate-200 border-t-emerald-500 rounded-full animate-spin block"></span> : <span className={`material-symbols-outlined ${formData.state ? 'group-hover:text-emerald-500' : ''} transition-colors`}>expand_content</span>}
-                        </div>
-                      </div>
-                      {errors.city && <p className="text-rose-500 text-xs mt-2 font-bold px-1">{errors.city}</p>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Detailed Address <span className="text-rose-500">*</span></label>
-                    <input name="address" value={formData.address} onChange={handleInputChange} onBlur={handleBlur}
-                      className="w-full rounded-2xl py-4 px-5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300"
-                      placeholder="Street, Landmark, Area" />
-                    {errors.address && <p className="text-rose-500 text-xs mt-2 font-bold px-1 flex items-center gap-1.5"><span className="material-symbols-outlined text-[14px]">error</span> {errors.address}</p>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* --- Business Category Section --- */}
-            <div className="pt-10 border-t border-slate-100">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-                <h3 className="font-black text-2xl text-slate-800 flex items-center gap-3 tracking-tight">
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
-                    <span className="material-symbols-outlined text-[26px]">business_center</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span>Business Model <span className="text-rose-500 text-lg">*</span></span>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Select how you operate</span>
-                  </div>
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
-                {businessTypes.map((type) => (
-                  <label key={type.id} className="cursor-pointer group relative">
-                    <input type="radio" name="businessType" value={type.id} className="peer sr-only"
-                      checked={formData.businessType === type.id}
-                      onChange={handleInputChange} />
-                    <div className={`rounded-3xl p-6 flex flex-col items-center justify-center text-center border-2 transition-all duration-300 ${formData.businessType === type.id ? 'bg-purple-50/80 border-purple-500 shadow-lg shadow-purple-200/50 scale-[1.02]' : 'bg-slate-50 border-slate-200/80 hover:border-purple-300 hover:bg-white hover:shadow-md'}`}>
-                      <span className={`text-4xl mb-3 transition-transform duration-300 ${formData.businessType === type.id ? 'scale-110' : 'group-hover:scale-110'}`}>{type.emoji}</span>
-                      <span className={`text-sm font-black tracking-wide ${formData.businessType === type.id ? 'text-purple-800' : 'text-slate-600 group-hover:text-purple-600'}`}>{type.label}</span>
-                      {formData.businessType === type.id && (
-                        <div className="absolute -top-3 -right-3 bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg shadow-purple-600/30 animate-in zoom-in">
-                          <span className="material-symbols-outlined text-[16px]">check</span>
-                        </div>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Daily Cap (kg) <span className="text-rose-500">*</span></label>
-                  <input name="dailyCapacity" type="number" min="1" value={formData.dailyCapacity} onChange={handleInputChange} onBlur={handleBlur}
-                    className="w-full rounded-2xl py-4 px-5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300"
-                    placeholder="E.g. 50" />
-                  {errors.dailyCapacity && <p className="text-rose-500 text-xs mt-2 font-bold px-1">{errors.dailyCapacity}</p>}
-                </div>
-                <div>
-                  <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">FSSAI License Number <span className="font-semibold text-slate-400 ml-1 lowercase">(Optional)</span></label>
-                  <input name="fssaiNumber" value={formData.fssaiNumber} onChange={handleInputChange}
-                    className="w-full rounded-2xl py-4 px-5 bg-slate-50 border border-slate-200/80 focus:bg-white focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none font-bold text-slate-800 shadow-sm transition-all duration-300 hover:border-slate-300"
-                    placeholder="E.g. 10012022000..." />
-                </div>
-              </div>
-            </div>
-
-            {/* --- Submit Section --- */}
-            <div className="pt-10">
-              <button type="submit" disabled={loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100}
-                className={`w-full py-5 rounded-2xl text-white font-black text-lg tracking-wide shadow-2xl flex items-center justify-center gap-3 transition-all duration-500 overflow-hidden relative group
-                                ${loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none border border-slate-200'
-                    : 'bg-slate-900 hover:bg-indigo-600 hover:shadow-indigo-500/40 active:scale-[0.98]'}`}>
-                {loading && (
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                )}
-                <div className="relative z-10 flex items-center gap-3">
-                  {loading ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</> : <><span className="material-symbols-outlined text-[24px] group-hover:scale-110 transition-transform">bolt</span> Complete Vendor Setup</>}
-                </div>
-              </button>
-
-              <div className="mt-8 text-center bg-slate-50/50 py-4 rounded-2xl border border-slate-100">
-                <p className="text-sm font-bold text-slate-600">Already a registered vendor? <a href="/login" className="text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300 decoration-2 underline-offset-4 transition-colors">Sign in here</a></p>
-              </div>
-            </div>
-          </form>
-        </div>
+            <p className="mt-6 text-center text-sm font-medium text-slate-500">
+              Already have an account?{' '}
+              <a href="/login" className="text-indigo-600 font-bold hover:underline underline-offset-4">Sign in here</a>
+            </p>
+          </div>
+        </form>
       </div>
 
       {/* --- OTP Modal --- */}
