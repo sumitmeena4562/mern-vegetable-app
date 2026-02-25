@@ -18,7 +18,7 @@ const LocationSection = ({
             <div className="bg-[#FFF7ED] rounded-3xl p-6 border border-orange-100/50">
                 <h3 className="text-[16px] font-bold text-slate-700 mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-orange-500">location_on</span>
+                        <span className="material-symbols-outlined text-orange-500 text-[22px]">location_on</span>
                         Farm Location
                     </div>
                     <button
@@ -71,7 +71,7 @@ const LocationSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.village && errors.village ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-orange-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.village && errors.village ? 'text-red-400' : formData.village ? 'text-orange-500' : 'text-slate-400'}`}>holiday_village</span>
+                                <span className={`material-symbols-outlined transition-colors duration-300 text-[22px] ${isTouched.village && errors.village ? 'text-red-400' : formData.village ? 'text-orange-500' : 'text-slate-400'}`}>holiday_village</span>
                             </div>
                             <input
                                 type="text"
@@ -79,7 +79,7 @@ const LocationSection = ({
                                 value={formData.village}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] text-slate-700 font-medium
                   ${isTouched.village && errors.village ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-50'}
                 `}
                                 placeholder="Enter your village or area name"

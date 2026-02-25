@@ -29,36 +29,35 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
                 {label} <span className="text-red-500">*</span>
             </label>
 
-            {/* Main Select Box (Trigger) */}
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`w-full rounded-full py-2.5 pl-11 pr-10 bg-white border cursor-pointer flex items-center justify-between transition-all duration-300 text-sm
+                className={`w-full rounded-full py-2.5 pl-12 pr-11 bg-white border cursor-pointer flex items-center justify-between transition-all duration-300 text-sm
           ${disabled ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'hover:border-green-400 shadow-sm hover:shadow-md'}
           ${error ? 'border-red-400' : 'border-slate-200'}
           ${isOpen ? 'ring-4 ring-green-50 border-green-500' : ''}
         `}
             >
                 {/* Left Icon */}
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className={`material-symbols-outlined transition-colors ${value ? 'text-green-600' : 'text-gray-400'}`}>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className={`material-symbols-outlined transition-colors text-[22px] ${value ? 'text-green-600' : 'text-slate-400'}`}>
                         {icon}
                     </span>
                 </div>
 
                 {/* Selected Value Text */}
-                <span className={`block truncate ${!value ? 'text-gray-400' : 'text-gray-900 font-medium'}`}>
+                <span className={`block truncate ${!value ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
                     {value || placeholder}
                 </span>
 
                 {/* Right Icon (Arrow or Loader) */}
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
                     {loading ? (
                         <svg className="animate-spin h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                     ) : (
-                        <span className={`material-symbols-outlined text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-green-600' : ''}`}>
+                        <span className={`material-symbols-outlined text-[20px] text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-green-600' : ''}`}>
                             expand_more
                         </span>
                     )}
