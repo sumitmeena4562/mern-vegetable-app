@@ -25,17 +25,17 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
+            <label className="block text-[13px] font-bold text-slate-700 mb-2">
                 {label} <span className="text-red-500">*</span>
             </label>
 
             {/* Main Select Box (Trigger) */}
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`w-full rounded-xl py-3 pl-10 pr-10 bg-white border cursor-pointer flex items-center justify-between transition-all duration-200
-          ${disabled ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' : 'hover:border-green-400 shadow-sm hover:shadow-md'}
-          ${error ? 'border-red-500' : 'border-gray-300'}
-          ${isOpen ? 'ring-4 ring-green-100 border-green-500' : ''}
+                className={`w-full rounded-full py-2.5 pl-11 pr-10 bg-white border cursor-pointer flex items-center justify-between transition-all duration-300 text-sm
+          ${disabled ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'hover:border-green-400 shadow-sm hover:shadow-md'}
+          ${error ? 'border-red-400' : 'border-slate-200'}
+          ${isOpen ? 'ring-4 ring-green-50 border-green-500' : ''}
         `}
             >
                 {/* Left Icon */}
@@ -67,25 +67,22 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
 
             {/* The Designer List (Pop-up) */}
             {isOpen && !disabled && (
-                <div className="absolute z-50 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                    <ul className="py-1">
+                <div className="absolute z-50 mt-2 w-full bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <ul className="py-2">
                         {options.length > 0 ? (
                             options.map((option, index) => (
                                 <li
                                     key={index}
                                     onClick={() => handleSelect(option.value)}
-                                    className={`px-4 py-3 cursor-pointer flex items-center gap-3 transition-colors
-                    ${value === option.value ? 'bg-green-50 text-green-700 font-bold' : 'text-gray-700 hover:bg-gray-50 hover:text-green-600'}
+                                    className={`px-5 py-2.5 cursor-pointer flex items-center gap-3 transition-colors text-[14px]
+                    ${value === option.value ? 'text-green-600 font-medium' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
                   `}
                                 >
-                                    {value === option.value && (
-                                        <span className="material-symbols-outlined text-sm">check</span>
-                                    )}
                                     {option.label}
                                 </li>
                             ))
                         ) : (
-                            <li className="px-4 py-3 text-gray-500 text-center text-sm">No options available</li>
+                            <li className="px-5 py-3 text-slate-400 text-center text-[13px]">No options available</li>
                         )}
                     </ul>
                 </div>

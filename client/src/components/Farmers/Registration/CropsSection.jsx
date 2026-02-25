@@ -9,13 +9,13 @@ const CropsSection = ({
     handleBlur
 }) => {
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-            <div className="bg-emerald-50/50 rounded-2xl p-6 border border-emerald-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-emerald-600 bg-white p-2 rounded-lg shadow-sm">eco</span>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            <div className="bg-[#ECFDF5] rounded-3xl p-6 border border-emerald-100/50">
+                <h3 className="text-[16px] font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-emerald-500">eco</span>
                     What do you grow?
                 </h3>
-                <p className="text-sm text-gray-500 mb-6">Select all the primary crops you cultivate. This helps us connect you with the right buyers.</p>
+                <p className="text-[13px] text-slate-500 mb-6 font-medium">Select all the primary crops you cultivate. This helps us connect you with the right buyers.</p>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[
@@ -28,8 +28,8 @@ const CropsSection = ({
                     ].map((crop) => (
                         <label
                             key={crop.id}
-                            className={`relative flex items-center p-3 sm:p-4 rounded-xl cursor-pointer border-2 transition-all duration-300 hover:shadow-md active:scale-95
-                ${formData.crops[crop.id] ? 'bg-emerald-50 border-emerald-500 shadow-sm' : 'bg-white border-gray-100 hover:border-emerald-200'}
+                            className={`relative flex items-center justify-center p-2.5 sm:p-3 rounded-full cursor-pointer border-2 transition-all duration-300 active:scale-95
+                ${formData.crops[crop.id] ? 'bg-emerald-50 border-emerald-400 shadow-sm' : 'bg-white border-transparent shadow-sm hover:border-emerald-200'}
               `}
                         >
                             <input
@@ -38,16 +38,16 @@ const CropsSection = ({
                                 onChange={() => handleCropToggle(crop.id)}
                                 className="hidden"
                             />
-                            <div className="flex flex-col sm:flex-row items-center sm:gap-3 w-full text-center sm:text-left">
-                                <span className="text-2xl sm:text-3xl mb-1 sm:mb-0 grayscale-[0.2] drop-shadow-sm">{crop.icon}</span>
-                                <span className={`font-semibold text-sm sm:text-base transition-colors ${formData.crops[crop.id] ? 'text-emerald-800' : 'text-gray-600'}`}>
+                            <div className="flex items-center gap-2 w-full justify-center">
+                                <span className="text-2xl drop-shadow-sm">{crop.icon}</span>
+                                <span className={`font-bold text-[13px] transition-colors ${formData.crops[crop.id] ? 'text-emerald-800' : 'text-slate-700'}`}>
                                     {crop.label}
                                 </span>
                             </div>
-                            {/* Added a cute checkmark for selected state */}
+                            {/* Checkmark for selected state */}
                             {formData.crops[crop.id] && (
-                                <div className="absolute top-2 right-2 sm:static sm:absolute sm:top-auto sm:bottom-2 sm:right-2">
-                                    <span className="material-symbols-outlined text-emerald-500 text-sm sm:text-base font-bold bg-white rounded-full">
+                                <div className="absolute -top-1 -right-1">
+                                    <span className="material-symbols-outlined text-emerald-500 text-[18px] font-bold bg-white rounded-full">
                                         check_circle
                                     </span>
                                 </div>
@@ -63,12 +63,12 @@ const CropsSection = ({
                 {/* Conditional "Other Crops" Input with smooth animation */}
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out ${formData.crops.others ? 'max-h-40 opacity-100 mt-6' : 'max-h-0 opacity-0 mt-0'}`}>
                     <div className="relative group">
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
                             Specify Other Crops <span className="text-red-500">*</span>
                         </label>
-                        <div className={`relative rounded-xl transition-all duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-emerald-100'}`}>
+                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-emerald-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'text-red-400' : formData.otherCropName ? 'text-emerald-500' : 'text-gray-400'}`}>edit_note</span>
+                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'text-red-400' : formData.otherCropName ? 'text-emerald-500' : 'text-slate-400'}`}>edit_note</span>
                             </div>
                             <input
                                 type="text"
@@ -76,8 +76,8 @@ const CropsSection = ({
                                 value={formData.otherCropName}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl outline-none transition-all duration-300
-                  ${isTouched.otherCropName && errors.otherCropName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'}
+                                className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                  ${isTouched.otherCropName && errors.otherCropName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'}
                 `}
                                 placeholder="e.g. Wheat, Brinjal, Cabbage"
                             />
