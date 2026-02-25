@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import ReactDOM from "react-dom";
 import { useLocation, useNavigate, Routes, Route } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import Sidebar from "../../components/Vendors/Dashboard/Sidebar";
@@ -61,7 +60,7 @@ export default function VendorDashboard() {
                 <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} userName={user?.fullName} onLogout={() => { logout(); navigate('/login'); }} />
                 <main className="flex-1 flex flex-col relative overflow-hidden">
                     <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title="Welcome Setup" subtitle="Let's get your business ready" userName={user?.fullName} />
-                    <div className="flex-1 overflow-y-auto scroll-smooth">
+                    <div className="flex-1 overflow-y-auto scroll-smooth relative z-10">
                         <VendorOnboarding
                             userName={user?.fullName}
                             stats={{ bankComplete: false, firstOrderPlaced: false, isVerified: false }}
@@ -74,11 +73,12 @@ export default function VendorDashboard() {
     }
 
     return (
-        <div className="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-sans">
+        <div className="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-sans relative">
             {/* Global Dashboard Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-100/40 rounded-full blur-[120px] opacity-60 mix-blend-multiply"></div>
-                <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-emerald-100/40 rounded-full blur-[120px] opacity-60 mix-blend-multiply"></div>
+            <div className="fixed inset-0 z-[-10] pointer-events-none overflow-hidden">
+                <div className="absolute -top-24 -right-24 w-[1000px] h-[1000px] bg-indigo-100/30 rounded-full blur-[120px] opacity-70 animate-pulse duration-[10s]"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-violet-100/20 rounded-full blur-[100px] opacity-50"></div>
+                <div className="absolute -bottom-24 -left-24 w-[800px] h-[800px] bg-cyan-100/20 rounded-full blur-[120px] opacity-70 animate-pulse duration-[8s] delay-1000"></div>
             </div>
 
             {/* SIDEBAR */}
