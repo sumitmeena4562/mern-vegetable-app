@@ -162,43 +162,6 @@ const FarmerRegistration = () => {
 
   }, [formData, isVerified]); // states dependency hatayi taaki infinite loop na ho
 
-  // --- Form Events ---
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-
-    // Auto validate on change if already touched or error exists
-    if (isTouched[name] || errors[name]) {
-      validateField(name, value);
-    }
-
-    // Password strength check (only update on password change)
-    if (name === 'password') {
-      let strength = 0;
-      if (value.length >= 6) strength += 1;
-      if (/[A-Z]/.test(value)) strength += 1;
-      if (/[0-9]/.test(value)) strength += 1;
-      if (/[^A-Za-z0-9]/.test(value)) strength += 1; // Special character bonus
-      if (value.length >= 10) strength += 1; // Length bonus
-      setPasswordStrength(Math.min(strength, 5));
-    }
-  };
-
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setIsTouched(prev => ({ ...prev, [name]: true }));
-    validateField(name, value);
-  };
-
-  const handleCropChange = (cropId) => {
-    // Legacy support for single crop change if needed, but we prefer handleCropToggle
-    handleCropToggle(cropId);
-  };
-
   // --- Validation Logic ---
   const validateField = (name, value) => {
     let errorMsg = "";
@@ -337,7 +300,7 @@ const FarmerRegistration = () => {
     validateField(name, value);
   };
 
-  const handleCropChange = (crop) => {
+  const handleCropToggle = (crop) => {
     const newCrops = { ...formData.crops, [crop]: !formData.crops[crop] };
     setFormData(prev => ({ ...prev, crops: newCrops }));
 
