@@ -31,21 +31,21 @@ const CustomSelect = ({ label, name, value, options, onChange, placeholder, icon
 
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`w-full rounded-full py-2.5 pl-12 pr-11 bg-white border cursor-pointer flex items-center justify-between transition-all duration-300 text-sm
+                className={`relative w-full rounded-full py-2.5 pl-11 pr-10 bg-white border cursor-pointer flex items-center transition-all duration-300 text-sm
           ${disabled ? 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed' : 'hover:border-green-400 shadow-sm hover:shadow-md'}
           ${error ? 'border-red-400' : 'border-slate-200'}
           ${isOpen ? 'ring-4 ring-green-50 border-green-500' : ''}
         `}
             >
-                {/* Left Icon */}
+                {/* Left Icon (Inside) */}
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className={`material-symbols-outlined transition-colors text-[22px] ${value ? 'text-green-600' : 'text-slate-400'}`}>
+                    <span className={`material-symbols-outlined text-[20px] transition-colors ${value || isOpen ? 'text-green-600' : 'text-slate-400'}`}>
                         {icon}
                     </span>
                 </div>
 
                 {/* Selected Value Text */}
-                <span className={`block truncate ${!value ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
+                <span className={`block w-full text-left pl-1 truncate ${!value ? 'text-slate-400' : 'text-slate-700 font-medium'}`}>
                     {value || placeholder}
                 </span>
 

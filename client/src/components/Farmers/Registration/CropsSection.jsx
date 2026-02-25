@@ -9,7 +9,7 @@ const CropsSection = ({
     handleBlur
 }) => {
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300 relative z-[10]">
             <div className="bg-[#ECFDF5] rounded-3xl p-6 border border-emerald-100/50">
                 <h3 className="text-[16px] font-bold text-slate-700 mb-2 flex items-center gap-2">
                     <span className="material-symbols-outlined text-emerald-500">eco</span>
@@ -68,7 +68,7 @@ const CropsSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-emerald-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'text-red-400' : formData.otherCropName ? 'text-emerald-500' : 'text-slate-400'}`}>edit_note</span>
+                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'text-red-500' : formData.otherCropName ? 'text-emerald-500' : 'text-slate-400'}`}>edit_note</span>
                             </div>
                             <input
                                 type="text"
@@ -76,7 +76,7 @@ const CropsSection = ({
                                 value={formData.otherCropName}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                   ${isTouched.otherCropName && errors.otherCropName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'}
                 `}
                                 placeholder="e.g. Wheat, Brinjal, Cabbage"

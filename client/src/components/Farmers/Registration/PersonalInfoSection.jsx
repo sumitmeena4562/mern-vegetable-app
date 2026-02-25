@@ -17,7 +17,7 @@ const PersonalInfoSection = ({
     loading
 }) => {
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-[40]">
             <div className="bg-[#F0FDF4] rounded-3xl p-6 border border-green-100/50">
                 <h3 className="text-[16px] font-bold text-slate-700 mb-6 flex items-center gap-2">
                     <span className="material-symbols-outlined text-green-600">person</span>
@@ -31,7 +31,7 @@ const PersonalInfoSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.fullName && errors.fullName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-green-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.fullName && errors.fullName ? 'text-red-400' : formData.fullName ? 'text-green-500' : 'text-slate-400'}`}>badge</span>
+                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.fullName && errors.fullName ? 'text-red-500' : formData.fullName ? 'text-green-600' : 'text-slate-400'}`}>badge</span>
                             </div>
                             <input
                                 type="text"
@@ -39,7 +39,7 @@ const PersonalInfoSection = ({
                                 value={formData.fullName}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                   ${isTouched.fullName && errors.fullName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'}
                 `}
                                 placeholder="Ramesh Kumar"
@@ -56,7 +56,7 @@ const PersonalInfoSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.email && errors.email ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-green-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.email && errors.email ? 'text-red-400' : formData.email ? 'text-green-500' : 'text-slate-400'}`}>mail</span>
+                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.email && errors.email ? 'text-red-500' : formData.email ? 'text-green-600' : 'text-slate-400'}`}>mail</span>
                             </div>
                             <input
                                 type="email"
@@ -64,7 +64,7 @@ const PersonalInfoSection = ({
                                 value={formData.email}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                   ${isTouched.email && errors.email ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'}
                 `}
                                 placeholder="ramesh@example.com"
@@ -81,7 +81,7 @@ const PersonalInfoSection = ({
                         <div className="flex gap-3">
                             <div className="relative flex-1 group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.mobile && errors.mobile ? 'text-red-400' : isVerified ? 'text-green-500' : 'text-slate-400'}`}>phone_iphone</span>
+                                    <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.mobile && errors.mobile ? 'text-red-500' : isVerified ? 'text-green-600' : 'text-slate-400'}`}>phone_iphone</span>
                                 </div>
                                 <input
                                     type="tel"
@@ -93,7 +93,7 @@ const PersonalInfoSection = ({
                                     }}
                                     onBlur={handleBlur}
                                     disabled={isVerified}
-                                    className={`w-full pl-11 pr-4 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                    className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                     ${isVerified ? 'bg-slate-50 border-green-200 text-slate-600' : ''}
                     ${isTouched.mobile && errors.mobile ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'}
                   `}
@@ -130,7 +130,7 @@ const PersonalInfoSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.password && errors.password ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-green-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.password && errors.password ? 'text-red-400' : formData.password ? 'text-green-500' : 'text-slate-400'}`}>lock</span>
+                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.password && errors.password ? 'text-red-500' : formData.password ? 'text-green-600' : 'text-slate-400'}`}>lock</span>
                             </div>
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -138,7 +138,7 @@ const PersonalInfoSection = ({
                                 value={formData.password}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-11 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-11 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                   ${isTouched.password && errors.password ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'}
                 `}
                                 placeholder="Secure@123"
@@ -158,17 +158,39 @@ const PersonalInfoSection = ({
                         )}
 
                         {/* Password Strength Indicator */}
-                        {formData.password && !errors.password && (
-                            <div className="mt-2 flex gap-1 h-1.5">
-                                {[1, 2, 3, 4].map((level) => (
-                                    <div
-                                        key={level}
-                                        className={`flex-1 rounded-full transition-all duration-500 ${passwordStrength >= level
-                                            ? level <= 2 ? 'bg-orange-400' : level === 3 ? 'bg-yellow-400' : 'bg-green-500'
-                                            : 'bg-gray-200'
-                                            }`}
-                                    />
-                                ))}
+                        {formData.password && (
+                            <div className="mt-3">
+                                <div className="flex justify-between items-center mb-1.5">
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password Strength</span>
+                                    <span className={`text-[11px] font-bold uppercase tracking-wider ${passwordStrength <= 1 ? 'text-red-500' :
+                                        passwordStrength <= 2 ? 'text-orange-500' :
+                                            passwordStrength === 3 ? 'text-yellow-600' :
+                                                passwordStrength === 4 ? 'text-emerald-500' :
+                                                    'text-green-600'
+                                        }`}>
+                                        {passwordStrength === 0 ? 'Very Weak' :
+                                            passwordStrength === 1 ? 'Weak' :
+                                                passwordStrength === 2 ? 'Fair' :
+                                                    passwordStrength === 3 ? 'Good' :
+                                                        passwordStrength === 4 ? 'Strong' :
+                                                            'Excellent'}
+                                    </span>
+                                </div>
+                                <div className="flex gap-1.5 h-1.5">
+                                    {[1, 2, 3, 4, 5].map((level) => (
+                                        <div
+                                            key={level}
+                                            className={`flex-1 rounded-full transition-all duration-500 ${passwordStrength >= level
+                                                ? passwordStrength <= 1 ? 'bg-red-400' :
+                                                    passwordStrength <= 2 ? 'bg-orange-400' :
+                                                        passwordStrength === 3 ? 'bg-yellow-400' :
+                                                            passwordStrength === 4 ? 'bg-emerald-400' :
+                                                                'bg-green-500'
+                                                : 'bg-slate-100'
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -180,7 +202,7 @@ const PersonalInfoSection = ({
                         </label>
                         <div className={`relative rounded-full transition-all duration-300 ${isTouched.confirmPassword && errors.confirmPassword ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-green-100'}`}>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined transition-colors duration-300 ${isTouched.confirmPassword && errors.confirmPassword ? 'text-red-400' : formData.confirmPassword ? (errors.confirmPassword ? 'text-red-500' : 'text-green-500') : 'text-slate-400'}`}>lock_reset</span>
+                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.confirmPassword && errors.confirmPassword ? 'text-red-500' : formData.confirmPassword ? (errors.confirmPassword ? 'text-red-500' : 'text-green-600') : 'text-slate-400'}`}>lock_reset</span>
                             </div>
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
@@ -188,7 +210,7 @@ const PersonalInfoSection = ({
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`w-full pl-11 pr-11 py-2.5 bg-white border outline-none rounded-full transition-all duration-300 text-sm
+                                className={`w-full pl-12 pr-11 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
                   ${isTouched.confirmPassword && errors.confirmPassword ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-green-500 focus:ring-4 focus:ring-green-50'}
                 `}
                                 placeholder="Re-enter password"
