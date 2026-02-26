@@ -11,22 +11,32 @@ const Wallet = () => {
 
     const [transactions, setTransactions] = useState([]);
 
-    const dummyTransactions = [
-        { id: 'TXN-001', createdAt: '2023-10-27', type: 'Payment', amount: -2700, status: 'Success', description: 'Order #ORD-9012' },
-        { id: 'TXN-002', createdAt: '2023-10-26', type: 'Topup', amount: 5000, status: 'Success', description: 'Added via UPI' },
-        { id: 'TXN-003', createdAt: '2023-10-20', type: 'Credit Use', amount: -1500, status: 'Success', description: 'Order #ORD-8711' },
-    ];
-
     useEffect(() => {
-        setTimeout(() => {
-            setWallet({ balance: 4500, creditLimit: 20000, creditUsed: 1500 });
-            setTransactions(dummyTransactions);
-            setLoading(false);
-        }, 800);
+        fetchWalletData();
     }, []);
 
-    const availableCredit = wallet.creditLimit - wallet.creditUsed;
-    const creditUsagePercentage = (wallet.creditUsed / wallet.creditLimit) * 100;
+    const fetchWalletData = async () => {
+        try {
+            const [statsRes, txnsRes] = await Promise.all([
+                api.get('/vendors/wallet/stats'),
+                api.get('/vendors/wallet/transactions')
+            ]);
+
+            if (statsRes.data.success) {
+                setWallet(statsRes.data.data);
+            }
+            if (txnsRes.data.success) {
+                setTransactions(txnsRes.data.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch wallet data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const availableCredit = (wallet.creditLimit || 0) - (wallet.creditUsed || 0);
+    const creditUsagePercentage = wallet.creditLimit > 0 ? ((wallet.creditUsed || 0) / wallet.creditLimit) * 100 : 0;
 
     const exportCSV = () => {
         if (!transactions.length) return;
@@ -169,7 +179,7 @@ const Wallet = () => {
                                         <div>
                                             <h4 className="font-black text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">{txn.type}</h4>
                                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-                                                <span>{txn.createdAt}</span>
+                                                <span>{new Date(txn.createdAt).toLocaleDateString()}</span>
                                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                                 <span>{txn.description}</span>
                                             </div>

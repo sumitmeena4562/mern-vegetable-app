@@ -17,7 +17,7 @@ export default function VendorDashboard() {
     const location = useLocation();
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [onboardingComplete, setOnboardingComplete] = useState(false); // Make it false to test it
+    const [onboardingComplete, setOnboardingComplete] = useState(true); // Default to true so it doesn't block UX
 
     // Auto-close sidebar on mobile when route changes
     useEffect(() => {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../api/axios';
+import { useCart } from '../../../../contexts/CartContext';
+import { toast } from 'react-hot-toast';
 
 const Market = () => {
     const [products, setProducts] = useState([]);
@@ -9,21 +11,25 @@ const Market = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10; // Similar pagination
 
-    // Dummy products until backend API is ready
-    const dummyProducts = [
-        { _id: '1', name: 'Fresh Tomatoes', farmer: 'Rajesh Kumar', pricePerUnit: 40, unit: 'kg', minOrder: 50, availableQuantity: 500, images: [{ url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60' }], rating: 4.8, distance: '5 km', variety: 'Hybrid' },
-        { _id: '2', name: 'Organic Potatoes', farmer: 'Suresh Singh', pricePerUnit: 25, unit: 'kg', minOrder: 100, availableQuantity: 1000, images: [{ url: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60' }], rating: 4.5, distance: '12 km', variety: 'Organic' },
-        { _id: '3', name: 'Red Onions', farmer: 'Anil Patil', pricePerUnit: 35, unit: 'kg', minOrder: 50, availableQuantity: 800, images: [{ url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop&q=60' }], rating: 4.9, distance: '3 km', variety: 'Red' },
-        { _id: '4', name: 'Green Chili', farmer: 'Vikram Das', pricePerUnit: 60, unit: 'kg', minOrder: 10, availableQuantity: 150, images: [{ url: 'https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=500&auto=format&fit=crop&q=60' }], rating: 4.2, distance: '8 km', variety: 'Spicy' },
-    ];
+    const { addToCart } = useCart();
 
     useEffect(() => {
-        // Simulate API fetch
-        setTimeout(() => {
-            setProducts(dummyProducts);
-            setLoading(false);
-        }, 1000);
+        fetchProducts();
     }, []);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await api.get('/vendors/products');
+            if (res.data.success) {
+                setProducts(res.data.data.products);
+            }
+        } catch (error) {
+            console.error("Failed to fetch market products:", error);
+            toast.error("Failed to load products");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Client-side search and filter
     const filteredProducts = products.filter(p => {
@@ -51,7 +57,7 @@ const Market = () => {
                         <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
                         <input
                             type="text"
-                            value={searchQuery}
+                            value={searchQuery || ''}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search produce, farmers..."
                             className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full md:w-48 placeholder:text-slate-300"
@@ -94,7 +100,7 @@ const Market = () => {
                     <p className="text-xs font-bold text-slate-400">Showing {paginatedProducts.length} of {filteredProducts.length} items</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {paginatedProducts.map((product) => (
-                            <ProductCard key={product._id} product={product} />
+                            <ProductCard key={product._id} product={product} onAddToCart={() => { addToCart(product, product.minimumOrder || 1); toast.success(`${product.name} added to cart!`); }} />
                         ))}
                     </div>
 
@@ -142,7 +148,16 @@ const Market = () => {
     );
 };
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onAddToCart }) => {
+    const farmerName = product.farmer?.fullName || product.farmer?.farmName || product.farmer || 'Unknown Farmer';
+
+    const getRating = (r) => {
+        if (!r) return 4.5;
+        if (typeof r === 'object') return r.average || 4.5;
+        return r;
+    };
+    const rating = getRating(product.farmer?.averageRating || product.rating);
+
     return (
         <div className="bg-white group rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden flex flex-col cursor-pointer">
             {/* Image Container */}
@@ -168,7 +183,7 @@ const ProductCard = ({ product }) => {
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                     <div className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-800 shadow-lg flex items-center gap-1.5 border border-white/50">
                         <span className="material-symbols-outlined text-[14px] text-amber-500 animate-pulse">star</span>
-                        {product.rating}
+                        {rating}
                     </div>
                 </div>
                 <div className="absolute top-4 right-4">
@@ -198,12 +213,12 @@ const ProductCard = ({ product }) => {
                         </div>
                     </div>
 
-                    <p className="text-sm font-bold text-slate-500 flex items-center gap-2 mb-4">
+                    <div className="text-sm font-bold text-slate-500 flex items-center gap-2 mb-4">
                         <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
                             <span className="material-symbols-outlined text-[10px]">agriculture</span>
                         </div>
-                        <span className="truncate hover:text-indigo-600 transition-colors decoration-2 underline-offset-4">{product.farmer}</span>
-                    </p>
+                        <span className="truncate hover:text-indigo-600 transition-colors decoration-2 underline-offset-4">{farmerName}</span>
+                    </div>
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 gap-2 mb-6">
@@ -229,7 +244,7 @@ const ProductCard = ({ product }) => {
                         <span>View Details</span>
                         <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-1.5">arrow_forward</span>
                     </button>
-                    <button className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white border border-indigo-100 transition-all flex items-center justify-center shadow-sm">
+                    <button onClick={(e) => { e.stopPropagation(); onAddToCart(); }} className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white border border-indigo-100 transition-all flex items-center justify-center shadow-sm">
                         <span className="material-symbols-outlined text-lg">shopping_cart</span>
                     </button>
                 </div>

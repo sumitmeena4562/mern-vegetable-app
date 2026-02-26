@@ -18,6 +18,19 @@ const Settings = () => {
         businessType: '',
         dailyCapacity: '',
         fssaiNumber: '',
+        bankDetails: {
+            accountHolderName: '',
+            accountNumber: '',
+            ifscCode: '',
+            bankName: '',
+            branch: ''
+        }
+    });
+
+    const [securityData, setSecurityData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
     });
 
     useEffect(() => {
@@ -37,6 +50,13 @@ const Settings = () => {
                     businessType: p.businessType || '',
                     dailyCapacity: p.dailyCapacity || '',
                     fssaiNumber: p.fssaiNumber || '',
+                    bankDetails: p.bankDetails || {
+                        accountHolderName: '',
+                        accountNumber: '',
+                        ifscCode: '',
+                        bankName: '',
+                        branch: ''
+                    }
                 }));
             }
         } catch (err) {
@@ -49,18 +69,43 @@ const Settings = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name.startsWith('bank_')) {
+            const field = name.split('_')[1];
+            setFormData(prev => ({
+                ...prev,
+                bankDetails: { ...prev.bankDetails, [field]: value }
+            }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleSecurityChange = (e) => {
+        setSecurityData({ ...securityData, [e.target.name]: e.target.value });
     };
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            const response = await api.put('/vendors/profile', formData);
-            if (response.data.success) {
-                toast.success('Profile updated successfully!');
+            if (activeTab === 'profile' || activeTab === 'shop' || activeTab === 'bank') {
+                const response = await api.put('/vendors/profile', formData);
+                if (response.data.success) {
+                    toast.success('Profile updated successfully!');
+                }
+            } else if (activeTab === 'security') {
+                if (securityData.newPassword !== securityData.confirmPassword) {
+                    toast.error('New passwords do not match');
+                    setSaving(false);
+                    return;
+                }
+                const response = await api.put('/auth/change-password', securityData);
+                if (response.data.success) {
+                    toast.success('Password changed successfully');
+                    setSecurityData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }
             }
         } catch (err) {
-            toast.error('Failed to update profile');
+            toast.error(err.response?.data?.message || 'Failed to update settings');
             console.error(err);
         } finally {
             setSaving(false);
@@ -131,7 +176,7 @@ const Settings = () => {
                             <input
                                 type="text"
                                 name="fullName"
-                                value={formData.fullName}
+                                value={formData.fullName || ''}
                                 onChange={handleInputChange}
                                 className={inputClass}
                             />
@@ -141,7 +186,7 @@ const Settings = () => {
                             <input
                                 type="email"
                                 name="email"
-                                value={formData.email}
+                                value={formData.email || ''}
                                 onChange={handleInputChange}
                                 className={inputClass}
                             />
@@ -151,7 +196,7 @@ const Settings = () => {
                             <input
                                 type="text"
                                 name="mobile"
-                                value={formData.mobile}
+                                value={formData.mobile || ''}
                                 readOnly
                                 className="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-100 rounded-2xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed opacity-80"
                             />
@@ -180,7 +225,7 @@ const Settings = () => {
                             <input
                                 type="text"
                                 name="shopName"
-                                value={formData.shopName}
+                                value={formData.shopName || ''}
                                 onChange={handleInputChange}
                                 className={inputClass}
                             />
@@ -189,7 +234,7 @@ const Settings = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Business Type</label>
                             <select
                                 name="businessType"
-                                value={formData.businessType}
+                                value={formData.businessType || 'retailer'}
                                 onChange={handleInputChange}
                                 className={selectClass}
                             >
@@ -203,7 +248,7 @@ const Settings = () => {
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Shop Format</label>
                             <select
                                 name="shopType"
-                                value={formData.shopType}
+                                value={formData.shopType || 'kirana'}
                                 onChange={handleInputChange}
                                 className={selectClass}
                             >
@@ -218,7 +263,7 @@ const Settings = () => {
                             <input
                                 type="number"
                                 name="dailyCapacity"
-                                value={formData.dailyCapacity}
+                                value={formData.dailyCapacity || ''}
                                 onChange={handleInputChange}
                                 className={inputClass}
                             />
@@ -228,7 +273,7 @@ const Settings = () => {
                             <input
                                 type="text"
                                 name="fssaiNumber"
-                                value={formData.fssaiNumber}
+                                value={formData.fssaiNumber || ''}
                                 onChange={handleInputChange}
                                 className={inputClass}
                                 placeholder="Optional"
@@ -238,38 +283,140 @@ const Settings = () => {
                 </div>
             )}
 
-            {/* Placeholders for other tabs */}
-            {(activeTab === 'bank' || activeTab === 'security') && (
-                <div className="bg-white rounded-[32px] p-16 shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col items-center justify-center text-center">
-                    <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-inner ${activeTab === 'bank' ? 'bg-blue-50 text-blue-300' : 'bg-indigo-50 text-indigo-300'}`}>
-                        <span className="material-symbols-outlined text-5xl">
-                            {activeTab === 'bank' ? 'account_balance' : 'encrypted'}
-                        </span>
+            {/* Bank Details Tab */}
+            {activeTab === 'bank' && (
+                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                            <span className="material-symbols-outlined text-3xl">account_balance</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Bank Details</h3>
+                            <p className="text-xs text-slate-400 font-medium">Manage your payout account information securely</p>
+                        </div>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">{activeTab === 'bank' ? 'Bank Details' : 'Security Settings'}</h3>
-                    <p className="text-slate-500 max-w-sm font-medium">This section is currently under development. You will be able to manage these settings soon.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Account Holder Name</label>
+                            <input
+                                type="text"
+                                name="bank_accountHolderName"
+                                value={formData.bankDetails?.accountHolderName || ''}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Account Number</label>
+                            <input
+                                type="text"
+                                name="bank_accountNumber"
+                                value={formData.bankDetails?.accountNumber || ''}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">IFSC Code</label>
+                            <input
+                                type="text"
+                                name="bank_ifscCode"
+                                value={formData.bankDetails?.ifscCode || ''}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Bank Name</label>
+                            <input
+                                type="text"
+                                name="bank_bankName"
+                                value={formData.bankDetails?.bankName || ''}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Branch Name</label>
+                            <input
+                                type="text"
+                                name="bank_branch"
+                                value={formData.bankDetails?.branch || ''}
+                                onChange={handleInputChange}
+                                className={inputClass}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Security Tab */}
+            {activeTab === 'security' && (
+                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
+                            <span className="material-symbols-outlined text-3xl">security</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Security Settings</h3>
+                            <p className="text-xs text-slate-400 font-medium">Update your password to keep your account secure</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1.5 md:col-span-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Current Password</label>
+                            <input
+                                type="password"
+                                name="currentPassword"
+                                value={securityData.currentPassword || ''}
+                                onChange={handleSecurityChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">New Password</label>
+                            <input
+                                type="password"
+                                name="newPassword"
+                                value={securityData.newPassword || ''}
+                                onChange={handleSecurityChange}
+                                className={inputClass}
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Confirm New Password</label>
+                            <input
+                                type="password"
+                                name="confirmPassword"
+                                value={securityData.confirmPassword || ''}
+                                onChange={handleSecurityChange}
+                                className={inputClass}
+                            />
+                        </div>
+                    </div>
                 </div>
             )}
 
             {/* Save Button */}
-            {(activeTab === 'profile' || activeTab === 'shop') && (
-                <div className="flex justify-end mt-8">
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
-                    >
-                        {saving ? (
-                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined text-lg">save</span>
-                                Save Changes
-                            </>
-                        )}
-                    </button>
-                </div>
-            )}
+            <div className="flex justify-end mt-8">
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                    {saving ? (
+                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                    ) : (
+                        <>
+                            <span className="material-symbols-outlined text-lg">save</span>
+                            Save Changes
+                        </>
+                    )}
+                </button>
+            </div>
+
 
         </div>
     );

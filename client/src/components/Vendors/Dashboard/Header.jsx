@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useAuth } from '../../../contexts/AuthContext';
-// import { useNotifications } from '../../../contexts/NotificationContext'; // Assuming Vendor might not have this context setup exactly the same yet, but let's prepare for it
+import { useCart } from '../../../contexts/CartContext';
 import api from '../../../api/axios';
 
 const Header = ({
@@ -16,7 +16,7 @@ const Header = ({
     const navigate = useNavigate();
     const socket = useSocket();
     const { user } = useAuth();
-    // const { unreadCount } = useNotifications();
+    const { cartItemCount } = useCart();
     const unreadCount = 0; // Mock this if context is missing for vendor
 
     const [isOnline, setIsOnline] = useState(true);
@@ -103,6 +103,19 @@ const Header = ({
                         <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                     </span>
                     <span className="text-[11px] font-semibold text-slate-600">{isOnline ? 'Online' : 'Offline'}</span>
+                </button>
+
+                {/* Cart Icon */}
+                <button
+                    onClick={() => navigate('/vendor-dashboard/cart')}
+                    className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center shrink-0"
+                >
+                    <span className="material-symbols-outlined text-2xl">shopping_cart</span>
+                    {cartItemCount > 0 && (
+                        <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-indigo-600 text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white px-1 shadow-sm">
+                            {cartItemCount > 99 ? '99+' : cartItemCount}
+                        </span>
+                    )}
                 </button>
 
                 {/* Notifications Icon */}

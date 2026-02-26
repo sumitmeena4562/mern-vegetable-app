@@ -118,3 +118,32 @@ export const updateOrderStatus = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to update order status' });
     }
 };
+
+/**
+ * @desc    Get all orders (purchases) for the authenticated buyer (Vendor)
+ * @route   GET /api/vendors/orders
+ * @access  Private (Vendor)
+ */
+export const getVendorOrders = async (req, res) => {
+    try {
+        const { status } = req.query;
+        let query = { buyer: req.user.id };
+
+        if (status && status !== 'all' && status !== 'All') {
+            query.status = status.toLowerCase(); // Ensure lowercase matching if DB is lowercase
+        }
+
+        const orders = await Order.find(query)
+            .populate('farmer', 'fullName farmName mobile profilePhoto')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: orders.length,
+            data: orders
+        });
+    } catch (error) {
+        console.error('getVendorOrders error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch vendor orders' });
+    }
+};

@@ -1,6 +1,7 @@
 import Transaction from '../models/Transaction.js';
 import Farmer from '../models/Farmer.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 /**
  * @desc    Get wallet stats for the authenticated farmer
@@ -100,5 +101,53 @@ export const requestWithdrawal = async (req, res) => {
     } catch (error) {
         console.error('requestWithdrawal error:', error);
         res.status(500).json({ message: 'Failed to process withdrawal request' });
+    }
+};
+
+/**
+ * @desc    Get wallet stats for the authenticated vendor
+ * @route   GET /api/vendors/wallet/stats
+ * @access  Private (Vendor)
+ */
+export const getVendorWalletStats = async (req, res) => {
+    try {
+        const vendor = await mongoose.model('Vendor').findOne({ user: req.user.id });
+
+        if (!vendor) {
+            return res.status(404).json({ message: 'Vendor profile not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                balance: vendor.walletBalance || 0,
+                creditLimit: vendor.creditLimit || 0,
+                creditUsed: vendor.currentCreditUsed || 0
+            }
+        });
+    } catch (error) {
+        console.error('getVendorWalletStats error:', error);
+        res.status(500).json({ message: 'Failed to fetch vendor wallet stats' });
+    }
+};
+
+/**
+ * @desc    Get transaction history for the authenticated vendor
+ * @route   GET /api/vendors/wallet/transactions
+ * @access  Private (Vendor)
+ */
+export const getVendorTransactions = async (req, res) => {
+    try {
+        const transactions = await Transaction.find({ user: req.user.id })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        res.status(200).json({
+            success: true,
+            data: transactions
+        });
+    } catch (error) {
+        console.error('getVendorTransactions error:', error);
+        res.status(500).json({ message: 'Failed to fetch vendor transactions' });
     }
 };

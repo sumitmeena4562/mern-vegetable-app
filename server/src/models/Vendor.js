@@ -114,6 +114,11 @@ const vendorSchema = new mongoose.Schema({
     default: 0
   },
 
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
+
   currentCreditUsed: {
     type: Number,
     default: 0

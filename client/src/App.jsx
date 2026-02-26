@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import FarmerDashboard from "./pages/Farmer/FarmerDashboard";
 import VendorDashboard from "./pages/Vendor/VendorDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import { CartProvider } from "./contexts/CartContext";
 export default function App() {
     return (
         <NotificationProvider>
@@ -22,7 +23,11 @@ export default function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/farmer-dashboard/*" element={<FarmerDashboard />} />
-                    <Route path="/vendor-dashboard/*" element={<VendorDashboard />} />
+                    <Route path="/vendor-dashboard/*" element={
+                        <CartProvider>
+                            <VendorDashboard />
+                        </CartProvider>
+                    } />
                 </Routes>
             </div>
         </NotificationProvider>

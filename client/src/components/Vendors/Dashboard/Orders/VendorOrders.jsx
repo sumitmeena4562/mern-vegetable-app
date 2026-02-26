@@ -9,25 +9,39 @@ const VendorOrders = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const ORDERS_PER_PAGE = 9;
 
-    const dummyOrders = [
-        { id: '#ORD-9012', date: '2023-10-27', farmer: 'Rajesh Kumar', items: 'Tomatoes (50kg), Onions (20kg)', total: 2700, status: 'Processing' },
-        { id: '#ORD-8834', date: '2023-10-25', farmer: 'Vikram Das', items: 'Green Chili (10kg)', total: 600, status: 'Shipped' },
-        { id: '#ORD-8711', date: '2023-10-20', farmer: 'Suresh Singh', items: 'Potatoes (100kg)', total: 2500, status: 'Delivered' },
-    ];
-
     const statuses = [
         { id: 'All', label: 'All Orders', icon: 'list' },
+        { id: 'Pending', label: 'Pending', icon: 'schedule' },
         { id: 'Processing', label: 'Processing', icon: 'hourglass_empty' },
+        { id: 'Ready_for_pickup', label: 'Ready', icon: 'inventory' },
         { id: 'Shipped', label: 'Shipped', icon: 'local_shipping' },
         { id: 'Delivered', label: 'Delivered', icon: 'check_circle' },
     ];
 
     useEffect(() => {
-        setTimeout(() => {
-            setOrders(dummyOrders);
-            setLoading(false);
-        }, 800);
+        fetchOrders();
     }, []);
+
+    const fetchOrders = async () => {
+        try {
+            const res = await api.get('/vendors/orders');
+            if (res.data.success) {
+                const formattedOrders = res.data.data.map(order => ({
+                    id: order.orderId || order._id,
+                    date: order.createdAt,
+                    farmer: order.farmer?.farmName || order.farmer?.fullName || 'Unknown Farmer',
+                    items: order.products?.map(p => `${p.name} (${p.quantity}${p.unit || 'kg'})`).join(', ') || 'Various Items',
+                    total: order.finalAmount || order.totalAmount,
+                    status: (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)
+                }));
+                setOrders(formattedOrders);
+            }
+        } catch (error) {
+            console.error("Failed to fetch vendor orders:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -41,7 +55,7 @@ const VendorOrders = () => {
 
     // Client-side search and filter
     const filteredOrders = orders.filter(o => {
-        const matchesFilter = filter === 'All' || o.status === filter;
+        const matchesFilter = filter === 'All' || o.status.toLowerCase() === filter.toLowerCase();
         const matchesSearch = !searchQuery.trim() || o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.farmer.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
