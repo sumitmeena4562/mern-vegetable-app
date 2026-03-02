@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 
-const ProductCard = ({ product, onAddToCart }) => {
+const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
     const farmerName = product.farmer?.fullName || product.farmer?.farmName || product.farmer || 'Unknown Farmer';
 
     const getRating = (r) => {
@@ -92,7 +92,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                    <button className="flex-1 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 shadow-lg shadow-slate-900/20 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
+                    <button onClick={(e) => { e.stopPropagation(); onViewDetails?.(); }} className="flex-1 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 shadow-lg shadow-slate-900/20 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
                         <span>View Details</span>
                         <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-1.5">arrow_forward</span>
                     </button>
