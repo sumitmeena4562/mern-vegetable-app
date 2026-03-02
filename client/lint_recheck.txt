@@ -1,0 +1,19 @@
+
+D:\AgriConnect-App\client\src\components\Farmers\Dashboard\Wallet\Wallet.jsx
+  36:22  error  '_' is defined but never used  no-unused-vars
+
+D:\AgriConnect-App\client\src\components\Farmers\Dashboard\add-sabji\SubmissionSuccess.jsx
+  12:13  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+D:\AgriConnect-App\client\src\components\Farmers\FarmerRegistration.jsx
+  272:18  error  'error' is defined but never used  no-unused-vars
+
+D:\AgriConnect-App\client\src\components\Vendors\VendorRegistration.jsx
+  235:18  error  'error' is defined but never used  no-unused-vars
+
+D:\AgriConnect-App\client\vite.config.js
+  36:11  error  'process' is not defined  no-undef
+
+✖ 5 problems (4 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

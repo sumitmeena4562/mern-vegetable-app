@@ -25,7 +25,8 @@ export default {
         "glass-border": "rgba(255, 255, 255, 0.5)",
       },
       fontFamily: {
-        "display": ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"SF Pro Display"', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+        "sans": ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        "display": ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif']
       },
       borderRadius: {
         "DEFAULT": "1rem",

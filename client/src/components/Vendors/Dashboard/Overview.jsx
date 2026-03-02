@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import api from '../../../api/axios';
 
 const Overview = () => {
     const { user } = useAuth();
-    const [stats] = useState({
+    const [stats, setStats] = useState({
         totalSpent: 0,
         activeOrders: 0,
         pendingDeliveries: 0,
@@ -14,9 +15,19 @@ const Overview = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setTimeout(() => {
-            setLoading(false);
-        }, 800);
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/vendors/stats');
+                if (res.data.success) {
+                    setStats(res.data.data);
+                }
+            } catch (error) {
+                console.error('Vendor stats fetch error:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStats();
     }, []);
 
     const getGreeting = () => {

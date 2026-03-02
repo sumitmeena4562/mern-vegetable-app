@@ -125,10 +125,53 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ success: false, message: 'Update failed', error: error.message });
     }
 };
+// Get Vendor Dashboard Stats (Aggregated from DB)
+export const getDashboardStats = async (req, res) => {
+    try {
+        const Order = (await import('../models/Order.js')).default;
+        const vendor = await Vendor.findOne({ user: req.user.id });
+
+        if (!vendor) {
+            return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+        }
+
+        // Aggregate order stats
+        const allOrders = await Order.find({ buyer: req.user.id });
+
+        const totalSpent = allOrders
+            .filter(o => o.status === 'delivered')
+            .reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0);
+
+        const activeOrders = allOrders.filter(o =>
+            ['pending', 'confirmed', 'processing', 'in_transit'].includes(o.status)
+        ).length;
+
+        const pendingDeliveries = allOrders.filter(o =>
+            ['ready_for_pickup', 'in_transit'].includes(o.status)
+        ).length;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalSpent,
+                activeOrders,
+                pendingDeliveries,
+                creditUsed: vendor.currentCreditUsed || 0,
+                creditLimit: vendor.creditLimit || 0,
+                totalOrders: allOrders.length,
+                deliveredOrders: allOrders.filter(o => o.status === 'delivered').length,
+            }
+        });
+    } catch (error) {
+        console.error('Vendor getDashboardStats error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch stats' });
+    }
+};
 
 export default {
     validateCreateVendor,
     registerVendor,
     getMyProfile,
-    updateProfile
+    updateProfile,
+    getDashboardStats
 };

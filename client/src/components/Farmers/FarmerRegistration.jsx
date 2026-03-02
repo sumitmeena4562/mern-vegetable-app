@@ -269,7 +269,7 @@ const FarmerRegistration = () => {
           if (res.data.success) {
             setDistricts(res.data.districts);
           }
-        } catch (error) {
+        } catch {
           toast.error("Could not fetch districts");
         } finally {
           setIsFetchingLocations(false);

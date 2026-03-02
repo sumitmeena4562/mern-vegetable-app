@@ -33,7 +33,7 @@ const Wallet = () => {
                 if (profileRes.data?.success && profileRes.data?.data?.bankDetails) {
                     setBankDetails(profileRes.data.data.bankDetails);
                 }
-            } catch (_) { /* Bank details not available yet */ }
+            } catch { /* Bank details not available yet */ }
         } catch (error) {
             console.error("Wallet loading error:", error);
         } finally {

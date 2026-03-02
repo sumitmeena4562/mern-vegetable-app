@@ -3,7 +3,8 @@ import {
     validateCreateVendor,
     registerVendor,
     getMyProfile,
-    updateProfile
+    updateProfile,
+    getDashboardStats
 } from '../controllers/vendorController.js';
 import { getProducts, searchProducts, getProduct } from '../controllers/productController.js';
 import { getVendorOrders } from '../controllers/orderController.js';
@@ -18,6 +19,7 @@ router.post('/register', validateCreateVendor, registerVendor);
 // Protected: Profile Management
 router.get('/profile', auth('vendor'), getMyProfile);
 router.put('/profile', auth('vendor'), updateProfile);
+router.get('/stats', auth('vendor'), getDashboardStats);
 
 // Protected: Market Products
 router.get('/products', auth('vendor'), getProducts);

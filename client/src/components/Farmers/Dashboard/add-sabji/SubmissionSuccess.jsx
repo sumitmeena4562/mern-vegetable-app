@@ -9,7 +9,7 @@ const SubmissionSuccess = ({ productName, onComplete }) => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setShow(true);
         const timer = setTimeout(() => {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+
             setShow(false);
             setTimeout(onComplete, 500);
         }, 2500);
