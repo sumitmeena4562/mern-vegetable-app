@@ -2,8 +2,14 @@ import React, { useState, useEffect } from 'react';
 import api from '../../../../api/axios';
 import { getStatusBadge } from '../../../common/orderUtils';
 import VendorOrderDetailModal from './VendorOrderDetailModal';
+import { useSocket } from '../../../../contexts/SocketContext';
+import { toast } from 'react-hot-toast';
+import { useCart } from '../../../../contexts/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 const VendorOrders = () => {
+    const { addToCart } = useCart();
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
@@ -25,17 +31,38 @@ const VendorOrders = () => {
         fetchOrders();
     }, []);
 
+    // Real-time order status updates via Socket.IO
+    const { socket } = useSocket();
+    useEffect(() => {
+        if (!socket) return;
+        const handleStatusUpdate = (data) => {
+            setOrders(prev => prev.map(o =>
+                (o._id === data.orderId || o.orderId === data.orderCode)
+                    ? { ...o, status: data.status }
+                    : o
+            ));
+            toast.success(`Order #${data.orderCode} → ${data.status.replace(/_/g, ' ')}`, { icon: '📦' });
+        };
+        socket.on('order-status-updated', handleStatusUpdate);
+        return () => socket.off('order-status-updated', handleStatusUpdate);
+    }, [socket]);
+
     const fetchOrders = async () => {
         try {
             const res = await api.get('/vendors/orders');
             if (res.data.success) {
                 const formattedOrders = res.data.data.map(order => ({
                     id: order.orderId || order._id,
+                    _id: order._id,
                     date: order.createdAt,
                     farmer: order.farmer?.farmName || order.farmer?.fullName || 'Unknown Farmer',
+                    rawFarmer: order.farmer,
+                    rawProducts: order.products,
                     items: order.products?.map(p => `${p.name} (${p.quantity}${p.unit || 'kg'})`).join(', ') || 'Various Items',
                     total: order.finalAmount || order.totalAmount,
-                    status: (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)
+                    status: (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1),
+                    rating: order.rating,
+                    review: order.review
                 }));
                 setOrders(formattedOrders);
             }
@@ -43,6 +70,72 @@ const VendorOrders = () => {
             console.error("Failed to fetch vendor orders:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCancelOrder = async (orderId) => {
+        try {
+            const res = await api.put(`/vendors/orders/${orderId}/cancel`);
+            if (res.data.success) {
+                toast.success('Order cancelled successfully', { icon: '❌' });
+                setOrders(prev => prev.map(o =>
+                    o._id === orderId ? { ...o, status: 'Cancelled' } : o
+                ));
+                if (selectedOrder && (selectedOrder._id === orderId || selectedOrder.id === orderId)) {
+                    setSelectedOrder({ ...selectedOrder, status: 'Cancelled' });
+                }
+            }
+        } catch (error) {
+            console.error('Cancel order error:', error);
+            toast.error(error.response?.data?.message || 'Failed to cancel order');
+        }
+    };
+
+    const handleReview = async (orderId, reviewData) => {
+        try {
+            const res = await api.put(`/vendors/orders/${orderId}/review`, reviewData);
+            if (res.data.success) {
+                toast.success('Review submitted! Thanks for your feedback.', { icon: '⭐' });
+                setOrders(prev => prev.map(o =>
+                    o._id === orderId ? { ...o, rating: reviewData.rating, review: { text: reviewData.reviewText, createdAt: new Date() } } : o
+                ));
+                if (selectedOrder && (selectedOrder._id === orderId || selectedOrder.id === orderId)) {
+                    setSelectedOrder({ ...selectedOrder, rating: reviewData.rating, review: { text: reviewData.reviewText, createdAt: new Date() } });
+                }
+            }
+        } catch (error) {
+            console.error('Submit review error:', error);
+            toast.error(error.response?.data?.message || 'Failed to submit review');
+        }
+    };
+
+    const handleReorder = (order) => {
+        try {
+            if (!order.rawProducts || !order.rawFarmer) {
+                toast.error('Cannot reorder this order due to missing data');
+                return;
+            }
+
+            let addedCount = 0;
+            order.rawProducts.forEach(prod => {
+                const cartProduct = {
+                    _id: prod.product._id || prod.product,
+                    name: prod.name,
+                    price: prod.pricePerUnit,
+                    unit: prod.unit || 'kg',
+                    farmer: order.rawFarmer
+                };
+                addToCart(cartProduct, prod.quantity);
+                addedCount++;
+            });
+
+            if (addedCount > 0) {
+                toast.success('Items added to cart! Redirecting...', { icon: '🛒' });
+                setTimeout(() => navigate('/vendor-dashboard/cart'), 1500);
+            }
+        } catch (error) {
+            console.error('Reorder error:', error);
+            toast.error('Failed to add items to cart');
         }
     };
 
@@ -232,6 +325,9 @@ const VendorOrders = () => {
                     <VendorOrderDetailModal
                         order={selectedOrder}
                         onClose={() => setSelectedOrder(null)}
+                        onCancel={handleCancelOrder}
+                        onReview={handleReview}
+                        onReorder={handleReorder}
                     />
                 )
             }

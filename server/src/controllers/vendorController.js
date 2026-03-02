@@ -150,6 +150,31 @@ export const getDashboardStats = async (req, res) => {
             ['ready_for_pickup', 'in_transit'].includes(o.status)
         ).length;
 
+        // --- Generate Chart Data ---
+        // 1. Weekly Sourcing (Last 7 days)
+        const weeklySourcing = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const dayOrders = allOrders.filter(o => {
+                const oDate = new Date(o.createdAt);
+                return oDate >= date && oDate < nextDate;
+            });
+
+            const daySpent = dayOrders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0);
+
+            weeklySourcing.push({
+                name: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                spent: daySpent,
+                orders: dayOrders.length
+            });
+        }
+
         res.status(200).json({
             success: true,
             data: {
@@ -160,6 +185,7 @@ export const getDashboardStats = async (req, res) => {
                 creditLimit: vendor.creditLimit || 0,
                 totalOrders: allOrders.length,
                 deliveredOrders: allOrders.filter(o => o.status === 'delivered').length,
+                weeklySourcing
             }
         });
     } catch (error) {

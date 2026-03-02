@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import api from '../../../api/axios';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from 'recharts';
 
 const Overview = () => {
     const { user } = useAuth();
@@ -10,6 +11,7 @@ const Overview = () => {
         activeOrders: 0,
         pendingDeliveries: 0,
         creditUsed: 0,
+        weeklySourcing: []
     });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -161,26 +163,48 @@ const Overview = () => {
                         </div>
                     </div>
 
-                    {/* Desktop Market Insights Placeholder */}
-                    <div className="bg-white/60 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
-                        <div className="flex justify-between items-center mb-8">
+                    {/* Weekly Sourcing Trends (Replaced Placeholder) */}
+                    <div className="bg-white/60 backdrop-blur-md p-6 md:p-8 rounded-[2.5rem] border border-white shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
+                        <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
                                     <span className="material-symbols-outlined">trending_up</span>
                                 </div>
-                                Recent Stock Updates
+                                Weekly Sourcing Insights
                             </h3>
-                            <button className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline decoration-2 underline-offset-4">Refresh Insights</button>
                         </div>
-                        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-slate-100 rounded-3xl group cursor-default hover:border-indigo-100 transition-colors">
-                            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-50 group-hover:text-indigo-300 transition-all duration-500 transform group-hover:rotate-6">
-                                <span className="material-symbols-outlined text-4xl">inventory_2</span>
+                        {stats.weeklySourcing && stats.weeklySourcing.length > 0 ? (
+                            <div className="h-72 w-full mt-4">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={stats.weeklySourcing} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorSpent" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 700 }} dy={10} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 700 }} tickFormatter={(val) => `₹${val}`} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', fontWeight: 'bold' }}
+                                            formatter={(value) => [`₹${value.toLocaleString()}`, 'Spent']}
+                                        />
+                                        <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="4 4" />
+                                        <Area type="monotone" dataKey="spent" stroke="#4f46e5" strokeWidth={4} fillOpacity={1} fill="url(#colorSpent)" activeDot={{ r: 6, strokeWidth: 0, fill: '#4f46e5' }} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </div>
-                            <h4 className="font-black text-slate-800 mb-2">Build Your Inventory</h4>
-                            <p className="text-slate-400 text-[13px] font-bold uppercase tracking-wide max-w-xs leading-relaxed">
-                                Start sourcing from the market to see real-time logistics and inventory tracking here.
-                            </p>
-                        </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-slate-100 rounded-3xl group cursor-default hover:border-indigo-100 transition-colors">
+                                <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-50 group-hover:text-indigo-300 transition-all duration-500 transform group-hover:rotate-6">
+                                    <span className="material-symbols-outlined text-4xl">inventory_2</span>
+                                </div>
+                                <h4 className="font-black text-slate-800 mb-2">Build Your Inventory</h4>
+                                <p className="text-slate-400 text-[13px] font-bold uppercase tracking-wide max-w-xs leading-relaxed">
+                                    Start sourcing from the market to see real-time logistics and inventory tracking here.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -220,18 +244,37 @@ const Overview = () => {
                         </div>
                     </div>
 
-                    {/* Analytics Card Placeholder */}
-                    <div className="bg-gradient-to-br from-indigo-50/50 to-violet-50/50 p-8 rounded-[2.5rem] border border-white shadow-inner relative overflow-hidden group">
-                        <div className="relative z-10 text-center">
-                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-indigo-600 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                <span className="material-symbols-outlined">analytics</span>
-                            </div>
-                            <h3 className="font-black text-slate-800 text-sm mb-2">Weekly Summary</h3>
-                            <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wide opacity-80 leading-relaxed">
-                                Sourcing intelligence will populate as you begin your business operations.
-                            </p>
+                    {/* Orders Volume Chart (Replaced Placeholder) */}
+                    <div className="bg-gradient-to-br from-indigo-50/50 to-violet-50/50 p-6 rounded-[2.5rem] border border-white shadow-inner relative overflow-hidden group">
+                        <div className="relative z-10">
+                            <h3 className="font-black text-slate-800 text-sm mb-4 flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                                    <span className="material-symbols-outlined text-[16px]">bar_chart</span>
+                                </div>
+                                Volume Last 7 Days
+                            </h3>
+                            {stats.weeklySourcing && stats.weeklySourcing.length > 0 ? (
+                                <div className="h-40 w-full mt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stats.weeklySourcing} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 700 }} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', fontSize: '12px', fontWeight: 'bold' }}
+                                                formatter={(value) => [value, 'Orders']}
+                                                cursor={{ fill: '#e0e7ff', opacity: 0.4 }}
+                                            />
+                                            <Bar dataKey="orders" fill="#4f46e5" radius={[4, 4, 4, 4]} barSize={20} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <div className="text-center py-6">
+                                    <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wide opacity-80 leading-relaxed">
+                                        Data will populate when orders are placed.
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                        <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
                     </div>
                 </div>
             </div>

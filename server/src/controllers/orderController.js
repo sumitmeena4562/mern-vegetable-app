@@ -206,6 +206,12 @@ export const updateOrderStatus = async (req, res) => {
         const io = req.app.get('io');
         if (io) {
             io.to(order.buyer.toString()).emit('receive-notification', notif);
+            io.to(order.buyer.toString()).emit('order-status-updated', {
+                orderId: order._id,
+                orderCode: order.orderId,
+                status: order.status,
+                updatedAt: new Date()
+            });
         }
 
         res.status(200).json({
@@ -245,5 +251,166 @@ export const getVendorOrders = async (req, res) => {
     } catch (error) {
         console.error('getVendorOrders error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch vendor orders' });
+    }
+};
+
+/**
+ * @desc    Get single order details for Vendor
+ * @route   GET /api/vendors/orders/:id
+ * @access  Private (Vendor)
+ */
+export const getVendorOrder = async (req, res) => {
+    try {
+        const order = await Order.findOne({ _id: req.params.id, buyer: req.user.id })
+            .populate('farmer', 'fullName farmName mobile profilePhoto email address')
+            .populate('products.product', 'name category unit price image');
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: order
+        });
+    } catch (error) {
+        console.error('getVendorOrder error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch order details' });
+    }
+};
+
+// @desc    Cancel order by buyer (Vendor)
+// @route   PUT /api/vendors/orders/:id/cancel
+// @access  Private (Vendor)
+export const cancelOrder = async (req, res) => {
+    try {
+        const { reason } = req.body;
+
+        const order = await Order.findOne({
+            _id: req.params.id,
+            buyer: req.user.id
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (!['pending'].includes(order.status)) {
+            return res.status(400).json({ success: false, message: `Cannot cancel a ${order.status} order` });
+        }
+
+        // Return inventory
+        for (const item of order.products) {
+            await Product.findByIdAndUpdate(item.product, {
+                $inc: { availableQuantity: item.quantity }
+            });
+            item.status = 'cancelled';
+        }
+
+        order.status = 'cancelled';
+        order.cancellation = {
+            reason: reason || 'Cancelled by buyer',
+            initiatedBy: 'vendor',
+            cancelledAt: new Date()
+        };
+
+        if (order.payment.method !== 'cod' && order.payment.status === 'paid') {
+            order.payment.status = 'refunded';
+            order.payment.refundedAt = new Date();
+        }
+
+        await order.save();
+
+        // Notify Farmer
+        const notif = await Notification.create({
+            user: order.farmer,
+            title: `Order Cancelled ❌`,
+            message: `Order #${order.orderId} was cancelled by the buyer.`,
+            type: 'order_update',
+            metadata: { orderId: order._id }
+        });
+
+        // Emit socket block
+        const io = req.app.get('io');
+        if (io) {
+            io.to(order.farmer.toString()).emit('receive-notification', notif);
+            // Also notify farmer's order view
+            io.to(order.farmer.toString()).emit('order-status-updated', {
+                orderId: order._id,
+                orderCode: order.orderId,
+                status: 'cancelled',
+                updatedAt: new Date()
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Order cancelled successfully',
+            data: order
+        });
+    } catch (error) {
+        console.error('cancelOrder error:', error);
+        res.status(500).json({ success: false, message: 'Failed to cancel order' });
+    }
+};
+
+// @desc    Add review for a delivered order
+// @route   PUT /api/vendors/orders/:id/review
+// @access  Private (Vendor)
+export const addOrderReview = async (req, res) => {
+    try {
+        const { rating, reviewText } = req.body;
+
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: 'Please provide a valid rating (1-5)' });
+        }
+
+        const order = await Order.findOne({
+            _id: req.params.id,
+            buyer: req.user.id
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.status !== 'delivered') {
+            return res.status(400).json({ success: false, message: 'Can only review delivered orders' });
+        }
+
+        if (order.rating) {
+            return res.status(400).json({ success: false, message: 'Order already reviewed' });
+        }
+
+        order.rating = rating;
+        if (reviewText) {
+            order.review = {
+                text: reviewText,
+                createdAt: new Date()
+            };
+        }
+        await order.save();
+
+        // Update Farmer Rating
+        const Farmer = (await import('../models/Farmer.js')).default;
+        const farmer = await Farmer.findOne({ user: order.farmer });
+        if (farmer) {
+            const allRatedOrders = await Order.find({
+                farmer: order.farmer,
+                rating: { $exists: true, $ne: null }
+            });
+            const totalRating = allRatedOrders.reduce((sum, o) => sum + o.rating, 0);
+            farmer.averageRating = Number((totalRating / allRatedOrders.length).toFixed(1));
+            await farmer.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Review submitted successfully',
+            data: order
+        });
+    } catch (error) {
+        console.error('addOrderReview error:', error);
+        res.status(500).json({ success: false, message: 'Failed to submit review' });
     }
 };

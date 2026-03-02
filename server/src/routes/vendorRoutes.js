@@ -8,7 +8,7 @@ import {
     completeOnboarding
 } from '../controllers/vendorController.js';
 import { getProducts, searchProducts, getProduct } from '../controllers/productController.js';
-import { getVendorOrders, createOrder } from '../controllers/orderController.js';
+import { getVendorOrders, getVendorOrder, createOrder, cancelOrder, addOrderReview } from '../controllers/orderController.js';
 import { getVendorWalletStats, getVendorTransactions } from '../controllers/walletController.js';
 import auth from '../middleware/auth.js';
 
@@ -30,7 +30,10 @@ router.get('/products/:id', auth('vendor'), getProduct);
 
 // Protected: Vendor Orders (Purchase History)
 router.get('/orders', auth('vendor'), getVendorOrders);
+router.get('/orders/:id', auth('vendor'), getVendorOrder);
 router.post('/orders', auth('vendor'), createOrder);
+router.put('/orders/:id/cancel', auth('vendor'), cancelOrder);
+router.put('/orders/:id/review', auth('vendor'), addOrderReview);
 
 // Protected: Vendor Finance
 router.get('/wallet/stats', auth('vendor'), getVendorWalletStats);

@@ -11,6 +11,10 @@ const Market = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filter, setFilter] = useState('all');
+    const [maxPrice, setMaxPrice] = useState(2000);
+    const [isOrganic, setIsOrganic] = useState(false);
+    const [sortBy, setSortBy] = useState('newest'); // 'newest', 'price-low', 'price-high', 'rating'
+    const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
     const debounceTimer = useRef(null);
@@ -44,16 +48,30 @@ const Market = () => {
     };
 
     // Client-side search and filter
-    const filteredProducts = products.filter(p => {
+    let filteredProducts = products.filter(p => {
         const matchesSearch = !debouncedSearch.trim() || p.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.category?.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.variety?.toLowerCase().includes(debouncedSearch.toLowerCase());
         const matchesCategory = filter === 'all' || p.category === filter;
-        return matchesSearch && matchesCategory;
+        const matchesPrice = (p.pricePerUnit || p.price || 0) <= maxPrice;
+        const matchesOrganic = !isOrganic || p.isOrganic;
+        return matchesSearch && matchesCategory && matchesPrice && matchesOrganic;
     });
+
+    if (sortBy === 'price-low') {
+        filteredProducts.sort((a, b) => (a.pricePerUnit || a.price || 0) - (b.pricePerUnit || b.price || 0));
+    } else if (sortBy === 'price-high') {
+        filteredProducts.sort((a, b) => (b.pricePerUnit || b.price || 0) - (a.pricePerUnit || a.price || 0));
+    } else if (sortBy === 'rating') {
+        const getR = (p) => typeof p.farmer?.averageRating === 'object' ? (p.farmer.averageRating.average || 0) : (p.farmer?.averageRating || p.rating || 0);
+        filteredProducts.sort((a, b) => getR(b) - getR(a));
+    } else {
+        // newest
+        filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
 
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filter]);
+    useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filter, maxPrice, isOrganic, sortBy]);
 
     return (
         <>
@@ -66,33 +84,100 @@ const Market = () => {
                         <p className="text-slate-500 font-medium text-sm mt-1">Browse fresh produce listed directly by farmers</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                        <div className="flex flex-1 md:flex-none items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                             <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
                             <input
                                 type="text"
                                 value={searchQuery || ''}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                placeholder="Search produce, farmers..."
+                                placeholder="Search produce..."
                                 className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full md:w-48 placeholder:text-slate-300"
                             />
                             {searchQuery && (
-                                <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
+                                <button onClick={() => { setSearchQuery(''); handleSearchChange(''); }} className="text-slate-300 hover:text-slate-500 flex items-center">
                                     <span className="material-symbols-outlined text-lg">close</span>
                                 </button>
                             )}
                         </div>
-                        <select
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="bg-white border-2 border-slate-100 rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-widest outline-none focus:border-indigo-500 transition-all shadow-sm shadow-slate-200"
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all border-2 ${showFilters ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200 shadow-sm shadow-slate-200'}`}
                         >
-                            <option value="all">All Categories</option>
-                            <option value="vegetables">Vegetables</option>
-                            <option value="fruits">Fruits</option>
-                            <option value="exotic">Exotic</option>
-                        </select>
+                            <span className="material-symbols-outlined text-[18px]">tune</span>
+                            Filters {(filter !== 'all' || maxPrice < 2000 || isOrganic || sortBy !== 'newest') && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
+                        </button>
                     </div>
                 </div>
+
+                {/* Extended Filters Panel */}
+                {showFilters && (
+                    <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-wrap gap-6 animate-in slide-in-from-top-2">
+                        {/* Category */}
+                        <div className="space-y-2 flex-1 min-w-[150px]">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</label>
+                            <select
+                                value={filter}
+                                onChange={(e) => setFilter(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all cursor-pointer"
+                            >
+                                <option value="all">All Categories</option>
+                                <option value="vegetables">Vegetables</option>
+                                <option value="fruits">Fruits</option>
+                                <option value="exotic">Exotic</option>
+                            </select>
+                        </div>
+
+                        {/* Sort */}
+                        <div className="space-y-2 flex-1 min-w-[150px]">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By</label>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all cursor-pointer"
+                            >
+                                <option value="newest">Newest First</option>
+                                <option value="price-low">Price: Low to High</option>
+                                <option value="price-high">Price: High to Low</option>
+                                <option value="rating">Highest Rated</option>
+                            </select>
+                        </div>
+
+                        {/* Price Range */}
+                        <div className="space-y-2 flex-1 min-w-[200px]">
+                            <div className="flex justify-between items-center">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Max Price: ₹{maxPrice}</label>
+                            </div>
+                            <input
+                                type="range"
+                                min="10"
+                                max="2000"
+                                step="10"
+                                value={maxPrice}
+                                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                                className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+
+                        {/* Organic Toggle */}
+                        <div className="flex items-end flex-wrap gap-3">
+                            <button
+                                onClick={() => setIsOrganic(!isOrganic)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${isOrganic ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'}`}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">eco</span>
+                                Organic Only
+                            </button>
+                            {(filter !== 'all' || maxPrice < 2000 || isOrganic || sortBy !== 'newest') && (
+                                <button
+                                    onClick={() => { setFilter('all'); setMaxPrice(2000); setIsOrganic(false); setSortBy('newest'); }}
+                                    className="text-xs font-bold text-slate-400 hover:text-indigo-600 underline underline-offset-2 transition-colors px-2 py-2"
+                                >
+                                    Reset
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
