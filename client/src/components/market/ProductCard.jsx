@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 const ProductCard = ({ product, onAddToCart }) => {
     const farmerName = product.farmer?.fullName || product.farmer?.farmName || product.farmer || 'Unknown Farmer';
@@ -105,4 +105,4 @@ const ProductCard = ({ product, onAddToCart }) => {
     );
 };
 
-export default ProductCard;
+export default memo(ProductCard);

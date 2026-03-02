@@ -168,10 +168,40 @@ export const getDashboardStats = async (req, res) => {
     }
 };
 
+// Complete Vendor Onboarding
+export const completeOnboarding = async (req, res) => {
+    try {
+        const { shopName, businessType, dailyCapacity, preferredVegetables, deliveryRadius, storeTimings } = req.body;
+
+        const updateData = { onboardingComplete: true };
+        if (shopName) updateData.shopName = shopName;
+        if (businessType) updateData.businessType = businessType;
+        if (dailyCapacity) updateData.dailyCapacity = dailyCapacity;
+        if (preferredVegetables) updateData.preferredVegetables = preferredVegetables;
+        if (deliveryRadius) updateData.deliveryRadius = deliveryRadius;
+        if (storeTimings) updateData.storeTimings = storeTimings;
+
+        const vendor = await Vendor.findOneAndUpdate(
+            { user: req.user.id },
+            updateData,
+            { new: true }
+        );
+
+        if (!vendor) {
+            return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Onboarding completed!', data: vendor });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Onboarding failed', error: error.message });
+    }
+};
+
 export default {
     validateCreateVendor,
     registerVendor,
     getMyProfile,
     updateProfile,
-    getDashboardStats
+    getDashboardStats,
+    completeOnboarding
 };

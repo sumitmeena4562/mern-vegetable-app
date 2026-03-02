@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../../../../api/axios';
 import { useCart } from '../../../../contexts/CartContext';
 import { toast } from 'react-hot-toast';
@@ -8,9 +8,18 @@ const Market = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filter, setFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10; // Similar pagination
+    const ITEMS_PER_PAGE = 10;
+    const debounceTimer = useRef(null);
+
+    // 300ms debounce on search
+    const handleSearchChange = (value) => {
+        setSearchQuery(value);
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
+    };
 
     const { addToCart } = useCart();
 
@@ -34,15 +43,15 @@ const Market = () => {
 
     // Client-side search and filter
     const filteredProducts = products.filter(p => {
-        const matchesSearch = !searchQuery.trim() || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.category?.toLowerCase().includes(searchQuery.toLowerCase()) || p.variety?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = filter === 'all' || p.category === filter; // Placeholder filter logic
+        const matchesSearch = !debouncedSearch.trim() || p.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.category?.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.variety?.toLowerCase().includes(debouncedSearch.toLowerCase());
+        const matchesCategory = filter === 'all' || p.category === filter;
         return matchesSearch && matchesCategory;
     });
 
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    useEffect(() => { setCurrentPage(1); }, [searchQuery, filter]);
+    useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filter]);
 
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
@@ -59,7 +68,7 @@ const Market = () => {
                         <input
                             type="text"
                             value={searchQuery || ''}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                             placeholder="Search produce, farmers..."
                             className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full md:w-48 placeholder:text-slate-300"
                         />

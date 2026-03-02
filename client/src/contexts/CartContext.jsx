@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import api from '../api/axios';
 
 const CartContext = createContext();
 
@@ -71,6 +72,32 @@ export const CartProvider = ({ children }) => {
         setCart([]);
     };
 
+    /**
+     * Checkout: Place order(s) from cart via API
+     * @param {object} options - { deliveryType, paymentMethod, deliveryAddress, notes }
+     * @returns {Promise<{success: boolean, data: any, message: string}>}
+     */
+    const checkout = async (options = {}) => {
+        const items = cart.map(item => ({
+            productId: item.product._id,
+            quantity: item.quantity
+        }));
+
+        const res = await api.post('/vendors/orders', {
+            items,
+            deliveryType: options.deliveryType || 'pickup',
+            paymentMethod: options.paymentMethod || 'online',
+            deliveryAddress: options.deliveryAddress || {},
+            notes: options.notes || ''
+        });
+
+        if (res.data.success) {
+            clearCart();
+        }
+
+        return res.data;
+    };
+
     const cartTotal = cart.reduce((total, item) => total + (item.product.pricePerUnit || item.product.price || 0) * item.quantity, 0);
     const cartItemCount = cart.reduce((count, item) => count + item.quantity, 0);
 
@@ -81,6 +108,7 @@ export const CartProvider = ({ children }) => {
             removeFromCart,
             updateQuantity,
             clearCart,
+            checkout,
             cartTotal,
             cartItemCount
         }}>

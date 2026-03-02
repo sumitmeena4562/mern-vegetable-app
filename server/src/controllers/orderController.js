@@ -3,6 +3,106 @@ import Product from '../models/Product.js';
 import Notification from '../models/Notification.js';
 
 /**
+ * @desc    Create order(s) from vendor cart
+ * @route   POST /api/vendors/orders
+ * @access  Private (Vendor)
+ */
+export const createOrder = async (req, res) => {
+    try {
+        const { items, deliveryType, paymentMethod, deliveryAddress, notes } = req.body;
+
+        if (!items || items.length === 0) {
+            return res.status(400).json({ success: false, message: 'Cart is empty' });
+        }
+
+        // Group items by farmer
+        const farmerGroups = {};
+        for (const item of items) {
+            const product = await Product.findById(item.productId).populate('farmer', 'fullName');
+            if (!product) {
+                return res.status(400).json({ success: false, message: `Product not found: ${item.productId}` });
+            }
+            if (product.availableQuantity < item.quantity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for ${product.name}. Available: ${product.availableQuantity} ${product.unit}`
+                });
+            }
+
+            const farmerId = product.farmer._id?.toString() || product.farmer.toString();
+            if (!farmerGroups[farmerId]) {
+                farmerGroups[farmerId] = { farmerId, products: [] };
+            }
+            farmerGroups[farmerId].products.push({
+                product: product._id,
+                name: product.name,
+                quantity: item.quantity,
+                unit: product.unit,
+                pricePerUnit: product.pricePerUnit,
+                totalPrice: product.pricePerUnit * item.quantity
+            });
+        }
+
+        // Create one order per farmer
+        const createdOrders = [];
+        for (const group of Object.values(farmerGroups)) {
+            const totalAmount = group.products.reduce((sum, p) => sum + p.totalPrice, 0);
+
+            const order = await Order.create({
+                farmer: group.farmerId,
+                buyer: req.user.id,
+                buyerType: 'vendor',
+                products: group.products,
+                totalAmount,
+                finalAmount: totalAmount,
+                deliveryType: deliveryType || 'pickup',
+                deliveryAddress: deliveryAddress || {},
+                payment: {
+                    method: paymentMethod || 'online',
+                    status: 'pending'
+                },
+                notes: notes || '',
+                status: 'pending'
+            });
+
+            // Deduct product stock
+            for (const p of group.products) {
+                await Product.findByIdAndUpdate(p.product, {
+                    $inc: { availableQuantity: -p.quantity }
+                });
+            }
+
+            // Notify farmer
+            const notif = await Notification.create({
+                user: group.farmerId,
+                title: 'New Order Received! 🛒',
+                message: `You have a new order #${order.orderId} worth ₹${totalAmount}`,
+                type: 'order_update',
+                metadata: { orderId: order._id }
+            });
+
+            // Real-time notification
+            const io = req.app.get('io');
+            if (io) {
+                io.to(group.farmerId).emit('receive-notification', notif);
+            }
+
+            createdOrders.push(order);
+        }
+
+        res.status(201).json({
+            success: true,
+            message: `${createdOrders.length} order(s) placed successfully!`,
+            data: createdOrders
+        });
+
+    } catch (error) {
+        console.error('createOrder error:', error);
+        res.status(500).json({ success: false, message: 'Failed to place order', error: error.message });
+    }
+};
+
+/**
  * @desc    Get all orders for the authenticated farmer
  * @route   GET /api/farmers/orders
  * @access  Private (Farmer)
