@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { getStatusBadge, getTimeAgo } from '../../../common/orderUtils';
 
 const VendorOrderDetailModal = ({ order, onClose }) => {
@@ -23,8 +24,8 @@ const VendorOrderDetailModal = ({ order, onClose }) => {
         }));
     };
 
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={onClose}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
             <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
             <div
                 className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto animate-in zoom-in-95 duration-300"
@@ -105,7 +106,8 @@ const VendorOrderDetailModal = ({ order, onClose }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

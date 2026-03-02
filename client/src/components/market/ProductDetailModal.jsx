@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useCart } from '../../contexts/CartContext';
 import { toast } from 'react-hot-toast';
 import api from '../../api/axios';
@@ -47,8 +48,8 @@ const ProductDetailModal = ({ product, onClose }) => {
     const minQty = product.minimumOrder || product.minOrder || 1;
     const maxQty = product.availableQuantity || 999;
 
-    return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" />
             <div
                 className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
@@ -258,7 +259,8 @@ const ProductDetailModal = ({ product, onClose }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
