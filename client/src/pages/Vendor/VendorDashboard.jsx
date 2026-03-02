@@ -10,6 +10,7 @@ import Settings from "../../components/Vendors/Dashboard/Settings/Settings";
 import Wallet from "../../components/Vendors/Dashboard/Wallet/Wallet";
 import Orders from "../../components/Vendors/Dashboard/Orders/VendorOrders";
 import VendorOnboarding from "../../components/Vendors/Dashboard/VendorOnboarding";
+import VendorCart from "../../components/Vendors/Dashboard/Cart/VendorCart";
 
 
 export default function VendorDashboard() {
@@ -65,6 +66,7 @@ export default function VendorDashboard() {
     // Header Details based on Route
     const getHeaderData = () => {
         const path = location.pathname;
+        if (path.includes('cart')) return { title: 'Shopping Cart', subtitle: 'Review and place your order' };
         if (path.includes('market')) return { title: 'Mandi Market', subtitle: 'Buy fresh produce locally' };
         if (path.includes('wallet')) return { title: 'Vendor Finance', subtitle: 'Manage payments and credit' };
         if (path.includes('orders')) return { title: 'My Purchases', subtitle: 'Track your incoming stock' };
@@ -159,6 +161,7 @@ export default function VendorDashboard() {
                         <Routes>
                             <Route path="/" element={<Overview />} />
                             <Route path="market" element={<Market />} />
+                            <Route path="cart" element={<VendorCart />} />
                             <Route path="wallet" element={<Wallet />} />
                             <Route path="orders" element={<Orders />} />
                             <Route path="settings" element={<Settings />} />
