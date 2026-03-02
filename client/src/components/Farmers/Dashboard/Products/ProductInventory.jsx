@@ -17,6 +17,7 @@ const ProductInventory = () => {
 
     useEffect(() => {
         fetchProducts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const fetchProducts = async () => {
@@ -246,8 +247,8 @@ const ProductInventory = () => {
                                         <button
                                             onClick={() => setCurrentPage(page)}
                                             className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page
-                                                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
-                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                                 }`}
                                         >
                                             {page}

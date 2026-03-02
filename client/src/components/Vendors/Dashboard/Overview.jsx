@@ -4,7 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 const Overview = () => {
     const { user } = useAuth();
-    const [stats, setStats] = useState({
+    const [stats] = useState({
         totalSpent: 0,
         activeOrders: 0,
         pendingDeliveries: 0,

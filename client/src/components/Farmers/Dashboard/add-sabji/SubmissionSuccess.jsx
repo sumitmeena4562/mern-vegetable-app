@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+
 
 const SubmissionSuccess = ({ productName, onComplete }) => {
     const [show, setShow] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShow(true);
         const timer = setTimeout(() => {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShow(false);
             setTimeout(onComplete, 500);
         }, 2500);

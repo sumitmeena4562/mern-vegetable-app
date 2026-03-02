@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 import axios from "axios";
 import { useLocation, useNavigate, Routes, Route } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import Sidebar from "../../components/Farmers/Dashboard/Sidebar";
-import Header from "../../components/Farmers/Dashboard/Header";
+import GlobalSidebar from "../../components/common/GlobalSidebar";
+import GlobalHeader from "../../components/common/GlobalHeader";
 import Overview from "../../components/Farmers/Dashboard/Overview";
 import FarmerOnboarding from "../../components/Farmers/Dashboard/FarmerOnboarding";
 import AddSabji from "./AddSabji";
@@ -33,10 +33,7 @@ const extractUserEmail = (userData) => {
   return "farmer@example.com";
 };
 
-const extractVerifiedStatus = (userData) => {
-  if (!userData) return false;
-  return userData.isVerified === true || userData.isVerified === "true";
-}
+
 
 const extractUserLocation = (userData) => {
   if (!userData) return { city: "", state: "", hasLocation: false };
@@ -109,10 +106,10 @@ const getAddressFromCoordinates = async (lat, lng) => {
           const address = service.parser(data);
           if (address.city || address.state) return address;
         }
-      } catch (error) { continue; }
+      } catch { continue; }
     }
     return { city: "", state: "", country: "India" };
-  } catch (error) {
+  } catch {
     return { city: "", state: "", country: "India" };
   }
 };
@@ -152,8 +149,27 @@ export default function FarmerDashboard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isVerified, setVerified] = useState(false);
+
   const [onboardingComplete, setOnboardingComplete] = useState(null);
+
+  const farmerNav = [
+    { to: '/farmer-dashboard', icon: 'dashboard', label: 'Dashboard', exact: true },
+    { to: '/farmer-dashboard/add-sabji', icon: 'add_circle', label: 'Add Product' },
+    { to: '/farmer-dashboard/inventory', icon: 'inventory_2', label: 'Products' },
+    { to: '/farmer-dashboard/orders', icon: 'shopping_cart', label: 'Orders' },
+    { to: '/farmer-dashboard/wallet', icon: 'payments', label: 'Finance' },
+    { to: '/farmer-dashboard/analytics', icon: 'monitoring', label: 'Analytics' },
+  ];
+
+  const farmerBottomNav = [
+    { to: '/farmer-dashboard/settings', icon: 'settings', label: 'Settings' },
+  ];
+
+  const headerNavLinks = [
+    { to: '/farmer-dashboard/settings', icon: 'person', label: 'Profile', dropdown: true },
+    { to: '/farmer-dashboard/notifications', icon: 'notifications', label: 'Notifications', dropdown: true }
+  ];
+
 
   const [userLocation, setUserLocation] = useState({
     city: "", state: "", loading: true, hasLocation: false,
@@ -180,6 +196,7 @@ export default function FarmerDashboard() {
       }
     };
     initializeDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   const loadUserProfile = async () => {
@@ -202,7 +219,6 @@ export default function FarmerDashboard() {
 
       setName(extractUserName(userData));
       setEmail(extractUserEmail(userData));
-      setVerified(extractVerifiedStatus(userData));
 
       // Use already-fetched userData for location (no duplicate API call)
       const savedLoc = extractUserLocation(userData);
@@ -213,7 +229,7 @@ export default function FarmerDashboard() {
           loading: false, hasLocation: true, showAddLocation: false, error: null, errorMessage: ""
         });
       }
-    } catch (error) {
+    } catch {
       setName("Farmer"); setEmail("farmer@example.com");
     }
   };
@@ -249,7 +265,7 @@ export default function FarmerDashboard() {
           hasLocation: false, showAddLocation: false, error: geoResult.error || "no_location", errorMessage: "Location not available"
         };
       });
-    } catch (error) {
+    } catch {
       setUserLocation({ city: "", state: "", loading: false, hasLocation: false, showAddLocation: true, error: "exception", errorMessage: "Failed to detect location" });
     }
   };
@@ -265,17 +281,14 @@ export default function FarmerDashboard() {
             let city = data.city || "", state = data.region || data.state || "";
             if (city || state) return { city, state };
           }
-        } catch (error) { continue; }
+        } catch { continue; }
       }
       return { city: "", state: "" };
-    } catch (error) { return { city: "", state: "" }; }
+    } catch { return { city: "", state: "" }; }
   };
 
   const [locationModal, setLocationModal] = useState({ show: false, city: '', state: '' });
 
-  const handleAddLocation = () => {
-    setLocationModal({ show: true, city: userLocation.city || '', state: userLocation.state || '' });
-  };
 
   const handleLocationSave = () => {
     const { city, state } = locationModal;
@@ -320,7 +333,7 @@ export default function FarmerDashboard() {
       if (response.data?.success && response.data?.data) {
         setOnboardingComplete(response.data.data.onboardingComplete === true);
       } else { setOnboardingComplete(false); }
-    } catch (error) { setOnboardingComplete(false); }
+    } catch { setOnboardingComplete(false); }
   };
 
   const headerData = getHeaderData();
@@ -368,11 +381,31 @@ export default function FarmerDashboard() {
       </div>
 
       {/* SIDEBAR */}
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} userName={name} userEmail={email} userLocation={userLocation} onLogout={handleLogout} onAddLocation={handleAddLocation} />
+      <GlobalSidebar
+        isOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        userName={name}
+        userEmail={email}
+        roleTitle="Farmer"
+        roleIcon="eco"
+        themeColor="green"
+        navLinks={farmerNav}
+        bottomNavLinks={farmerBottomNav}
+        onLogout={handleLogout}
+      />
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title={headerData.title} showBack={headerData.showBack} subtitle={headerData.subtitle} userName={name} Verified={isVerified} locationData={userLocation} onAddLocation={handleAddLocation} onLogout={handleLogout} />
+        <GlobalHeader
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          title={headerData.title}
+          showBack={headerData.showBack}
+          subtitle={headerData.subtitle}
+          themeColor="green"
+          roleIcon="eco"
+          navLinks={headerNavLinks}
+          onLogout={handleLogout}
+        />
 
         {/* Scrollable Content (Added pb-24 on mobile to prevent bottom nav bar overlap) */}
         <div className="flex-1 overflow-y-auto scroll-smooth pb-24 xl:pb-0">

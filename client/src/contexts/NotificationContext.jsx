@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 
 const NotificationContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
@@ -38,7 +39,7 @@ export const NotificationProvider = ({ children }) => {
     socket.on('receive-notification', (newNotification) => {
       // Sound play 🔔
       const audio = new Audio('/notification.mp3');
-      audio.play().catch(e => console.log("Audio permission denied"));
+      audio.play().catch(() => console.log("Audio permission denied"));
 
       // Toast alert 🍞
       toast.custom(

@@ -12,6 +12,7 @@ const RightPanel = ({ isNew }) => {
   useEffect(() => {
     fetchTodayPickups();
     fetchWeather();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Fetch today's pending/confirmed/ready orders as "pickups" ---

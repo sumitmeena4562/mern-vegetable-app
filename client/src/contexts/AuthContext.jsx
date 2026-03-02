@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -33,22 +34,10 @@ export const AuthProvider = ({ children }) => {
         }
     }, [token]);
 
-    // 3. App start hone par User Profile fetch karo
-    useEffect(() => {
-        const initAuth = async () => {
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-            await fetchUserProfile();
-            setLoading(false);
-        };
 
-        initAuth();
-    }, [token]); // Token change hone par ye chalega
 
     // 4. Fetch User Profile
-    const fetchUserProfile = async () => {
+    async function fetchUserProfile() {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/me`);
 
@@ -69,6 +58,22 @@ export const AuthProvider = ({ children }) => {
             }
         }
     };
+
+    // 3. App start hone par User Profile fetch karo
+    useEffect(() => {
+        const initAuth = async () => {
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            await fetchUserProfile();
+            setLoading(false);
+        };
+
+        initAuth();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token]); // Token change hone par ye chalega
+
 
     // 5. LOGIN FUNCTION (Fixed ✅)
     const login = (newToken, userData) => {

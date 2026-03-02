@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { getFarmerProfile, updateFarmerProfile } from '@/api/userApi';
+import api from '@/api/axios';
 import { toast } from 'react-hot-toast';
+
+import PersonalInfoForm from '../../common/settings/PersonalInfoForm';
+import FarmDetailsForm from '../../common/settings/FarmDetailsForm';
+import NotificationsForm from '../../common/settings/NotificationsForm';
+import SecurityForm from '../../common/settings/SecurityForm';
 
 const Settings = () => {
     const [loading, setLoading] = useState(true);
@@ -34,6 +40,16 @@ const Settings = () => {
         sms: true,
         push: true,
     });
+
+    const [securityData, setSecurityData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+
+    const handleSecurityChange = (e) => {
+        setSecurityData({ ...securityData, [e.target.name]: e.target.value });
+    };
 
     useEffect(() => {
         loadProfile();
@@ -78,18 +94,32 @@ const Settings = () => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            const payload = {
-                fullName: profile.fullName,
-                email: profile.email,
-                address: profile.address,
-                ...farm,
-            };
-            const res = await updateFarmerProfile(payload);
-            if (res.success) {
-                toast.success('Profile updated successfully!');
+
+            if (activeTab === 'security') {
+                if (securityData.newPassword !== securityData.confirmPassword) {
+                    toast.error('New passwords do not match');
+                    setSaving(false);
+                    return;
+                }
+                const response = await api.put('/auth/change-password', securityData);
+                if (response.data.success) {
+                    toast.success('Password changed successfully');
+                    setSecurityData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }
+            } else {
+                const payload = {
+                    fullName: profile.fullName,
+                    email: profile.email,
+                    address: profile.address,
+                    ...farm,
+                };
+                const res = await updateFarmerProfile(payload);
+                if (res.success) {
+                    toast.success('Profile updated successfully!');
+                }
             }
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to update profile');
+            toast.error(error.response?.data?.message || 'Failed to update changes');
         } finally {
             setSaving(false);
         }
@@ -99,10 +129,9 @@ const Settings = () => {
         { id: 'profile', label: 'Profile', icon: 'person' },
         { id: 'farm', label: 'Farm Details', icon: 'agriculture' },
         { id: 'notifications', label: 'Notifications', icon: 'notifications' },
+        { id: 'security', label: 'Security', icon: 'security' },
     ];
 
-    const selectClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all appearance-none";
-    const inputClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all";
 
     if (loading) {
         return (
@@ -139,301 +168,49 @@ const Settings = () => {
                 ))}
             </div>
 
-            {/* Profile Tab */}
+            {/* Tab Contents */}
             {activeTab === 'profile' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-                            <span className="material-symbols-outlined text-3xl">person</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Personal Information</h3>
-                            <p className="text-xs text-slate-400 font-medium">Update your name, email, and address</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
-                            <input
-                                type="text"
-                                value={profile.fullName}
-                                onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email</label>
-                            <input
-                                type="email"
-                                value={profile.email}
-                                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Mobile (Read Only)</label>
-                            <input
-                                type="text"
-                                value={profile.mobile}
-                                readOnly
-                                className="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-100 rounded-2xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Address */}
-                    <div className="pt-4 border-t border-slate-50">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-4">Address</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                            {['village', 'city', 'district', 'state', 'pincode'].map((field) => (
-                                <div key={field} className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 capitalize">{field}</label>
-                                    <input
-                                        type="text"
-                                        value={profile.address?.[field] || ''}
-                                        onChange={(e) => setProfile({
-                                            ...profile,
-                                            address: { ...profile.address, [field]: e.target.value }
-                                        })}
-                                        className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-xl outline-none text-sm font-bold text-slate-900 transition-all"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <PersonalInfoForm
+                    profileData={profile}
+                    handleInputChange={(e) => {
+                        const { name, value } = e.target;
+                        if (name.startsWith('address_')) {
+                            const field = name.split('_')[1];
+                            setProfile(prev => ({ ...prev, address: { ...prev.address, [field]: value } }));
+                        } else {
+                            setProfile(prev => ({ ...prev, [name]: value }));
+                        }
+                    }}
+                    themeColor="green"
+                    showAddress={true}
+                />
             )}
 
-            {/* Farm Tab */}
             {activeTab === 'farm' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                            <span className="material-symbols-outlined text-3xl">agriculture</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Farm Details</h3>
-                            <p className="text-xs text-slate-400 font-medium">Update your farm information and infrastructure</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Farm Name */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farm Name</label>
-                            <input
-                                type="text"
-                                value={farm.farmName}
-                                onChange={(e) => setFarm({ ...farm, farmName: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
-
-                        {/* Farm Size + Unit */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farm Size</label>
-                                <input
-                                    type="number"
-                                    value={farm.farmSize}
-                                    onChange={(e) => setFarm({ ...farm, farmSize: e.target.value })}
-                                    className={inputClass}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Unit</label>
-                                <select
-                                    value={farm.farmSizeUnit}
-                                    onChange={(e) => setFarm({ ...farm, farmSizeUnit: e.target.value })}
-                                    className={selectClass}
-                                >
-                                    <option value="acre">Acres</option>
-                                    <option value="hectare">Hectares</option>
-                                    <option value="bigha">Bigha</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Farming Type */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farming Type</label>
-                            <select
-                                value={farm.farmingType}
-                                onChange={(e) => setFarm({ ...farm, farmingType: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="organic">Organic</option>
-                                <option value="natural">Natural</option>
-                                <option value="regular">Regular</option>
-                                <option value="hydroponic">Hydroponic</option>
-                            </select>
-                        </div>
-
-                        {/* Soil Type */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Soil Type</label>
-                            <select
-                                value={farm.soilType}
-                                onChange={(e) => setFarm({ ...farm, soilType: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="black">Black Soil</option>
-                                <option value="red">Red Soil</option>
-                                <option value="alluvial">Alluvial Soil</option>
-                                <option value="sandy">Sandy Soil</option>
-                                <option value="clay">Clay Soil</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        {/* Irrigation System */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Irrigation System</label>
-                            <select
-                                value={farm.irrigationSystem}
-                                onChange={(e) => setFarm({ ...farm, irrigationSystem: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="drip">Drip Irrigation</option>
-                                <option value="sprinkler">Sprinkler</option>
-                                <option value="tubewell">Tubewell</option>
-                                <option value="canal">Canal</option>
-                                <option value="manual">Manual</option>
-                            </select>
-                        </div>
-
-                        {/* Water Source */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Water Source</label>
-                            <select
-                                value={farm.waterSource}
-                                onChange={(e) => setFarm({ ...farm, waterSource: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="borewell">Borewell</option>
-                                <option value="river">River</option>
-                                <option value="canal">Canal</option>
-                                <option value="rainwater">Rainwater</option>
-                                <option value="well">Well</option>
-                            </select>
-                        </div>
-
-                        {/* Land Ownership */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Land Ownership</label>
-                            <select
-                                value={farm.landOwnership}
-                                onChange={(e) => setFarm({ ...farm, landOwnership: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="owned">Owned</option>
-                                <option value="leased">Leased</option>
-                            </select>
-                        </div>
-
-                        {/* Primary Crop */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Primary Crop</label>
-                            <input
-                                type="text"
-                                value={farm.primaryCrop}
-                                onChange={(e) => setFarm({ ...farm, primaryCrop: e.target.value })}
-                                placeholder="e.g., Tomato Specialist"
-                                className={inputClass + " placeholder:text-slate-300"}
-                            />
-                        </div>
-
-                        {/* Experience */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Experience (Years)</label>
-                            <input
-                                type="number"
-                                value={farm.farmingExperience}
-                                onChange={(e) => setFarm({ ...farm, farmingExperience: e.target.value })}
-                                className={inputClass}
-                            />
-                        </div>
-
-                        {/* Preferred Pickup Time */}
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Preferred Pickup Time</label>
-                            <select
-                                value={farm.preferredPickupTime}
-                                onChange={(e) => setFarm({ ...farm, preferredPickupTime: e.target.value })}
-                                className={selectClass}
-                            >
-                                <option value="morning">Morning (6 AM - 10 AM)</option>
-                                <option value="afternoon">Afternoon (12 PM - 3 PM)</option>
-                                <option value="evening">Evening (4 PM - 7 PM)</option>
-                                <option value="any">Any Time</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Cold Storage Toggle */}
-                    <div className="pt-4 border-t border-slate-50">
-                        <div className="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-slate-200 shadow-sm">
-                                    <span className="material-symbols-outlined text-blue-500">ac_unit</span>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-black text-slate-800">Cold Storage Available</p>
-                                    <p className="text-xs text-slate-400 font-medium">Do you have cold storage on your farm?</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setFarm({ ...farm, hasColdStorage: !farm.hasColdStorage })}
-                                className={`relative w-12 h-7 rounded-full transition-all ${farm.hasColdStorage ? 'bg-green-500' : 'bg-slate-200'}`}
-                            >
-                                <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all ${farm.hasColdStorage ? 'left-6' : 'left-1'}`}></div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <FarmDetailsForm
+                    farm={farm}
+                    handleFarmChange={(e) => setFarm({ ...farm, [e.target.name]: e.target.value })}
+                    toggleColdStorage={() => setFarm({ ...farm, hasColdStorage: !farm.hasColdStorage })}
+                />
             )}
 
-            {/* Notifications Tab */}
             {activeTab === 'notifications' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                            <span className="material-symbols-outlined text-3xl">notifications</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Notification Preferences</h3>
-                            <p className="text-xs text-slate-400 font-medium">Control how you receive alerts</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        {[
-                            { key: 'email', label: 'Email Notifications', desc: 'Receive order updates and reports via email', icon: 'mail' },
-                            { key: 'sms', label: 'SMS Notifications', desc: 'Get text alerts for urgent updates', icon: 'sms' },
-                            { key: 'push', label: 'Push Notifications', desc: 'Browser and mobile push alerts', icon: 'notifications_active' },
-                        ].map((item) => (
-                            <div key={item.key} className="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-slate-200 shadow-sm">
-                                        <span className="material-symbols-outlined text-slate-500">{item.icon}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-black text-slate-800">{item.label}</p>
-                                        <p className="text-xs text-slate-400 font-medium">{item.desc}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key] })}
-                                    className={`relative w-12 h-7 rounded-full transition-all ${notifications[item.key] ? 'bg-green-500' : 'bg-slate-200'}`}
-                                >
-                                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-all ${notifications[item.key] ? 'left-6' : 'left-1'}`}></div>
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <NotificationsForm
+                    notifications={notifications}
+                    toggleNotification={(key) => setNotifications({ ...notifications, [key]: !notifications[key] })}
+                    themeColor="green"
+                />
             )}
+
+            {activeTab === 'security' && (
+                <SecurityForm
+                    securityData={securityData}
+                    handleSecurityChange={handleSecurityChange}
+                    themeColor="green"
+                />
+            )}
+
+            {/* Form actions down below are unchanged */}
 
             {/* Save Button */}
             <div className="flex justify-end">

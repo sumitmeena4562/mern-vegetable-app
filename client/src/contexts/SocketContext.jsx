@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 
 const SocketContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
@@ -34,6 +35,7 @@ export const SocketProvider = ({ children }) => {
                 newSocket.emit('join-user', user._id || user.id);
             });
 
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSocket(newSocket);
 
             return () => {

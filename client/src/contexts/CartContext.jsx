@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
@@ -15,6 +16,7 @@ export const CartProvider = ({ children }) => {
             const savedCart = localStorage.getItem(`vendor_cart_${user._id}`);
             if (savedCart) {
                 try {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
                     setCart(JSON.parse(savedCart));
                 } catch (e) {
                     console.error("Failed to parse saved cart", e);

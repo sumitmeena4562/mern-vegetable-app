@@ -140,7 +140,7 @@ const LeftPanel = () => {
         ) : (
           <div className="relative">
             <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-slate-200"></div>
-            {recentOrders.map((order, idx) => {
+            {recentOrders.map((order) => {
               const badge = getStatusBadge(order.status);
               return (
                 <div key={order._id} className="relative pl-16 py-2 mb-4">

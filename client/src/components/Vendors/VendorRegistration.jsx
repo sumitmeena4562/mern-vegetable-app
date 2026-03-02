@@ -149,10 +149,11 @@ const VendorRegistration = () => {
         if (value.length !== 10) errorMsg = "Mobile number must be 10 digits.";
         else if (!/^[6-9]\d{9}$/.test(value)) errorMsg = "Must be a valid Indian mobile number.";
         break;
-      case "email":
+      case "email": {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) errorMsg = "Invalid email format.";
         break;
+      }
       case "password":
         if (value.length < 6) errorMsg = "Password must be at least 6 characters.";
         else if (!/(?=.*[A-Z])/.test(value)) errorMsg = "Must contain at least one uppercase letter.";
@@ -189,26 +190,7 @@ const VendorRegistration = () => {
     return Math.min(score, 5);
   };
 
-  const getStrengthColor = () => {
-    if (passwordStrength <= 2) return "bg-red-500";
-    if (passwordStrength === 3) return "bg-yellow-500";
-    return "bg-blue-500";
-  };
 
-  const getStrengthLabel = () => {
-    if (passwordStrength === 0) return "Very Weak";
-    if (passwordStrength === 1) return "Weak";
-    if (passwordStrength === 2) return "Fair";
-    if (passwordStrength === 3) return "Good";
-    if (passwordStrength === 4) return "Strong";
-    return "Very Strong";
-  };
-
-  const getStrengthTextColor = () => {
-    if (passwordStrength <= 2) return "text-red-600";
-    if (passwordStrength === 3) return "text-yellow-600";
-    return "text-blue-600";
-  };
 
   // --- Input Handlers ---
   const handleInputChange = async (e) => {
@@ -489,12 +471,7 @@ const VendorRegistration = () => {
     { id: 'hotel', label: 'Hotel', emoji: '🏨' },
   ];
 
-  const passwordRequirements = [
-    { text: "At least 6 characters", met: formData.password.length >= 6 },
-    { text: "At least one uppercase letter", met: /[A-Z]/.test(formData.password) },
-    { text: "At least one number", met: /[0-9]/.test(formData.password) },
-    { text: "Strong password", met: passwordStrength >= 3 }
-  ];
+
 
   return (
     <div className="min-h-screen font-display antialiased text-slate-900 bg-slate-50 flex flex-col justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

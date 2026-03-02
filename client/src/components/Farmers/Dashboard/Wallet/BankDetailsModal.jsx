@@ -28,6 +28,7 @@ const BankDetailsModal = ({ onClose, existingDetails, onSuccess }) => {
 
         try {
             setSaving(true);
+            // eslint-disable-next-line no-unused-vars
             const { confirmAccountNumber, ...bankData } = form;
             const res = await updateBankDetails(bankData);
             if (res.success) {

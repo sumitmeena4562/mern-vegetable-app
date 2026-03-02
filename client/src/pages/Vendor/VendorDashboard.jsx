@@ -1,26 +1,46 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate, Routes, Route } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import Sidebar from "../../components/Vendors/Dashboard/Sidebar";
-import Header from "../../components/Vendors/Dashboard/Header";
+import { useCart } from "../../contexts/CartContext";
+import GlobalSidebar from "../../components/common/GlobalSidebar";
+import GlobalHeader from "../../components/common/GlobalHeader";
 import Overview from "../../components/Vendors/Dashboard/Overview";
 import Market from "../../components/Vendors/Dashboard/Market/Market";
 import Settings from "../../components/Vendors/Dashboard/Settings/Settings";
 import Wallet from "../../components/Vendors/Dashboard/Wallet/Wallet";
 import Orders from "../../components/Vendors/Dashboard/Orders/VendorOrders";
 import VendorOnboarding from "../../components/Vendors/Dashboard/VendorOnboarding";
-import api from "../../api/axios";
+
 
 export default function VendorDashboard() {
     const { user, loading: authLoading, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
+    const { cartItemCount } = useCart();
+
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [onboardingComplete, setOnboardingComplete] = useState(true); // Default to true so it doesn't block UX
 
+    const vendorNav = [
+        { to: '/vendor-dashboard', icon: 'dashboard', label: 'Dashboard', exact: true },
+        { to: '/vendor-dashboard/market', icon: 'storefront', label: 'Market' },
+        { to: '/vendor-dashboard/orders', icon: 'local_shipping', label: 'Purchases' },
+        { to: '/vendor-dashboard/wallet', icon: 'payments', label: 'Finance' },
+    ];
+
+    const vendorBottomNav = [
+        { to: '/vendor-dashboard/settings', icon: 'store', label: 'Shop Profile' },
+    ];
+
+    const headerNavLinks = [
+        { to: '/vendor-dashboard/settings', icon: 'store', label: 'Shop Profile', dropdown: true },
+        { to: '/vendor-dashboard/notifications', icon: 'notifications', label: 'Notifications', dropdown: true }
+    ];
+
     // Auto-close sidebar on mobile when route changes
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSidebarOpen(false);
     }, [location.pathname]);
 
@@ -57,9 +77,27 @@ export default function VendorDashboard() {
     if (!onboardingComplete) {
         return (
             <div className="flex h-screen w-full bg-[#f8fafc] overflow-hidden font-sans">
-                <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} userName={user?.fullName} onLogout={() => { logout(); navigate('/login'); }} />
+                <GlobalSidebar
+                    isOpen={sidebarOpen}
+                    toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                    userName={user.fullName}
+                    userEmail={user.email || user.mobile}
+                    roleTitle="Vendor"
+                    roleIcon="local_mall"
+                    themeColor="indigo"
+                    navLinks={vendorNav}
+                    bottomNavLinks={vendorBottomNav}
+                    onLogout={() => { logout(); navigate('/login'); }}
+                />
                 <main className="flex-1 flex flex-col relative overflow-hidden">
-                    <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} title="Welcome Setup" subtitle="Let's get your business ready" userName={user?.fullName} />
+                    <GlobalHeader
+                        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+                        title="Welcome Setup"
+                        subtitle="Let's get your business ready"
+                        themeColor="indigo"
+                        roleIcon="local_mall"
+                        navLinks={headerNavLinks}
+                    />
                     <div className="flex-1 overflow-y-auto scroll-smooth relative z-10">
                         <VendorOnboarding
                             userName={user?.fullName}
@@ -82,20 +120,36 @@ export default function VendorDashboard() {
             </div>
 
             {/* SIDEBAR */}
-            <Sidebar
+            <GlobalSidebar
                 isOpen={sidebarOpen}
                 toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                 userName={user.fullName}
+                userEmail={user.email || user.mobile}
+                roleTitle="Vendor"
+                roleIcon="local_mall"
+                themeColor="indigo"
+                navLinks={vendorNav}
+                bottomNavLinks={vendorBottomNav}
                 onLogout={() => { logout(); navigate('/login'); }}
+                customProfileBadge={
+                    <div className="flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[10px] text-emerald-500">verified</span>
+                        <p className="text-[9px] uppercase font-bold text-emerald-600 tracking-wider">Verified Buyer</p>
+                    </div>
+                }
             />
 
             {/* MAIN CONTENT AREA */}
             <main className="flex-1 flex flex-col relative overflow-hidden">
-                <Header
+                <GlobalHeader
                     toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                     title={headerData.title}
                     subtitle={headerData.subtitle}
-                    userName={user.fullName}
+                    themeColor="indigo"
+                    roleIcon="local_mall"
+                    navLinks={headerNavLinks}
+                    showCart={true}
+                    cartItemCount={cartItemCount}
                     onLogout={() => { logout(); navigate('/login'); }}
                 />
 

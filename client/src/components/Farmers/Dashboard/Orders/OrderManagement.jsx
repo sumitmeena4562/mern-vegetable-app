@@ -21,6 +21,7 @@ const OrderManagement = () => {
 
     useEffect(() => {
         fetchOrders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStatus]);
 
     const fetchOrders = async () => {

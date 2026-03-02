@@ -3,8 +3,13 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import api from '../../../../api/axios';
 import { toast } from 'react-hot-toast';
 
+import PersonalInfoForm from '../../../common/settings/PersonalInfoForm';
+import ShopDetailsForm from '../../../common/settings/ShopDetailsForm';
+import BankDetailsForm from '../../../common/settings/BankDetailsForm';
+import SecurityForm from '../../../common/settings/SecurityForm';
+
 const Settings = () => {
-    const { user, login } = useAuth();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('profile');
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -119,8 +124,6 @@ const Settings = () => {
         { id: 'security', label: 'Security', icon: 'security' },
     ];
 
-    const selectClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all appearance-none";
-    const inputClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-indigo-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all";
 
     if (loading) {
         return (
@@ -157,247 +160,41 @@ const Settings = () => {
                 ))}
             </div>
 
-            {/* Personal Info Tab */}
+            {/* Tab Contents */}
             {activeTab === 'profile' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
-                            <span className="material-symbols-outlined text-3xl">person</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Personal Information</h3>
-                            <p className="text-xs text-slate-400 font-medium">Update your basic profile details</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                value={formData.fullName || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Mobile (Read Only)</label>
-                            <input
-                                type="text"
-                                name="mobile"
-                                value={formData.mobile || ''}
-                                readOnly
-                                className="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-100 rounded-2xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed opacity-80"
-                            />
-                            <p className="text-[10px] text-slate-400 mt-2 px-1 font-semibold flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">lock</span> Mobile number is verified and cannot be changed.</p>
-                        </div>
-                    </div>
-                </div>
+                <PersonalInfoForm
+                    profileData={formData}
+                    handleInputChange={handleInputChange}
+                    themeColor="indigo"
+                    showAddress={false}
+                />
             )}
 
-            {/* Shop Details Tab */}
             {activeTab === 'shop' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                            <span className="material-symbols-outlined text-3xl">storefront</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Business Details</h3>
-                            <p className="text-xs text-slate-400 font-medium">Manage your shop visibility and operations</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Shop Name</label>
-                            <input
-                                type="text"
-                                name="shopName"
-                                value={formData.shopName || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Business Type</label>
-                            <select
-                                name="businessType"
-                                value={formData.businessType || 'retailer'}
-                                onChange={handleInputChange}
-                                className={selectClass}
-                            >
-                                <option value="retailer">Retailer</option>
-                                <option value="wholesaler">Wholesaler</option>
-                                <option value="restaurant">Restaurant</option>
-                                <option value="hotel">Hotel</option>
-                            </select>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Shop Format</label>
-                            <select
-                                name="shopType"
-                                value={formData.shopType || 'kirana'}
-                                onChange={handleInputChange}
-                                className={selectClass}
-                            >
-                                <option value="kirana">Kirana Shop</option>
-                                <option value="supermarket">Supermarket</option>
-                                <option value="mandi">Mandi Trader</option>
-                                <option value="cart_vendor">Cart Vendor</option>
-                            </select>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Daily Cap (kg)</label>
-                            <input
-                                type="number"
-                                name="dailyCapacity"
-                                value={formData.dailyCapacity || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">FSSAI No.</label>
-                            <input
-                                type="text"
-                                name="fssaiNumber"
-                                value={formData.fssaiNumber || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                                placeholder="Optional"
-                            />
-                        </div>
-                    </div>
-                </div>
+                <ShopDetailsForm
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    themeColor="indigo"
+                />
             )}
 
-            {/* Bank Details Tab */}
             {activeTab === 'bank' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-                            <span className="material-symbols-outlined text-3xl">account_balance</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Bank Details</h3>
-                            <p className="text-xs text-slate-400 font-medium">Manage your payout account information securely</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Account Holder Name</label>
-                            <input
-                                type="text"
-                                name="bank_accountHolderName"
-                                value={formData.bankDetails?.accountHolderName || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Account Number</label>
-                            <input
-                                type="text"
-                                name="bank_accountNumber"
-                                value={formData.bankDetails?.accountNumber || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">IFSC Code</label>
-                            <input
-                                type="text"
-                                name="bank_ifscCode"
-                                value={formData.bankDetails?.ifscCode || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Bank Name</label>
-                            <input
-                                type="text"
-                                name="bank_bankName"
-                                value={formData.bankDetails?.bankName || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Branch Name</label>
-                            <input
-                                type="text"
-                                name="bank_branch"
-                                value={formData.bankDetails?.branch || ''}
-                                onChange={handleInputChange}
-                                className={inputClass}
-                            />
-                        </div>
-                    </div>
-                </div>
+                <BankDetailsForm
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    themeColor="indigo"
+                />
             )}
 
-            {/* Security Tab */}
             {activeTab === 'security' && (
-                <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-600">
-                            <span className="material-symbols-outlined text-3xl">security</span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">Security Settings</h3>
-                            <p className="text-xs text-slate-400 font-medium">Update your password to keep your account secure</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-1.5 md:col-span-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Current Password</label>
-                            <input
-                                type="password"
-                                name="currentPassword"
-                                value={securityData.currentPassword || ''}
-                                onChange={handleSecurityChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">New Password</label>
-                            <input
-                                type="password"
-                                name="newPassword"
-                                value={securityData.newPassword || ''}
-                                onChange={handleSecurityChange}
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Confirm New Password</label>
-                            <input
-                                type="password"
-                                name="confirmPassword"
-                                value={securityData.confirmPassword || ''}
-                                onChange={handleSecurityChange}
-                                className={inputClass}
-                            />
-                        </div>
-                    </div>
-                </div>
+                <SecurityForm
+                    securityData={securityData}
+                    handleSecurityChange={handleSecurityChange}
+                    themeColor="indigo"
+                />
             )}
+
+            {/* Form actions down below are unchanged */}
 
             {/* Save Button */}
             <div className="flex justify-end mt-8">

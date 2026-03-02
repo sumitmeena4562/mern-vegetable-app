@@ -12,7 +12,7 @@ const PersonalInfoSection = ({
     showConfirmPassword,
     setShowConfirmPassword,
     passwordStrength,
-    setShowOtpModal,
+
     handleSendOtp,
     loading
 }) => {
