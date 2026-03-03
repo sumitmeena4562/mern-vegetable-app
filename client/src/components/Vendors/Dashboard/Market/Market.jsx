@@ -4,6 +4,8 @@ import { useCart } from '../../../../contexts/CartContext';
 import { toast } from 'react-hot-toast';
 import ProductCard from '../../../market/ProductCard';
 import ProductDetailModal from '../../../market/ProductDetailModal';
+import Skeleton from '../../../../components/ui/Skeleton';
+import Select from '../../../../components/ui/Select';
 
 const Market = () => {
     const [products, setProducts] = useState([]);
@@ -113,33 +115,33 @@ const Market = () => {
                 {showFilters && (
                     <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-wrap gap-6 animate-in slide-in-from-top-2">
                         {/* Category */}
-                        <div className="space-y-2 flex-1 min-w-[150px]">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</label>
-                            <select
+                        <div className="flex-1 min-w-[150px]">
+                            <Select
+                                label="Category"
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all cursor-pointer"
-                            >
-                                <option value="all">All Categories</option>
-                                <option value="vegetables">Vegetables</option>
-                                <option value="fruits">Fruits</option>
-                                <option value="exotic">Exotic</option>
-                            </select>
+                                options={[
+                                    { value: 'all', label: 'All Categories' },
+                                    { value: 'vegetables', label: 'Vegetables' },
+                                    { value: 'fruits', label: 'Fruits' },
+                                    { value: 'exotic', label: 'Exotic' }
+                                ]}
+                            />
                         </div>
 
                         {/* Sort */}
-                        <div className="space-y-2 flex-1 min-w-[150px]">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sort By</label>
-                            <select
+                        <div className="flex-1 min-w-[150px]">
+                            <Select
+                                label="Sort By"
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all cursor-pointer"
-                            >
-                                <option value="newest">Newest First</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                                <option value="rating">Highest Rated</option>
-                            </select>
+                                options={[
+                                    { value: 'newest', label: 'Newest First' },
+                                    { value: 'price-low', label: 'Price: Low to High' },
+                                    { value: 'price-high', label: 'Price: High to Low' },
+                                    { value: 'rating', label: 'Highest Rated' }
+                                ]}
+                            />
                         </div>
 
                         {/* Price Range */}
@@ -180,9 +182,9 @@ const Market = () => {
                 )}
 
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <div key={i} className="h-72 bg-slate-100 rounded-[32px]"></div>
+                            <Skeleton key={i} variant="rectangular" className="h-72 rounded-[32px] w-full" />
                         ))}
                     </div>
                 ) : filteredProducts.length === 0 ? (

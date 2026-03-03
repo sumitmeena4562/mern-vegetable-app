@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import api from '@/api/axios';
 import { toast } from 'react-hot-toast';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 const STEPS = [
     { id: 1, title: 'Farm Info', icon: 'home_work', desc: 'Enter your basic farm information' },
@@ -122,40 +125,49 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
     };
 
     /* ─── Shared classes ─── */
-    const inputCls = 'w-full px-4 py-3.5 rounded-2xl border-2 border-slate-100 bg-slate-50/60 focus:border-green-400 focus:bg-white focus:ring-4 focus:ring-green-50 outline-none transition-all text-[15px] placeholder:text-slate-300';
-    const selectCls = `${inputCls} bg-white appearance-none`;
     const labelCls = 'block text-[13px] font-bold text-slate-600 mb-2 tracking-wide uppercase';
 
     /* ─── STEP 1 ─── */
     const renderStep1 = () => (
         <div style={fadeStyle} className="space-y-6">
             {/* Farm Name */}
-            <div>
-                <label className={labelCls}>Farm Name <span className="text-red-400">*</span></label>
-                <div className="relative">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xl">agriculture</span>
-                    <input type="text" value={formData.farmName} onChange={e => handleChange('farmName', e.target.value)}
-                        placeholder="e.g. Green Valley Farm" className={`${inputCls} pl-12`} />
-                </div>
-            </div>
+            <Input
+                label={<>Farm Name <span className="text-red-400">*</span></>}
+                type="text"
+                value={formData.farmName}
+                onChange={e => handleChange('farmName', e.target.value)}
+                placeholder="e.g. Green Valley Farm"
+                icon="agriculture"
+                className="rounded-2xl"
+            />
 
             {/* Farm Size Row */}
             <div className="flex gap-3">
                 <div className="flex-1">
-                    <label className={labelCls}>Farm Size <span className="text-red-400">*</span></label>
-                    <div className="relative">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xl">straighten</span>
-                        <input type="number" value={formData.farmSize} onChange={e => handleChange('farmSize', e.target.value)}
-                            placeholder="e.g. 5" min="0.1" step="0.1" className={`${inputCls} pl-12`} />
-                    </div>
+                    <Input
+                        label={<>Farm Size <span className="text-red-400">*</span></>}
+                        type="number"
+                        value={formData.farmSize}
+                        onChange={e => handleChange('farmSize', e.target.value)}
+                        placeholder="e.g. 5"
+                        min="0.1"
+                        step="0.1"
+                        icon="straighten"
+                        className="rounded-2xl"
+                    />
                 </div>
                 <div className="w-28">
-                    <label className={labelCls}>Unit</label>
-                    <select value={formData.farmSizeUnit} onChange={e => handleChange('farmSizeUnit', e.target.value)} className={selectCls}>
-                        <option value="acre">Acre</option>
-                        <option value="hectare">Hectare</option>
-                        <option value="bigha">Bigha</option>
-                    </select>
+                    <Select
+                        label="Unit"
+                        value={formData.farmSizeUnit}
+                        onChange={e => handleChange('farmSizeUnit', e.target.value)}
+                        options={[
+                            { value: 'acre', label: 'Acre' },
+                            { value: 'hectare', label: 'Hectare' },
+                            { value: 'bigha', label: 'Bigha' }
+                        ]}
+                        className="rounded-2xl"
+                    />
                 </div>
             </div>
 
@@ -227,24 +239,34 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
             {/* Irrigation + Water Source */}
             <div className="flex gap-3">
                 <div className="flex-1">
-                    <label className={labelCls}>Irrigation</label>
-                    <select value={formData.irrigationSystem} onChange={e => handleChange('irrigationSystem', e.target.value)} className={selectCls}>
-                        <option value="drip">💧 Drip</option>
-                        <option value="sprinkler">🌧️ Sprinkler</option>
-                        <option value="tubewell">🔧 Tubewell</option>
-                        <option value="canal">🏞️ Canal</option>
-                        <option value="manual">🪣 Manual</option>
-                    </select>
+                    <Select
+                        label="Irrigation"
+                        value={formData.irrigationSystem}
+                        onChange={e => handleChange('irrigationSystem', e.target.value)}
+                        options={[
+                            { value: 'drip', label: '💧 Drip' },
+                            { value: 'sprinkler', label: '🌧️ Sprinkler' },
+                            { value: 'tubewell', label: '🔧 Tubewell' },
+                            { value: 'canal', label: '🏞️ Canal' },
+                            { value: 'manual', label: '🪣 Manual' }
+                        ]}
+                        className="rounded-2xl"
+                    />
                 </div>
                 <div className="flex-1">
-                    <label className={labelCls}>Water Source</label>
-                    <select value={formData.waterSource} onChange={e => handleChange('waterSource', e.target.value)} className={selectCls}>
-                        <option value="borewell">🕳️ Borewell</option>
-                        <option value="river">🏞️ River</option>
-                        <option value="canal">🌊 Canal</option>
-                        <option value="rainwater">🌧️ Rainwater</option>
-                        <option value="well">⛲ Well</option>
-                    </select>
+                    <Select
+                        label="Water Source"
+                        value={formData.waterSource}
+                        onChange={e => handleChange('waterSource', e.target.value)}
+                        options={[
+                            { value: 'borewell', label: '🕳️ Borewell' },
+                            { value: 'river', label: '🏞️ River' },
+                            { value: 'canal', label: '🌊 Canal' },
+                            { value: 'rainwater', label: '🌧️ Rainwater' },
+                            { value: 'well', label: '⛲ Well' }
+                        ]}
+                        className="rounded-2xl"
+                    />
                 </div>
             </div>
 
@@ -268,14 +290,15 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
     const renderStep3 = () => (
         <div style={fadeStyle} className="space-y-6">
             {/* Primary Crop */}
-            <div>
-                <label className={labelCls}>Primary Crop (Specialization)</label>
-                <div className="relative">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xl">local_florist</span>
-                    <input type="text" value={formData.primaryCrop} onChange={e => handleChange('primaryCrop', e.target.value)}
-                        placeholder="e.g. Tomato Expert" className={`${inputCls} pl-12`} />
-                </div>
-            </div>
+            <Input
+                label="Primary Crop (Specialization)"
+                type="text"
+                value={formData.primaryCrop}
+                onChange={e => handleChange('primaryCrop', e.target.value)}
+                placeholder="e.g. Tomato Expert"
+                icon="local_florist"
+                className="rounded-2xl"
+            />
 
             {/* Crop Selector */}
             <div>
@@ -304,21 +327,30 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
             {/* Experience + Pickup Time */}
             <div className="flex gap-3">
                 <div className="flex-1">
-                    <label className={labelCls}>Experience (Years) <span className="text-red-400">*</span></label>
-                    <div className="relative">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xl">timer</span>
-                        <input type="number" value={formData.farmingExperience} onChange={e => handleChange('farmingExperience', e.target.value)}
-                            placeholder="e.g. 5" min="0" className={`${inputCls} pl-12`} />
-                    </div>
+                    <Input
+                        label={<>Experience (Years) <span className="text-red-400">*</span></>}
+                        type="number"
+                        value={formData.farmingExperience}
+                        onChange={e => handleChange('farmingExperience', e.target.value)}
+                        placeholder="e.g. 5"
+                        min="0"
+                        icon="timer"
+                        className="rounded-2xl"
+                    />
                 </div>
                 <div className="flex-1">
-                    <label className={labelCls}>Pickup Time</label>
-                    <select value={formData.preferredPickupTime} onChange={e => handleChange('preferredPickupTime', e.target.value)} className={selectCls}>
-                        <option value="morning">🌅 Morning</option>
-                        <option value="afternoon">☀️ Afternoon</option>
-                        <option value="evening">🌇 Evening</option>
-                        <option value="any">📦 Any Time</option>
-                    </select>
+                    <Select
+                        label="Pickup Time"
+                        value={formData.preferredPickupTime}
+                        onChange={e => handleChange('preferredPickupTime', e.target.value)}
+                        options={[
+                            { value: 'morning', label: '🌅 Morning' },
+                            { value: 'afternoon', label: '☀️ Afternoon' },
+                            { value: 'evening', label: '🌇 Evening' },
+                            { value: 'any', label: '📦 Any Time' }
+                        ]}
+                        className="rounded-2xl"
+                    />
                 </div>
             </div>
         </div>
@@ -400,26 +432,20 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                         {/* Navigation */}
                         <div className="flex items-center justify-between mt-5 gap-3">
                             {currentStep > 1 ? (
-                                <button onClick={handleBack}
-                                    className="flex-1 sm:flex-none px-6 py-3.5 rounded-2xl text-sm font-bold text-slate-600 bg-white border-2 border-slate-100 hover:border-slate-200 active:scale-[0.97] transition-all">
+                                <Button onClick={handleBack} variant="outline" className="flex-1 sm:flex-none rounded-2xl px-6">
                                     ← Back
-                                </button>
+                                </Button>
                             ) : <div className="flex-1 sm:flex-none" />}
 
                             {currentStep < 3 ? (
-                                <button onClick={handleNext}
-                                    className="flex-1 sm:flex-none px-8 py-3.5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-xl shadow-green-200/50 active:scale-[0.97] transition-all">
+                                <Button onClick={handleNext} className="flex-1 sm:flex-none rounded-2xl px-8">
                                     Continue →
-                                </button>
+                                </Button>
                             ) : (
-                                <button onClick={handleSubmit} disabled={isSubmitting}
-                                    className="flex-1 sm:flex-none px-8 py-3.5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-xl shadow-green-200/50 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                    {isSubmitting ? (
-                                        <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
-                                    ) : (
-                                        <>🚀 Start Farming</>
-                                    )}
-                                </button>
+                                <Button onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting}
+                                    className="flex-1 sm:flex-none rounded-2xl px-8">
+                                    🚀 Start Farming
+                                </Button>
                             )}
                         </div>
 

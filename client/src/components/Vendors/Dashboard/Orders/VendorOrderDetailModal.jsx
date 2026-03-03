@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
+import Modal from '../../../ui/Modal';
 import { getStatusBadge, getTimeAgo } from '../../../common/orderUtils';
+import Badge from '../../../../components/ui/Badge';
 
 const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder }) => {
     const [isReviewing, setIsReviewing] = useState(false);
@@ -37,15 +38,11 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
         }));
     };
 
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
-            <div
-                className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto animate-in zoom-in-95 duration-300"
-                onClick={(e) => e.stopPropagation()}
-            >
+    return (
+        <Modal isOpen={true} onClose={onClose} maxWidth="max-w-lg">
+            <div className="max-h-[85vh] overflow-y-auto">
                 {/* Header */}
-                <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-10 p-6 pb-4 border-b border-slate-100">
+                <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-10 p-6 pb-4 border-b border-slate-100 -mt-6 -mx-6 mb-4">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-lg font-black text-slate-900">Order #{order.id || order.orderId}</h3>
@@ -63,9 +60,9 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                 <div className="p-6 space-y-6">
                     {/* Status Badge */}
                     <div className="flex items-center gap-3">
-                        <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${badge.color}`}>
-                            {badge.label}
-                        </span>
+                        <Badge type={order.status?.toLowerCase()}>
+                            {order.status}
+                        </Badge>
                     </div>
 
                     {/* Progress Timeline */}
@@ -229,8 +226,7 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                     )}
                 </div>
             </div>
-        </div>,
-        document.body
+        </Modal>
     );
 };
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getFarmerProfile, updateFarmerProfile } from '@/api/userApi';
 import api from '@/api/axios';
 import { toast } from 'react-hot-toast';
+import Skeleton from '@/components/ui/Skeleton';
+import Button from '@/components/ui/Button';
 
 import PersonalInfoForm from '../../common/settings/PersonalInfoForm';
 import FarmDetailsForm from '../../common/settings/FarmDetailsForm';
@@ -135,9 +137,9 @@ const Settings = () => {
 
     if (loading) {
         return (
-            <div className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto w-full space-y-6 animate-pulse">
-                <div className="h-10 bg-slate-100 rounded-2xl w-64"></div>
-                <div className="h-96 bg-slate-100 rounded-[32px]"></div>
+            <div className="p-4 md:p-6 lg:p-8 max-w-[1200px] mx-auto w-full space-y-6">
+                <Skeleton variant="rectangular" className="h-10 rounded-2xl w-64" />
+                <Skeleton variant="rectangular" className="h-96 rounded-[32px] w-full" />
             </div>
         );
     }
@@ -214,20 +216,14 @@ const Settings = () => {
 
             {/* Save Button */}
             <div className="flex justify-end">
-                <button
+                <Button
                     onClick={handleSave}
-                    disabled={saving}
-                    className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-green-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+                    isLoading={saving}
+                    icon="save"
+                    className="px-8 shadow-xl shadow-green-200"
                 >
-                    {saving ? (
-                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                    ) : (
-                        <>
-                            <span className="material-symbols-outlined text-lg">save</span>
-                            Save Changes
-                        </>
-                    )}
-                </button>
+                    Save Changes
+                </Button>
             </div>
         </div>
     );

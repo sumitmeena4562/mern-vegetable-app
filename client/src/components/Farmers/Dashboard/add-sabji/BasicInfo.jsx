@@ -1,4 +1,5 @@
 import React from 'react';
+import Input from '../../../ui/Input';
 
 const BasicInfo = ({ data, onChange }) => {
   const categories = [
@@ -33,28 +34,25 @@ const BasicInfo = ({ data, onChange }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Input Style - Synced with Dashboard Forms */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Sabji Name <span className="text-red-500">*</span></label>
-          <div className="relative group/input">
-            <input
-              value={data.name}
-              onChange={(e) => onChange('name', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/5 transition-all outline-none shadow-sm text-sm"
-              placeholder="Ex: Tomato, Onion..."
-              list="cropSuggestions"
-            />
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-green-600 transition-colors">search</span>
-          </div>
+        <div className="md:col-span-1">
+          <Input
+            label={<>Sabji Name <span className="text-red-500">*</span></>}
+            value={data.name}
+            onChange={(e) => onChange('name', e.target.value)}
+            placeholder="Ex: Tomato, Onion..."
+            list="cropSuggestions"
+            icon="search"
+            className="rounded-xl focus:ring-green-500/30 focus:border-green-500"
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Variety (Optional)</label>
-          <input
+        <div className="md:col-span-1">
+          <Input
+            label="Variety (Optional)"
             value={data.variety}
             onChange={(e) => onChange('variety', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 px-4 font-bold text-slate-700 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
             placeholder="Desi, Hybrid..."
+            className="rounded-xl focus:ring-green-500/30 focus:border-green-500"
           />
         </div>
       </div>
@@ -82,41 +80,41 @@ const BasicInfo = ({ data, onChange }) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Total Quantity</label>
-          <div className="flex bg-slate-50 border border-slate-100 rounded-xl overflow-hidden focus-within:bg-white focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-500/5 transition-all shadow-sm">
-            <input
-              value={data.quantity}
-              onChange={(e) => onChange('quantity', e.target.value)}
-              className="flex-1 bg-transparent py-2.5 px-4 font-black text-slate-800 outline-none w-full text-sm"
-              placeholder="0.00" type="number"
-            />
-            <select
-              value={data.unit}
-              onChange={(e) => onChange('unit', e.target.value)}
-              className="bg-slate-100/50 border-l border-slate-200 px-3 text-[10px] font-black uppercase text-slate-600 outline-none cursor-pointer"
-            >
-              <option value="kg">KG</option>
-              <option value="quintal">QTL</option>
-              <option value="ton">TON</option>
-              <option value="dozen">DZN</option>
-            </select>
-          </div>
+        <div className="sm:col-span-1">
+          <Input
+            label="Total Quantity"
+            type="number"
+            value={data.quantity}
+            onChange={(e) => onChange('quantity', e.target.value)}
+            placeholder="0.00"
+            className="rounded-xl focus:ring-green-500/30 focus:border-green-500"
+            rightElement={
+              <select
+                value={data.unit}
+                onChange={(e) => onChange('unit', e.target.value)}
+                className="bg-slate-100/50 border-l border-slate-200 h-full px-3 py-3 text-[10px] font-black uppercase text-slate-600 outline-none cursor-pointer rounded-r-xl"
+              >
+                <option value="kg">KG</option>
+                <option value="quintal">QTL</option>
+                <option value="ton">TON</option>
+                <option value="dozen">DZN</option>
+              </select>
+            }
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Price per {data.unit}</label>
-          <div className="relative group/price">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 group-focus-within/price:text-green-600 transition-colors">₹</span>
-            <input
-              value={data.pricePerUnit}
-              onChange={(e) => onChange('pricePerUnit', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-9 pr-4 font-black text-slate-800 placeholder-slate-400 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
-              placeholder="0.00" type="number"
-            />
-          </div>
+        <div className="sm:col-span-1">
+          <Input
+            label={`Price per ${data.unit}`}
+            type="number"
+            value={data.pricePerUnit}
+            onChange={(e) => onChange('pricePerUnit', e.target.value)}
+            placeholder="0.00"
+            icon={<span className="font-black text-[15px] leading-none pt-0.5">₹</span>}
+            className="rounded-xl focus:ring-green-500/30 focus:border-green-500"
+          />
           {/* Price Advisor Hint */}
-          <div className="flex items-center gap-1.5 ml-1 animate-in fade-in slide-in-from-left-2 duration-500">
+          <div className="flex items-center gap-1.5 ml-1 mt-1.5 animate-in fade-in slide-in-from-left-2 duration-500">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
               Market Avg: <span className="text-green-600">₹22/kg</span>
@@ -126,17 +124,15 @@ const BasicInfo = ({ data, onChange }) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Harvest Date</label>
-          <div className="relative group/date">
-            <input
-              type="date"
-              value={data.harvestDate}
-              onChange={(e) => onChange('harvestDate', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 focus:bg-white focus:border-green-500 transition-all outline-none shadow-sm text-sm"
-            />
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/date:text-green-600 transition-colors">calendar_today</span>
-          </div>
+        <div className="sm:col-span-1">
+          <Input
+            label="Harvest Date"
+            type="date"
+            value={data.harvestDate}
+            onChange={(e) => onChange('harvestDate', e.target.value)}
+            icon="calendar_today"
+            className="rounded-xl pr-4 focus:ring-green-500/30 focus:border-green-500 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+          />
         </div>
 
         {/* Quality Selector - Dashboard Segment Style */}

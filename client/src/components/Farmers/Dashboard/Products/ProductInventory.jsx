@@ -3,6 +3,9 @@ import { getFarmerProducts, updateProductStatus, deleteProduct } from '@/api/use
 import ProductPlaceholder from '@/components/common/ProductPlaceholder';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import ProductEditModal from './ProductEditModal';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Skeleton from '@/components/ui/Skeleton';
 
 const ProductInventory = () => {
     const [products, setProducts] = useState([]);
@@ -97,39 +100,39 @@ const ProductInventory = () => {
                     <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Product Inventory</h2>
                     <p className="text-slate-500 font-medium text-sm mt-1">Manage your listed vegetables and stock status</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-500/20 transition-all">
-                        <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search products..."
-                            className="bg-transparent outline-none text-sm font-medium text-slate-700 w-40 placeholder:text-slate-300"
-                        />
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
-                                <span className="material-symbols-outlined text-lg">close</span>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <Input
+                        icon="search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search products..."
+                        wrapperClassName="w-full sm:w-56"
+                        className="py-2.5 rounded-2xl border-slate-100 focus:ring-green-500/20"
+                        rightElement={searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500 flex items-center justify-center p-1">
+                                <span className="material-symbols-outlined text-lg leading-none">close</span>
                             </button>
                         )}
-                    </div>
-                    <select
+                    />
+                    <Select
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        className="bg-white border-2 border-slate-100 rounded-2xl px-4 py-3 text-xs font-black uppercase tracking-widest outline-none focus:border-green-500 transition-all shadow-sm shadow-slate-200"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="available">In Stock</option>
-                        <option value="sold">Out of Stock</option>
-                        <option value="expired">Expired</option>
-                    </select>
+                        wrapperClassName="w-full sm:w-40"
+                        className="py-2.5 rounded-2xl border-slate-100 focus:ring-green-500/20 text-xs font-black uppercase tracking-widest text-slate-700"
+                        options={[
+                            { value: 'all', label: 'All Status' },
+                            { value: 'available', label: 'In Stock' },
+                            { value: 'sold', label: 'Out of Stock' },
+                            { value: 'expired', label: 'Expired' }
+                        ]}
+                    />
                 </div>
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                        <div key={i} className="h-64 bg-slate-100 rounded-[32px]"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {[...Array(8)].map((_, i) => (
+                        <Skeleton key={i} variant="rectangular" className="h-64 rounded-[32px] w-full" />
                     ))}
                 </div>
             ) : products.length === 0 ? (

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 const CustomerRegistration = () => {
   const navigate = useNavigate();
@@ -76,38 +78,6 @@ const CustomerRegistration = () => {
         {/* Registration Form Card */}
         <div className="sm:mx-auto sm:w-full sm:max-w-[1024px]">
           <div className="glass-card shadow-xl rounded-card px-6 py-10 sm:px-12 lg:px-16 relative overflow-hidden">
-            {/* Glass Card Effect */}
-            <style jsx>{`
-              .glass-card {
-                background: rgba(255, 255, 255, 0.75);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.8);
-                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-              }
-              .glass-input {
-                background: rgba(255, 255, 255, 0.6);
-                border: 1px solid rgba(255, 255, 255, 0.6);
-                transition: all 0.3s ease;
-              }
-              .glass-input:focus {
-                background: rgba(255, 255, 255, 0.95);
-                border-color: #16a34a;
-                box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15);
-                transform: translateY(-1px);
-              }
-              .glass-input:hover {
-                background: rgba(255, 255, 255, 0.8);
-              }
-              .hide-scrollbar::-webkit-scrollbar {
-                display: none;
-              }
-              .hide-scrollbar {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-              }
-            `}</style>
-
             {/* Form Header */}
             <div className="relative z-10 mb-10 pb-6 border-b border-green-100/50 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
@@ -134,70 +104,44 @@ const CustomerRegistration = () => {
 
                   <div className="space-y-5">
                     {/* Full Name */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="fullName">
-                        Full Name
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">person</span>
-                        </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                          id="fullName"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          placeholder="Ex: Anjali Sharma"
-                          type="text"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <Input
+                      label="Full Name"
+                      id="fullName"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="Ex: Anjali Sharma"
+                      type="text"
+                      icon="person"
+                      required
+                      className="rounded-2xl py-3.5"
+                    />
 
-                    {/* Mobile Number */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="mobile">
-                        Mobile Number
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">smartphone</span>
-                        </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                          id="mobile"
-                          name="mobile"
-                          value={formData.mobile}
-                          onChange={handleInputChange}
-                          placeholder="+91 98765 43210"
-                          type="tel"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <Input
+                      label="Mobile Number"
+                      id="mobile"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      placeholder="+91 98765 43210"
+                      type="tel"
+                      icon="smartphone"
+                      required
+                      className="rounded-2xl py-3.5"
+                    />
 
-                    {/* Password */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="password">
-                        Password
-                      </label>
-                      <div className="relative rounded-md shadow-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">lock</span>
-                        </div>
-                        <input
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base"
-                          id="password"
-                          name="password"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          placeholder="Create a strong password"
-                          type="password"
-                          required
-                        />
-                      </div>
-                    </div>
+                    <Input
+                      label="Password"
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Create a strong password"
+                      type="password"
+                      icon="lock"
+                      required
+                      className="rounded-2xl py-3.5"
+                    />
                   </div>
                 </div>
 
@@ -213,15 +157,15 @@ const CustomerRegistration = () => {
                   <div className="space-y-5">
                     {/* Full Address */}
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="address">
+                      <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block mb-1.5" htmlFor="address">
                         Full Address
                       </label>
-                      <div className="relative rounded-md shadow-sm">
+                      <div className="relative">
                         <div className="pointer-events-none absolute top-4 left-0 flex items-center pl-4">
-                          <span className="material-symbols-outlined text-gray-400">location_on</span>
+                          <span className="material-symbols-outlined text-gray-400 text-[20px]">location_on</span>
                         </div>
                         <textarea
-                          className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium resize-none"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-400 transition-all pl-11 resize-none"
                           id="address"
                           name="address"
                           value={formData.address}
@@ -235,48 +179,32 @@ const CustomerRegistration = () => {
 
                     {/* City and PIN Code */}
                     <div className="grid grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="city">
-                          City
-                        </label>
-                        <div className="relative rounded-md shadow-sm">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400">location_city</span>
-                          </div>
-                          <input
-                            className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                            id="city"
-                            name="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            placeholder="City"
-                            type="text"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="pincode">
-                          PIN Code
-                        </label>
-                        <div className="relative rounded-md shadow-sm">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                            <span className="material-symbols-outlined text-gray-400">pin_drop</span>
-                          </div>
-                          <input
-                            className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                            id="pincode"
-                            name="pincode"
-                            value={formData.pincode}
-                            onChange={handleInputChange}
-                            placeholder="000000"
-                            type="text"
-                            pattern="[0-9]{6}"
-                            maxLength="6"
-                            required
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        label="City"
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        placeholder="City"
+                        type="text"
+                        icon="location_city"
+                        required
+                        className="rounded-2xl py-3.5"
+                      />
+                      <Input
+                        label="PIN Code"
+                        id="pincode"
+                        name="pincode"
+                        value={formData.pincode}
+                        onChange={handleInputChange}
+                        placeholder="000000"
+                        type="text"
+                        pattern="[0-9]{6}"
+                        maxLength="6"
+                        icon="pin_drop"
+                        required
+                        className="rounded-2xl py-3.5"
+                      />
                     </div>
                   </div>
                 </div>
@@ -292,37 +220,31 @@ const CustomerRegistration = () => {
                 </h3>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 ml-1" htmlFor="preferences">
-                    Preferred Vegetables
-                  </label>
-                  <div className="relative rounded-md shadow-sm">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                      <span className="material-symbols-outlined text-gray-400">nutrition</span>
-                    </div>
-                    <input
-                      className="glass-input block w-full rounded-input py-4 pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary sm:text-base font-medium"
-                      id="preferences"
-                      name="preferences"
-                      value={formData.preferences}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Spinach, Carrots, Tomatoes (Separated by comma)"
-                      type="text"
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-gray-500 ml-1">
-                    We'll notify you when your favorites are fresh in stock!
-                  </p>
+                  <Input
+                    label="Preferred Vegetables"
+                    id="preferences"
+                    name="preferences"
+                    value={formData.preferences}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Spinach, Carrots, Tomatoes (Separated by comma)"
+                    type="text"
+                    icon="nutrition"
+                    className="rounded-2xl py-3.5"
+                    helpText="We'll notify you when your favorites are fresh in stock!"
+                  />
                 </div>
               </div>
 
               {/* Submit Section */}
               <div className="pt-8">
-                <button
+                <Button
                   type="submit"
-                  className="w-full flex justify-center py-5 px-4 border border-transparent rounded-[24px] shadow-lg shadow-green-600/30 text-xl font-bold text-white bg-gradient-to-r from-green-500 to-primary hover:from-green-600 hover:to-primary-dark focus:outline-none focus:ring-4 focus:ring-green-500/30 transition-all transform active:scale-[0.98] hover:shadow-green-600/40"
+                  fullWidth
+                  size="lg"
+                  className="rounded-2xl py-4 shadow-lg shadow-green-600/30 text-base"
                 >
                   Create Account
-                </button>
+                </Button>
 
                 <div className="mt-6 flex justify-center items-center gap-2 p-4">
                   <span className="material-symbols-outlined text-green-600">verified_user</span>
@@ -337,9 +259,9 @@ const CustomerRegistration = () => {
           {/* Login Link */}
           <p className="mt-8 text-center text-sm text-gray-500 font-medium">
             Already have an account?
-            <a className="font-bold text-green-700 hover:text-green-800 ml-1 underline decoration-2 decoration-green-300 underline-offset-2 transition-colors" href="#">
+            <Link className="font-bold text-green-700 hover:text-green-800 ml-1 underline decoration-2 decoration-green-300 underline-offset-2 transition-colors" to="/login">
               Login here
-            </a>
+            </Link>
           </p>
         </div>
       </div>

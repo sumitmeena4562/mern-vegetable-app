@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { sendForgotPasswordOtp, verifyResetOtp, resetPasswordWithOtp } from '../../api/userApi';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 const ForgotPassword = () => {
     const [step, setStep] = useState(1);
@@ -142,26 +144,27 @@ const ForgotPassword = () => {
                     {step === 1 && (
                         <form onSubmit={handleSendOtp} className="space-y-6 mt-4">
                             <div className="group">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Email or Mobile</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-green-500 transition-colors">person_search</span>
-                                    <input
-                                        type="text"
-                                        value={identifier}
-                                        onChange={(e) => setIdentifier(e.target.value)}
-                                        className="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-12 pr-4 font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all shadow-inner"
-                                        placeholder="Enter registered ID"
-                                        required
-                                    />
-                                </div>
+                                <Input
+                                    label="Email or Mobile"
+                                    type="text"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                    icon="person_search"
+                                    placeholder="Enter registered ID"
+                                    required
+                                    className="rounded-2xl py-3.5"
+                                />
                             </div>
-                            <button
+                            <Button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-green-500/20 text-sm font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:to-emerald-500 transition-all hover:-translate-y-0.5"
+                                isLoading={loading}
+                                fullWidth
+                                size="lg"
+                                className="rounded-2xl shadow-green-500/20 hover:-translate-y-0.5"
                             >
-                                {loading ? "Sending..." : "Send Reset Code"}
-                            </button>
+                                Send Reset Code
+                            </Button>
                         </form>
                     )}
 
@@ -177,24 +180,27 @@ const ForgotPassword = () => {
                             </div>
 
                             <div className="group">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1 text-center">Verification Code</label>
-                                <input
+                                <Input
+                                    label="Verification Code"
                                     type="text"
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                    className="w-full bg-slate-50 border-none rounded-2xl py-4 font-mono text-3xl font-black text-center tracking-[0.5em] text-slate-800 placeholder-slate-300 focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all shadow-inner"
                                     placeholder="••••"
                                     required
+                                    className="font-mono text-3xl font-black text-center tracking-[0.5em] rounded-2xl py-4"
                                 />
                             </div>
 
-                            <button
+                            <Button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-green-500/20 text-sm font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:to-emerald-500 transition-all hover:-translate-y-0.5"
+                                isLoading={loading}
+                                fullWidth
+                                size="lg"
+                                className="rounded-2xl shadow-green-500/20 hover:-translate-y-0.5"
                             >
-                                {loading ? "Verifying..." : "Verify Code"}
-                            </button>
+                                Verify Code
+                            </Button>
 
                             <div className="flex justify-between items-center text-xs font-bold px-1">
                                 <button type="button" onClick={() => setStep(1)} className="text-slate-400 hover:text-slate-600">Wrong ID?</button>
@@ -212,28 +218,28 @@ const ForgotPassword = () => {
                         <form onSubmit={handleResetPassword} className="space-y-6 mt-4">
                             <div className="space-y-4">
                                 <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">New Password</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock</span>
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={newPassword}
-                                            onChange={(e) => {
-                                                setNewPassword(e.target.value);
-                                                checkPasswordStrength(e.target.value);
-                                            }}
-                                            className="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-12 pr-12 font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all shadow-inner"
-                                            placeholder="Min 6 characters"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 flex items-center justify-center"
-                                        >
-                                            <span className="material-symbols-outlined text-xl leading-none">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                                        </button>
-                                    </div>
+                                    <Input
+                                        label="New Password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => {
+                                            setNewPassword(e.target.value);
+                                            checkPasswordStrength(e.target.value);
+                                        }}
+                                        icon="lock"
+                                        placeholder="Min 6 characters"
+                                        required
+                                        className="rounded-2xl py-3.5 pr-12"
+                                        rightElement={
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="text-slate-400 hover:text-slate-600 flex items-center justify-center p-1"
+                                            >
+                                                <span className="material-symbols-outlined text-xl leading-none">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                                            </button>
+                                        }
+                                    />
                                     {/* Strength Meter */}
                                     {newPassword && (
                                         <div className="flex gap-1 h-1 mt-3 px-1">
@@ -245,28 +251,29 @@ const ForgotPassword = () => {
                                 </div>
 
                                 <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Confirm Password</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock_clock</span>
-                                        <input
-                                            type="password"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-12 pr-4 font-medium text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-green-500/20 focus:bg-white transition-all shadow-inner"
-                                            placeholder="Re-enter password"
-                                            required
-                                        />
-                                    </div>
+                                    <Input
+                                        label="Confirm Password"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        icon="lock_clock"
+                                        placeholder="Re-enter password"
+                                        required
+                                        className="rounded-2xl py-3.5"
+                                    />
                                 </div>
                             </div>
 
-                            <button
+                            <Button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-lg shadow-green-500/20 text-sm font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:to-emerald-500 transition-all hover:-translate-y-0.5"
+                                isLoading={loading}
+                                fullWidth
+                                size="lg"
+                                className="rounded-2xl shadow-green-500/20 hover:-translate-y-0.5"
                             >
-                                {loading ? "Updating..." : "Reset Password"}
-                            </button>
+                                Reset Password
+                            </Button>
                         </form>
                     )}
 

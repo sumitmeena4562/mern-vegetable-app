@@ -4,6 +4,7 @@ import {
     BarChart, Bar, Cell, PieChart, Pie, Legend, LineChart, Line
 } from 'recharts';
 import api from '@/api/axios';
+import Skeleton from '@/components/ui/Skeleton';
 
 const Analytics = () => {
     const [data, setData] = useState(null);
@@ -32,10 +33,20 @@ const Analytics = () => {
 
     if (loading) {
         return (
-            <div className="p-8 space-y-8 animate-pulse">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="h-80 bg-slate-100 rounded-[40px]"></div>
-                    <div className="h-80 bg-slate-100 rounded-[40px]"></div>
+            <div className="p-4 md:p-8 space-y-8 max-w-[1600px] mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
+                            <Skeleton variant="circular" className="w-12 h-12 mb-6" />
+                            <Skeleton variant="rectangular" className="h-3 w-24 mb-3" />
+                            <Skeleton variant="text" className="h-8 w-32 mb-2" />
+                            <Skeleton variant="rectangular" className="h-2 w-20" />
+                        </div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <Skeleton variant="rectangular" className="h-96 rounded-[48px] w-full" />
+                    <Skeleton variant="rectangular" className="h-96 rounded-[48px] w-full" />
                 </div>
             </div>
         );

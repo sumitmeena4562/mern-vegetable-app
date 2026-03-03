@@ -1,4 +1,6 @@
 import React from 'react';
+import Input from '../../../ui/Input';
+import Select from '../../../ui/Select';
 
 const AdditionalDetails = ({ data, onChange }) => {
   return (
@@ -14,70 +16,62 @@ const AdditionalDetails = ({ data, onChange }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Min Order Qty</label>
-          <div className="relative group/input">
-            <input
-              value={data.minOrder}
-              onChange={(e) => onChange('minOrder', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 transition-all outline-none shadow-sm"
-              type="number"
-              placeholder="1"
-            />
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">shopping_basket</span>
-          </div>
+        <div className="md:col-span-1">
+          <Input
+            label="Min Order Qty"
+            type="number"
+            value={data.minOrder}
+            onChange={(e) => onChange('minOrder', e.target.value)}
+            placeholder="1"
+            icon="shopping_basket"
+            className="rounded-xl py-3 focus:ring-blue-500/30 focus:border-blue-500"
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Packaging Type</label>
-          <div className="relative group/input">
-            <select
-              value={data.packaging}
-              onChange={(e) => onChange('packaging', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
-            >
-              <option value="Jute Bags">Jute Bags (Bori)</option>
-              <option value="Plastic Crates">Plastic Crates</option>
-              <option value="Cardboard Boxes">Cardboard Boxes</option>
-              <option value="Net Bags">Net Bags</option>
-            </select>
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">package_2</span>
-            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
+        <div className="md:col-span-1">
+          <Select
+            label="Packaging Type"
+            value={data.packaging}
+            onChange={(e) => onChange('packaging', e.target.value)}
+            icon="package_2"
+            options={[
+              { value: 'Jute Bags', label: 'Jute Bags (Bori)' },
+              { value: 'Plastic Crates', label: 'Plastic Crates' },
+              { value: 'Cardboard Boxes', label: 'Cardboard Boxes' },
+              { value: 'Net Bags', label: 'Net Bags' }
+            ]}
+            className="rounded-xl py-3 focus:ring-blue-500/30 focus:border-blue-500"
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Shelf Life</label>
-          <div className="relative group/input">
-            <select
-              value={data.shelfLife}
-              onChange={(e) => onChange('shelfLife', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3 pl-11 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm"
-            >
-              <option value="1-2 Days">1-2 Days</option>
-              <option value="3-5 Days">3-5 Days</option>
-              <option value="1 Week">1 Week</option>
-            </select>
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">hourglass_top</span>
-            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
+        <div className="md:col-span-1">
+          <Select
+            label="Shelf Life"
+            value={data.shelfLife}
+            onChange={(e) => onChange('shelfLife', e.target.value)}
+            icon="hourglass_top"
+            options={[
+              '1-2 Days',
+              '3-5 Days',
+              '1 Week'
+            ]}
+            className="rounded-xl py-3 focus:ring-blue-500/30 focus:border-blue-500"
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Pickup Slot</label>
-          <div className="relative group/input">
-            <select
-              value={data.pickupSlot}
-              onChange={(e) => onChange('pickupSlot', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-10 pr-4 font-bold text-slate-700 focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer shadow-sm text-sm"
-            >
-              <option value="Morning (8 AM - 11 AM)">Morning (8 AM - 11 AM)</option>
-              <option value="Afternoon (12 PM - 3 PM)">Afternoon (12 PM - 3 PM)</option>
-              <option value="Evening (5 PM - 8 PM)">Evening (5 PM - 8 PM)</option>
-            </select>
-            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within/input:text-blue-600 transition-colors">schedule</span>
-            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
+        <div className="md:col-span-1">
+          <Select
+            label="Pickup Slot"
+            value={data.pickupSlot}
+            onChange={(e) => onChange('pickupSlot', e.target.value)}
+            icon="schedule"
+            options={[
+              'Morning (8 AM - 11 AM)',
+              'Afternoon (12 PM - 3 PM)',
+              'Evening (5 PM - 8 PM)'
+            ]}
+            className="rounded-xl py-3 focus:ring-blue-500/30 focus:border-blue-500"
+          />
         </div>
       </div>
 

@@ -68,10 +68,10 @@ const GlobalSidebar = ({
                         <span className="material-symbols-outlined text-white text-xl sm:text-2xl">{roleIcon}</span>
                     </div>
                     <div className="flex flex-col justify-center">
-                        <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800 leading-none mb-0.5 mt-0.5">
+                        <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800 leading-none">
                             Agri<span className={theme.textTitle}>Connect</span>
                         </h1>
-                        <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-none">{roleTitle} Panel</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-none mt-1">{roleTitle} Panel</p>
                     </div>
                 </Link>
 

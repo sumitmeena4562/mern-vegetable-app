@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../../../api/axios';
-import { getStatusBadge } from '../../../common/orderUtils';
-import VendorOrderDetailModal from './VendorOrderDetailModal';
 import { useSocket } from '../../../../contexts/SocketContext';
 import { toast } from 'react-hot-toast';
+import Badge from '../../../../components/ui/Badge';
+import Skeleton from '../../../../components/ui/Skeleton';
 import { useCart } from '../../../../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
+import VendorOrderDetailModal from './VendorOrderDetailModal';
 
 const VendorOrders = () => {
     const { addToCart } = useCart();
@@ -139,10 +140,7 @@ const VendorOrders = () => {
         }
     };
 
-    const getStatusColor = (status) => {
-        const badge = getStatusBadge(status.toLowerCase());
-        return badge.color;
-    };
+    // Removed getStatusColor since Badge handles styles based on type string
 
     // Client-side search and filter
     const filteredOrders = orders.filter(o => {
@@ -203,9 +201,9 @@ const VendorOrders = () => {
                 </div>
 
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="h-48 bg-slate-100 rounded-[32px]"></div>
+                            <Skeleton key={i} variant="rectangular" className="h-48 rounded-[32px] w-full" />
                         ))}
                     </div>
                 ) : filteredOrders.length === 0 ? (
@@ -232,9 +230,9 @@ const VendorOrders = () => {
                                     className="bg-white group rounded-[32px] p-6 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden relative"
                                 >
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
+                                        <Badge type={order.status.toLowerCase()}>
                                             {order.status}
-                                        </div>
+                                        </Badge>
                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                             {new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>

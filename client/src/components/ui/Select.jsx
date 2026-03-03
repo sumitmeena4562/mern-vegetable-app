@@ -24,8 +24,8 @@ const Select = ({
             )}
             <div className="relative">
                 {icon && (
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center justify-center pointer-events-none z-10">
-                        <span className={`${IconSpan} text-slate-400 text-[20px] leading-none`}>
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 pl-4 flex items-center justify-center pointer-events-none z-10">
+                        <span className={`${IconSpan} text-slate-400 text-[20px] leading-none block`}>
                             {icon}
                         </span>
                     </div>
@@ -47,8 +47,8 @@ const Select = ({
                         </option>
                     ))}
                 </select>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center pointer-events-none z-10">
-                    <span className="material-symbols-outlined text-slate-400 text-[20px] leading-none mt-[2px]">expand_more</span>
+                <div className="absolute top-1/2 -translate-y-1/2 right-0 pr-4 flex items-center justify-center pointer-events-none z-10">
+                    <span className="material-symbols-outlined text-slate-400 text-[20px] leading-none block">expand_more</span>
                 </div>
             </div>
             {error && (

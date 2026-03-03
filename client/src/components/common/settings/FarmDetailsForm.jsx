@@ -1,9 +1,8 @@
 import React from 'react';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 
 const FarmDetailsForm = ({ farm, handleFarmChange, toggleColdStorage }) => {
-    const inputClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all text-ellipsis";
-    const selectClass = "w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 focus:border-green-500 focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all appearance-none";
-
     return (
         <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-4 mb-4">
@@ -18,106 +17,138 @@ const FarmDetailsForm = ({ farm, handleFarmChange, toggleColdStorage }) => {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                 {/* Farm Name */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farm Name</label>
-                    <input type="text" name="farmName" value={farm.farmName} onChange={handleFarmChange} className={inputClass} />
-                </div>
+                <Input
+                    label="Farm Name"
+                    name="farmName"
+                    value={farm.farmName}
+                    onChange={handleFarmChange}
+                />
 
                 {/* Farm Size + Unit */}
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farm Size</label>
-                        <input type="number" name="farmSize" value={farm.farmSize} onChange={handleFarmChange} className={inputClass} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Unit</label>
-                        <select name="farmSizeUnit" value={farm.farmSizeUnit} onChange={handleFarmChange} className={selectClass}>
-                            <option value="acre">Acres</option>
-                            <option value="hectare">Hectares</option>
-                            <option value="bigha">Bigha</option>
-                        </select>
-                    </div>
+                    <Input
+                        label="Farm Size"
+                        type="number"
+                        name="farmSize"
+                        value={farm.farmSize}
+                        onChange={handleFarmChange}
+                    />
+                    <Select
+                        label="Unit"
+                        name="farmSizeUnit"
+                        value={farm.farmSizeUnit}
+                        onChange={handleFarmChange}
+                        options={[
+                            { value: 'acre', label: 'Acres' },
+                            { value: 'hectare', label: 'Hectares' },
+                            { value: 'bigha', label: 'Bigha' }
+                        ]}
+                    />
                 </div>
 
                 {/* Farming Type */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Farming Type</label>
-                    <select name="farmingType" value={farm.farmingType} onChange={handleFarmChange} className={selectClass}>
-                        <option value="organic">Organic</option>
-                        <option value="natural">Natural</option>
-                        <option value="regular">Regular</option>
-                        <option value="hydroponic">Hydroponic</option>
-                    </select>
-                </div>
+                <Select
+                    label="Farming Type"
+                    name="farmingType"
+                    value={farm.farmingType}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'organic', label: 'Organic' },
+                        { value: 'natural', label: 'Natural' },
+                        { value: 'regular', label: 'Regular' },
+                        { value: 'hydroponic', label: 'Hydroponic' }
+                    ]}
+                />
 
                 {/* Soil Type */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Soil Type</label>
-                    <select name="soilType" value={farm.soilType} onChange={handleFarmChange} className={selectClass}>
-                        <option value="black">Black Soil</option>
-                        <option value="red">Red Soil</option>
-                        <option value="alluvial">Alluvial Soil</option>
-                        <option value="sandy">Sandy Soil</option>
-                        <option value="clay">Clay Soil</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
+                <Select
+                    label="Soil Type"
+                    name="soilType"
+                    value={farm.soilType}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'black', label: 'Black Soil' },
+                        { value: 'red', label: 'Red Soil' },
+                        { value: 'alluvial', label: 'Alluvial Soil' },
+                        { value: 'sandy', label: 'Sandy Soil' },
+                        { value: 'clay', label: 'Clay Soil' },
+                        { value: 'other', label: 'Other' }
+                    ]}
+                />
 
                 {/* Irrigation System */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Irrigation System</label>
-                    <select name="irrigationSystem" value={farm.irrigationSystem} onChange={handleFarmChange} className={selectClass}>
-                        <option value="drip">Drip Irrigation</option>
-                        <option value="sprinkler">Sprinkler</option>
-                        <option value="tubewell">Tubewell</option>
-                        <option value="canal">Canal</option>
-                        <option value="manual">Manual</option>
-                    </select>
-                </div>
+                <Select
+                    label="Irrigation System"
+                    name="irrigationSystem"
+                    value={farm.irrigationSystem}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'drip', label: 'Drip Irrigation' },
+                        { value: 'sprinkler', label: 'Sprinkler' },
+                        { value: 'tubewell', label: 'Tubewell' },
+                        { value: 'canal', label: 'Canal' },
+                        { value: 'manual', label: 'Manual' }
+                    ]}
+                />
 
                 {/* Water Source */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Water Source</label>
-                    <select name="waterSource" value={farm.waterSource} onChange={handleFarmChange} className={selectClass}>
-                        <option value="borewell">Borewell</option>
-                        <option value="river">River</option>
-                        <option value="canal">Canal</option>
-                        <option value="rainwater">Rainwater</option>
-                        <option value="well">Well</option>
-                    </select>
-                </div>
+                <Select
+                    label="Water Source"
+                    name="waterSource"
+                    value={farm.waterSource}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'borewell', label: 'Borewell' },
+                        { value: 'river', label: 'River' },
+                        { value: 'canal', label: 'Canal' },
+                        { value: 'rainwater', label: 'Rainwater' },
+                        { value: 'well', label: 'Well' }
+                    ]}
+                />
 
                 {/* Land Ownership */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Land Ownership</label>
-                    <select name="landOwnership" value={farm.landOwnership} onChange={handleFarmChange} className={selectClass}>
-                        <option value="owned">Owned</option>
-                        <option value="leased">Leased</option>
-                    </select>
-                </div>
+                <Select
+                    label="Land Ownership"
+                    name="landOwnership"
+                    value={farm.landOwnership}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'owned', label: 'Owned' },
+                        { value: 'leased', label: 'Leased' }
+                    ]}
+                />
 
                 {/* Primary Crop */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Primary Crop</label>
-                    <input type="text" name="primaryCrop" value={farm.primaryCrop} onChange={handleFarmChange} placeholder="e.g., Tomato Specialist" className={inputClass + " placeholder:text-slate-300"} />
-                </div>
+                <Input
+                    label="Primary Crop"
+                    name="primaryCrop"
+                    value={farm.primaryCrop}
+                    onChange={handleFarmChange}
+                    placeholder="e.g., Tomato Specialist"
+                />
 
                 {/* Experience */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Experience (Years)</label>
-                    <input type="number" name="farmingExperience" value={farm.farmingExperience} onChange={handleFarmChange} className={inputClass} />
-                </div>
+                <Input
+                    label="Experience (Years)"
+                    type="number"
+                    name="farmingExperience"
+                    value={farm.farmingExperience}
+                    onChange={handleFarmChange}
+                />
 
                 {/* Preferred Pickup Time */}
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Preferred Pickup Time</label>
-                    <select name="preferredPickupTime" value={farm.preferredPickupTime} onChange={handleFarmChange} className={selectClass}>
-                        <option value="morning">Morning (6 AM - 10 AM)</option>
-                        <option value="afternoon">Afternoon (12 PM - 3 PM)</option>
-                        <option value="evening">Evening (4 PM - 7 PM)</option>
-                        <option value="any">Any Time</option>
-                    </select>
-                </div>
+                <Select
+                    label="Preferred Pickup Time"
+                    name="preferredPickupTime"
+                    value={farm.preferredPickupTime}
+                    onChange={handleFarmChange}
+                    options={[
+                        { value: 'morning', label: 'Morning (6 AM - 10 AM)' },
+                        { value: 'afternoon', label: 'Afternoon (12 PM - 3 PM)' },
+                        { value: 'evening', label: 'Evening (4 PM - 7 PM)' },
+                        { value: 'any', label: 'Any Time' }
+                    ]}
+                />
             </div>
 
             {/* Cold Storage Toggle */}

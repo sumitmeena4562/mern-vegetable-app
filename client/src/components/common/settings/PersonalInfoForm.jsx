@@ -1,12 +1,12 @@
 import React from 'react';
+import Input from '@/components/ui/Input';
 
 const PersonalInfoForm = ({ profileData, handleInputChange, themeColor = 'green', showAddress = false }) => {
     const themes = {
-        green: { iconBg: 'bg-green-50', iconColor: 'text-green-600', focusRing: 'focus:border-green-500' },
-        indigo: { iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', focusRing: 'focus:border-indigo-500' }
+        green: { iconBg: 'bg-green-50', iconColor: 'text-green-600' },
+        indigo: { iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600' }
     };
     const theme = themes[themeColor] || themes.green;
-    const inputClass = `w-full px-4 py-3.5 bg-slate-50 border-2 border-slate-50 ${theme.focusRing} focus:bg-white rounded-2xl outline-none text-sm font-bold text-slate-900 transition-all`;
 
     return (
         <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 p-6 md:p-8 space-y-6">
@@ -21,34 +21,26 @@ const PersonalInfoForm = ({ profileData, handleInputChange, themeColor = 'green'
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Full Name</label>
-                    <input
-                        type="text"
-                        name="fullName"
-                        value={profileData.fullName || ''}
-                        onChange={handleInputChange}
-                        className={inputClass}
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Email</label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={profileData.email || ''}
-                        onChange={handleInputChange}
-                        className={inputClass}
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Mobile (Read Only)</label>
-                    <input
-                        type="text"
+                <Input
+                    label="Full Name"
+                    name="fullName"
+                    value={profileData.fullName || ''}
+                    onChange={handleInputChange}
+                />
+                <Input
+                    label="Email"
+                    type="email"
+                    name="email"
+                    value={profileData.email || ''}
+                    onChange={handleInputChange}
+                />
+                <div className="flex flex-col justify-center">
+                    <Input
+                        label="Mobile (Read Only)"
                         name="mobile"
                         value={profileData.mobile || ''}
-                        readOnly
-                        className="w-full px-4 py-3.5 bg-slate-100 border-2 border-slate-100 rounded-2xl outline-none text-sm font-bold text-slate-500 cursor-not-allowed opacity-80"
+                        disabled
+                        className="cursor-not-allowed opacity-80"
                     />
                     <p className="text-[10px] text-slate-400 mt-2 px-1 font-semibold flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">lock</span> Mobile number is verified and cannot be changed.
@@ -62,16 +54,13 @@ const PersonalInfoForm = ({ profileData, handleInputChange, themeColor = 'green'
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-4">Address</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {['village', 'city', 'district', 'state', 'pincode'].map((field) => (
-                            <div key={field} className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 capitalize">{field}</label>
-                                <input
-                                    type="text"
-                                    name={`address_${field}`}
-                                    value={profileData.address?.[field] || ''}
-                                    onChange={handleInputChange}
-                                    className={inputClass}
-                                />
-                            </div>
+                            <Input
+                                key={field}
+                                label={field.charAt(0).toUpperCase() + field.slice(1)}
+                                name={`address_${field}`}
+                                value={profileData.address?.[field] || ''}
+                                onChange={handleInputChange}
+                            />
                         ))}
                     </div>
                 </div>

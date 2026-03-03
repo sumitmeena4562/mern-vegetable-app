@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getFarmerOrders, updateOrderStatus } from '@/api/userApi';
 import OrderDetailsModal from './OrderDetailsModal';
+import Input from '@/components/ui/Input';
+import Badge from '@/components/ui/Badge';
+import Skeleton from '@/components/ui/Skeleton';
 
 const OrderManagement = () => {
     const [orders, setOrders] = useState([]);
@@ -52,17 +55,6 @@ const OrderManagement = () => {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'pending': return 'bg-orange-50 text-orange-600 border-orange-100';
-            case 'confirmed': return 'bg-blue-50 text-blue-600 border-blue-100';
-            case 'processing': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
-            case 'ready_for_pickup': return 'bg-green-50 text-green-600 border-green-100';
-            case 'delivered': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-            case 'cancelled': return 'bg-red-50 text-red-600 border-red-100';
-            default: return 'bg-slate-50 text-slate-600 border-slate-100';
-        }
-    };
 
     // Client-side search filter
     const filteredOrders = orders.filter(order => {
@@ -95,21 +87,19 @@ const OrderManagement = () => {
                     <p className="text-slate-500 font-medium text-sm mt-1">Track and fulfill your farm orders</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-green-400 focus-within:ring-2 focus-within:ring-green-500/20 transition-all w-64">
-                        <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search by order ID or buyer..."
-                            className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full placeholder:text-slate-300"
-                        />
-                        {searchQuery && (
-                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
-                                <span className="material-symbols-outlined text-lg">close</span>
+                    <Input
+                        icon="search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by order ID or buyer..."
+                        wrapperClassName="w-full sm:w-64"
+                        className="py-2.5 rounded-2xl border-slate-100 focus:ring-green-500/20"
+                        rightElement={searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500 flex items-center justify-center p-1">
+                                <span className="material-symbols-outlined text-lg leading-none">close</span>
                             </button>
                         )}
-                    </div>
+                    />
                 </div>
             </div>
 
@@ -131,9 +121,9 @@ const OrderManagement = () => {
             </div>
 
             {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="h-48 bg-slate-100 rounded-[32px]"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => (
+                        <Skeleton key={i} variant="rectangular" className="h-48 rounded-[32px] w-full" />
                     ))}
                 </div>
             ) : filteredOrders.length === 0 ? (
@@ -160,9 +150,7 @@ const OrderManagement = () => {
                                 className="bg-white group rounded-[32px] p-6 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-green-200/30 transition-all overflow-hidden relative"
                             >
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className={`px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
-                                        {order.status.replace(/_/g, ' ')}
-                                    </div>
+                                    <Badge status={order.status} className="border border-current opacity-90 shadow-sm" />
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                         {new Date(order.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </p>

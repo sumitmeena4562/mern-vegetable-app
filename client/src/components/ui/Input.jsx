@@ -25,8 +25,8 @@ const Input = ({
             )}
             <div className="relative">
                 {icon && (
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center justify-center pointer-events-none">
-                        <span className={`${IconSpan} text-slate-400 text-[20px] leading-none`}>
+                    <div className="absolute top-1/2 -translate-y-1/2 left-0 pl-4 flex items-center justify-center pointer-events-none">
+                        <span className={`${IconSpan} text-slate-400 text-[20px] leading-none block`}>
                             {icon}
                         </span>
                     </div>
@@ -44,13 +44,13 @@ const Input = ({
                     {...props}
                 />
                 {rightElement && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center z-10">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-0 pr-4 flex items-center justify-center z-10">
                         {rightElement}
                     </div>
                 )}
                 {suffix && !rightElement && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center pointer-events-none z-10">
-                        <span className="text-slate-400 font-bold text-sm leading-none">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-0 pr-4 flex items-center justify-center pointer-events-none z-10">
+                        <span className="text-slate-400 font-bold text-sm leading-none block">
                             {suffix}
                         </span>
                     </div>

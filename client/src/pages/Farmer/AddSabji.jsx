@@ -7,6 +7,7 @@ import AdditionalDetails from '../../components/Farmers/Dashboard/add-sabji/Addi
 import VisibilityCard from '../../components/Farmers/Dashboard/add-sabji/VisibilityCard';
 import SubmissionSuccess from '../../components/Farmers/Dashboard/add-sabji/SubmissionSuccess';
 import api from '../../api/axios';
+import Button from '../../components/ui/Button';
 
 const AddSabji = () => {
   const navigate = useNavigate();
@@ -143,26 +144,23 @@ const AddSabji = () => {
             <VisibilityCard data={formData} onChange={handleChange} income={potentialIncome} />
 
             {/* Desktop Action Buttons - Elite Style */}
-            <div className="hidden lg:block space-y-3">
-              <button
+            <div className="hidden lg:flex flex-col gap-3">
+              <Button
                 onClick={handleSubmit}
-                disabled={loading}
-                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-[0.98] flex items-center justify-center gap-2 group overflow-hidden relative"
+                isLoading={loading}
+                icon="rocket_launch"
+                className="w-full py-4 rounded-2xl shadow-xl shadow-slate-200 group overflow-hidden relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                {loading ? <span className="material-symbols-outlined animate-spin">sync</span> : (
-                  <>
-                    <span className="material-symbols-outlined text-xl group-hover:scale-110 group-hover:rotate-12 transition-transform">rocket_launch</span>
-                    Publish Now
-                  </>
-                )}
-              </button>
-              <button
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none"></div>
+                Publish Now
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => navigate('/farmer-dashboard')}
-                className="w-full bg-white text-slate-500 py-3.5 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-all active:scale-[0.98]"
+                className="w-full py-3.5 rounded-2xl"
               >
                 Save for Later
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -170,18 +168,14 @@ const AddSabji = () => {
 
       {/* Global Action Button for Mobile (Inlined for consistency) */}
       <div className="lg:hidden mt-8">
-        <button
+        <Button
           onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black active:scale-[0.98] shadow-lg shadow-slate-900/20 flex items-center justify-center gap-2 text-sm"
+          isLoading={loading}
+          icon="publish"
+          className="w-full py-4 rounded-2xl font-black shadow-lg shadow-slate-900/20 text-sm"
         >
-          {loading ? <span className="material-symbols-outlined animate-spin text-lg">sync</span> : (
-            <>
-              <span className="material-symbols-outlined text-base">publish</span>
-              Publish Harvest
-            </>
-          )}
-        </button>
+          Publish Harvest
+        </Button>
       </div>
     </div>
   );

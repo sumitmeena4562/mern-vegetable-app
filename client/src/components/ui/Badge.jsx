@@ -7,7 +7,9 @@ const Badge = ({
     const statusConfig = {
         // Orders
         pending: { color: 'bg-yellow-100 text-yellow-700', icon: 'schedule' },
+        confirmed: { color: 'bg-blue-100 text-blue-700', icon: 'thumb_up' },
         processing: { color: 'bg-blue-100 text-blue-700', icon: 'package' },
+        ready_for_pickup: { color: 'bg-emerald-100 text-emerald-700', icon: 'shopping_bag' },
         shipped: { color: 'bg-indigo-100 text-indigo-700', icon: 'local_shipping' },
         delivered: { color: 'bg-green-100 text-green-700', icon: 'check_circle' },
         cancelled: { color: 'bg-red-100 text-red-700', icon: 'cancel' },
@@ -26,7 +28,7 @@ const Badge = ({
             <span className="material-symbols-outlined text-[14px]">
                 {config.icon}
             </span>
-            {status}
+            {status?.replace(/_/g, ' ')}
         </span>
     );
 };
