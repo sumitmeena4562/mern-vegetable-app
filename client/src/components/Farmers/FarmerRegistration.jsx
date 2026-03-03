@@ -10,6 +10,9 @@ import FarmDetailsSection from './Registration/FarmDetailsSection';
 import CropsSection from './Registration/CropsSection';
 import Button from '../ui/Button';
 import Loader from '../ui/Loader';
+import { checkPasswordStrength } from '../../utils/passwordUtils';
+import useGPS from '../../hooks/useGPS';
+import useOtp from '../../hooks/useOtp';
 
 
 const FarmerRegistration = () => {
@@ -38,73 +41,39 @@ const FarmerRegistration = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [formProgress, setFormProgress] = useState(0);
 
-  // OTP States
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpValues, setOtpValues] = useState(["", "", "", ""]);
-  const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
-  const [otpError, setOtpError] = useState("");
-
-  // Password UI
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isTouched, setIsTouched] = useState({});
-  const [gpsLoading, setGpsLoading] = useState(false);
 
-  // Dynamic location 
-  // ✅ Fix: Variable ka naam 'states' kiya (plural) taaki niche map function kaam kare
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [isFetchingLocations, setIsFetchingLocations] = useState(false);
 
-  // GPS Logic
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
+  // --- Shared Hooks ---
+  const { gpsLoading, handleGetLocation } = useGPS(
+    ({ longitude, latitude }) => {
+      setFormData(prev => ({
+        ...prev,
+        location: { type: 'Point', coordinates: [longitude, latitude] }
+      }));
+    },
+    "Location captured successfully!"
+  );
+
+  const otp = useOtp(
+    formData.mobile,
+    formData.email,
+    () => {
+      setIsVerified(true);
+      setTimeout(() => document.getElementsByName("password")[0]?.focus(), 300);
     }
-    setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setFormData(prev => ({
-          ...prev,
-          location: {
-            type: 'Point',
-            coordinates: [position.coords.longitude, position.coords.latitude]
-          }
-        }));
-        toast.success("Location captured successfully!");
-        setGpsLoading(false);
-      },
-      (error) => {
-        setGpsLoading(false);
-        let errorMsg = "Unable to retrieve your location";
-        switch (error.code) {
-          case 1: // PERMISSION_DENIED
-            errorMsg = "⚠️ Permission Denied! Please allow location access in your browser settings.";
-            break;
-          case 2: // POSITION_UNAVAILABLE
-            errorMsg = "📡 GPS Unavailable! Please ensure your device location is turned ON.";
-            break;
-          case 3: // TIMEOUT
-            errorMsg = "⏳ Request Timed Out! Please try again in an open area.";
-            break;
-          default:
-            errorMsg = `❌ Location Error: ${error.message}`;
-        }
-        toast.error(errorMsg, { duration: 5000 });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
-
-
+  );
 
   // Ref for OTP inputs
-  const otpRefs = useRef([]);
+  const otpRefs = otp.otpRefs;
+
+  // Ref for OTP inputs kept via hook above
 
   // --- Progress & Initial Data Load ---
   useEffect(() => {
@@ -200,16 +169,7 @@ const FarmerRegistration = () => {
     setIsTouched(prev => ({ ...prev, [name]: true }));
   };
 
-  const checkPasswordStrength = (pass) => {
-    let score = 0;
-    if (pass.length > 5) score++;
-    if (pass.length > 8) score++;
-    if (/[A-Z]/.test(pass)) score++;
-    if (/[0-9]/.test(pass)) score++;
-    if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return Math.min(score, 5);
-  };
-
+  // checkPasswordStrength is now imported from utils/passwordUtils
 
 
   // --- Input Handlers ---
@@ -288,148 +248,19 @@ const FarmerRegistration = () => {
     }
   };
 
-  // --- OTP Functions ---
+  // --- OTP Functions: handled by useOtp hook ---
+
+  // Wrap handleSendOtp with pre-validation
   const handleSendOtp = async () => {
-    // Validate mobile and email first
     validateField('mobile', formData.mobile);
     validateField('email', formData.email);
-
     if (errors.mobile || errors.email || !formData.mobile || !formData.email) {
       toast.error("Please fix mobile/email errors before verification");
       return;
     }
-
-    if (formData.mobile.length !== 10) {
-      toast.error("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setOtpLoading(true);
-    try {
-      const res = await api.post('/auth/send-otp', {
-        mobile: formData.mobile,
-        email: formData.email
-      });
-
-      if (res.data.success) {
-        toast.success("OTP sent to your mobile and email!");
-        setShowOtpModal(true);
-        setTimer(60);
-        setCanResend(false);
-        setOtpError("");
-        // Focus first OTP input
-        setTimeout(() => otpRefs.current[0]?.focus(), 100);
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Failed to send OTP";
-      toast.error(errorMsg);
-
-      // Handle specific errors
-      if (error.response?.status === 400) {
-        if (errorMsg.includes("already registered")) {
-          setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
-        }
-      }
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  // Timer Logic for Resend
-  useEffect(() => {
-    let interval;
-    if (showOtpModal && timer > 0) {
-      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
-    } else if (timer === 0) {
-      setCanResend(true);
-    }
-    return () => clearInterval(interval);
-  }, [showOtpModal, timer]);
-
-  const handleVerifyOtp = async () => {
-    if (otpInput.length !== 4) {
-      setOtpError("Please enter complete 4-digit OTP");
-      return;
-    }
-
-    setOtpLoading(true);
-    setOtpError("");
-
-    try {
-      const res = await api.post('/auth/verify-otp', {
-        mobile: formData.mobile,
-        otp: otpInput
-      });
-
-      if (res.data.success) {
-        setIsVerified(true);
-        setShowOtpModal(false);
-        setOtpValues(["", "", "", ""]);
-        setOtpInput("");
-        toast.success("✅ Mobile verified successfully!");
-
-        // Auto-focus password field after verification
-        setTimeout(() => {
-          document.getElementsByName("password")[0]?.focus();
-        }, 300);
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Invalid OTP";
-      setOtpError(errorMsg);
-      toast.error("❌ " + errorMsg);
-
-      // Clear OTP on error
-      setOtpValues(["", "", "", ""]);
-      setOtpInput("");
-      otpRefs.current[0]?.focus();
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return;
-
-    let newOtp = [...otpValues];
-    newOtp[index] = element.value;
-    setOtpValues(newOtp);
-
-    const joinedOtp = newOtp.join("");
-    setOtpInput(joinedOtp);
-    setOtpError("");
-
-    // Auto-focus next input
-    if (element.value && index < 3 && element.nextSibling) {
-      element.nextSibling.focus();
-    }
-
-    // Auto-verify when 4 digits entered
-    if (joinedOtp.length === 4) {
-      setTimeout(() => handleVerifyOtp(), 300);
-    }
-  };
-
-  const handleOtpKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
-      e.preventDefault();
-      otpRefs.current[index - 1]?.focus();
-    } else if (e.key === "ArrowLeft" && index > 0) {
-      e.preventDefault();
-      otpRefs.current[index - 1]?.focus();
-    } else if (e.key === "ArrowRight" && index < 3) {
-      e.preventDefault();
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handlePasteOtp = (e) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split('');
-      setOtpValues(digits);
-      setOtpInput(pastedData);
-      otpRefs.current[3]?.focus();
+    const errorMsg = await otp.handleSendOtp();
+    if (errorMsg && errorMsg.includes("already registered")) {
+      setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
     }
   };
 
@@ -643,9 +474,9 @@ const FarmerRegistration = () => {
                   showConfirmPassword={showConfirmPassword}
                   setShowConfirmPassword={setShowConfirmPassword}
                   passwordStrength={passwordStrength}
-                  setShowOtpModal={setShowOtpModal}
+                  setShowOtpModal={otp.setShowOtpModal}
                   handleSendOtp={handleSendOtp}
-                  loading={otpLoading}
+                  loading={otp.otpLoading}
                 />
 
                 <LocationSection
@@ -717,10 +548,10 @@ const FarmerRegistration = () => {
       </div>
 
       {/* OTP Modal with Matching Green Theme */}
-      {showOtpModal && (
+      {otp.showOtpModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
-          onClick={(e) => e.target === e.currentTarget && setShowOtpModal(false)}
+          onClick={(e) => e.target === e.currentTarget && otp.setShowOtpModal(false)}
         >
           <div
             className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300 border border-white/20"
@@ -746,29 +577,29 @@ const FarmerRegistration = () => {
             {/* OTP Input */}
             <div className="mb-8">
               <div className="flex justify-center gap-4 mb-6">
-                {otpValues.map((data, index) => (
+                {otp.otpValues.map((data, index) => (
                   <input
                     key={index}
-                    ref={el => otpRefs.current[index] = el}
+                    ref={el => otp.otpRefs.current[index] = el}
                     maxLength="1"
-                    className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${otpError
+                    className={`w-16 h-16 border-2 rounded-xl text-center text-3xl font-bold outline-none transition-all duration-200 ${otp.otpError
                       ? 'border-red-500 focus:border-red-500 ring-4 ring-red-100'
                       : 'border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-100'
                       }`}
                     value={data}
-                    onChange={(e) => handleOtpChange(e.target, index)}
-                    onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                    onPaste={handlePasteOtp}
+                    onChange={(e) => otp.handleOtpChange(e.target, index)}
+                    onKeyDown={(e) => otp.handleOtpKeyDown(e, index)}
+                    onPaste={otp.handlePasteOtp}
                     inputMode="numeric"
                     autoComplete="one-time-code"
                   />
                 ))}
               </div>
 
-              {otpError && (
+              {otp.otpError && (
                 <p className="text-center text-red-600 text-sm font-semibold flex items-center justify-center gap-2 animate-pulse">
                   <span className="material-symbols-outlined text-sm">error</span>
-                  {otpError}
+                  {otp.otpError}
                 </p>
               )}
             </div>
@@ -776,26 +607,22 @@ const FarmerRegistration = () => {
             {/* Action Buttons */}
             <div className="space-y-4">
               <Button
-                onClick={handleVerifyOtp}
-                disabled={otpLoading || otpInput.length !== 4}
-                isLoading={otpLoading}
+                onClick={otp.handleVerifyOtp}
+                disabled={otp.otpLoading || otp.otpInput.length !== 4}
+                isLoading={otp.otpLoading}
                 fullWidth
                 size="lg"
-                icon={!otpLoading && <span className="material-symbols-outlined">check_circle</span>}
+                icon={!otp.otpLoading && <span className="material-symbols-outlined">check_circle</span>}
                 className="rounded-xl"
               >
-                {otpLoading ? 'Verifying...' : 'Verify OTP'}
+                {otp.otpLoading ? 'Verifying...' : 'Verify OTP'}
               </Button>
 
               {/* Resend Section */}
               <div className="text-center space-y-3">
-                {canResend ? (
+                {otp.canResend ? (
                   <button
-                    onClick={() => {
-                      handleSendOtp();
-                      setTimer(60);
-                      setCanResend(false);
-                    }}
+                    onClick={otp.handleResend}
                     className="text-green-600 font-bold hover:text-green-800 transition-colors flex items-center justify-center gap-2 w-full py-2 hover:bg-green-50 rounded-lg"
                   >
                     <span className="material-symbols-outlined text-lg">refresh</span>
@@ -804,12 +631,12 @@ const FarmerRegistration = () => {
                 ) : (
                   <div className="space-y-2">
                     <span className="text-gray-500 text-sm">
-                      Resend code in <span className="font-bold text-green-600">{timer}s</span>
+                      Resend code in <span className="font-bold text-green-600">{otp.timer}s</span>
                     </span>
                     <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500 transition-all duration-1000 ease-linear rounded-full"
-                        style={{ width: `${(timer / 60) * 100}%` }}
+                        style={{ width: `${(otp.timer / 60) * 100}%` }}
                       ></div>
                     </div>
                   </div>
@@ -817,7 +644,7 @@ const FarmerRegistration = () => {
 
                 <div className="pt-4 border-t border-gray-100 mt-4">
                   <button
-                    onClick={() => setShowOtpModal(false)}
+                    onClick={() => otp.setShowOtpModal(false)}
                     className="text-gray-400 hover:text-gray-600 font-bold text-sm transition-colors flex items-center justify-center gap-1 w-full"
                   >
                     <span className="material-symbols-outlined text-sm">close</span>

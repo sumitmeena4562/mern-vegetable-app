@@ -8,6 +8,9 @@ import BusinessDetailsSection from './Registration/BusinessDetailsSection';
 import LocationSection from './Registration/LocationSection';
 import Button from '../ui/Button';
 import Loader from '../ui/Loader';
+import { checkPasswordStrength } from '../../utils/passwordUtils';
+import useGPS from '../../hooks/useGPS';
+import useOtp from '../../hooks/useOtp';
 
 const VendorRegistration = () => {
   const navigate = useNavigate();
@@ -35,63 +38,38 @@ const VendorRegistration = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [formProgress, setFormProgress] = useState(0);
 
-  // OTP States
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [otpValues, setOtpValues] = useState(["", "", "", ""]);
-  const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
-  const [otpError, setOtpError] = useState("");
-
   // Password UI
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isTouched, setIsTouched] = useState({});
-  const [gpsLoading, setGpsLoading] = useState(false);
 
-  // Dynamic location 
+  // OTP Refs
   const [states, setStates] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [isFetchingLocations, setIsFetchingLocations] = useState(false);
 
-  // OTP Refs
-  const otpRefs = useRef([]);
+  // --- Shared Hooks ---
+  const { gpsLoading, handleGetLocation } = useGPS(
+    ({ longitude, latitude }) => {
+      setFormData(prev => ({
+        ...prev,
+        location: { type: 'Point', coordinates: [longitude, latitude] }
+      }));
+    },
+    "Shop location captured successfully!"
+  );
 
-  // GPS Logic
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
+  const otp = useOtp(
+    formData.mobile,
+    formData.email,
+    () => {
+      setIsVerified(true);
+      setTimeout(() => document.getElementsByName("password")[0]?.focus(), 300);
     }
-    setGpsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setFormData(prev => ({
-          ...prev,
-          location: {
-            type: 'Point',
-            coordinates: [position.coords.longitude, position.coords.latitude]
-          }
-        }));
-        toast.success("Shop location captured successfully!");
-        setGpsLoading(false);
-      },
-      (error) => {
-        setGpsLoading(false);
-        let errorMsg = "Unable to retrieve your location";
-        switch (error.code) {
-          case 1: errorMsg = "⚠️ Permission Denied! Please allow location access."; break;
-          case 2: errorMsg = "📡 GPS Unavailable! Please ensure your device location is ON."; break;
-          case 3: errorMsg = "⏳ Request Timed Out! Please try again in an open area."; break;
-          default: errorMsg = `❌ Location Error: ${error.message}`;
-        }
-        toast.error(errorMsg, { duration: 5000 });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
+  );
+
+  // GPS Logic handled by useGPS hook
 
   // --- Progress & Initial Data Load ---
   useEffect(() => {
@@ -174,15 +152,7 @@ const VendorRegistration = () => {
     setIsTouched(prev => ({ ...prev, [name]: true }));
   };
 
-  const checkPasswordStrength = (pass) => {
-    let score = 0;
-    if (pass.length > 5) score++;
-    if (pass.length > 8) score++;
-    if (/[A-Z]/.test(pass)) score++;
-    if (/[0-9]/.test(pass)) score++;
-    if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return Math.min(score, 5);
-  };
+  // checkPasswordStrength is now imported from utils/passwordUtils
 
 
 
@@ -240,132 +210,21 @@ const VendorRegistration = () => {
     validateField(name, value);
   };
 
-  // --- OTP Functions ---
+  // --- OTP Functions: handled by useOtp hook ---
   const handleSendOtp = async () => {
     validateField('mobile', formData.mobile);
     validateField('email', formData.email);
-
     if (errors.mobile || errors.email || !formData.mobile || !formData.email) {
       toast.error("Please fix mobile/email errors before verification");
       return;
     }
-
-    if (formData.mobile.length !== 10) {
-      toast.error("Please enter a valid 10-digit mobile number");
-      return;
-    }
-
-    setOtpLoading(true);
-    try {
-      const res = await api.post('/auth/send-otp', {
-        mobile: formData.mobile,
-        email: formData.email
-      });
-
-      if (res.data.success) {
-        toast.success("OTP sent to your mobile and email!");
-        setShowOtpModal(true);
-        setTimer(60);
-        setCanResend(false);
-        setOtpError("");
-        setTimeout(() => otpRefs.current[0]?.focus(), 100);
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Failed to send OTP";
-      toast.error(errorMsg);
-      if (error.response?.status === 400 && errorMsg.includes("already registered")) {
-        setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
-      }
-    } finally {
-      setOtpLoading(false);
+    const errorMsg = await otp.handleSendOtp();
+    if (errorMsg && errorMsg.includes("already registered")) {
+      setErrors(prev => ({ ...prev, mobile: "Mobile number already registered" }));
     }
   };
 
-  useEffect(() => {
-    let interval;
-    if (showOtpModal && timer > 0) {
-      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
-    } else if (timer === 0) {
-      setCanResend(true);
-    }
-    return () => clearInterval(interval);
-  }, [showOtpModal, timer]);
-
-  const handleVerifyOtp = async () => {
-    if (otpInput.length !== 4) {
-      setOtpError("Please enter complete 4-digit OTP");
-      return;
-    }
-
-    setOtpLoading(true);
-    setOtpError("");
-
-    try {
-      const res = await api.post('/auth/verify-otp', {
-        mobile: formData.mobile,
-        otp: otpInput
-      });
-
-      if (res.data.success) {
-        setIsVerified(true);
-        setShowOtpModal(false);
-        setOtpValues(["", "", "", ""]);
-        setOtpInput("");
-        toast.success("✅ Contact details verified successfully!");
-        setTimeout(() => document.getElementsByName("password")[0]?.focus(), 300);
-      }
-    } catch (error) {
-      const errorMsg = error.response?.data?.message || "Invalid OTP";
-      setOtpError(errorMsg);
-      toast.error("❌ " + errorMsg);
-      setOtpValues(["", "", "", ""]);
-      setOtpInput("");
-      otpRefs.current[0]?.focus();
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return;
-    let newOtp = [...otpValues];
-    newOtp[index] = element.value;
-    setOtpValues(newOtp);
-    const joinedOtp = newOtp.join("");
-    setOtpInput(joinedOtp);
-    setOtpError("");
-
-    if (element.value && index < 3 && element.nextSibling) {
-      element.nextSibling.focus();
-    }
-    if (joinedOtp.length === 4) {
-      setTimeout(() => handleVerifyOtp(), 300);
-    }
-  };
-
-  const handleOtpKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
-      e.preventDefault();
-      otpRefs.current[index - 1]?.focus();
-    } else if (e.key === "ArrowLeft" && index > 0) {
-      e.preventDefault();
-      otpRefs.current[index - 1]?.focus();
-    } else if (e.key === "ArrowRight" && index < 3) {
-      e.preventDefault();
-      otpRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handlePasteOtp = (e) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split('');
-      setOtpValues(digits);
-      setOtpInput(pastedData);
-      otpRefs.current[3]?.focus();
-    }
-  };
+  // OTP change/keydown/paste/timer handled by useOtp hook
 
   // --- Form Submission ---
   const handleSubmit = async (e) => {
@@ -513,7 +372,7 @@ const VendorRegistration = () => {
             showConfirmPassword={showConfirmPassword}
             setShowConfirmPassword={setShowConfirmPassword}
             handleSendOtp={handleSendOtp}
-            loading={otpLoading}
+            loading={otp.otpLoading}
           />
 
           {/* Section 2: Location (Cyan Theme) */}
@@ -562,8 +421,8 @@ const VendorRegistration = () => {
       </div>
 
       {/* --- OTP Modal --- */}
-      {showOtpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={e => e.target === e.currentTarget && setShowOtpModal(false)}>
+      {otp.showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300" onClick={e => e.target === e.currentTarget && otp.setShowOtpModal(false)}>
           <div className="bg-white rounded-[2.5rem] p-8 sm:p-10 w-full max-w-md shadow-2xl border border-white animate-in zoom-in-95 duration-300">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-indigo-50 border border-indigo-100 shadow-sm mb-6 text-indigo-600 transform hover:scale-105 transition-transform">
@@ -578,28 +437,28 @@ const VendorRegistration = () => {
             </div>
 
             <div className="flex justify-center gap-4 sm:gap-6 mb-8">
-              {otpValues.map((data, index) => (
-                <input key={index} ref={el => otpRefs.current[index] = el} maxLength="1"
-                  className={`w-14 h-16 sm:w-16 sm:h-20 border-2 rounded-2xl text-center text-3xl font-black outline-none shadow-sm transition-all duration-300 ${otpError ? 'border-rose-400 bg-rose-50 text-rose-700 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10'}`}
-                  value={data} onChange={(e) => handleOtpChange(e.target, index)} onKeyDown={e => handleOtpKeyDown(e, index)} onPaste={handlePasteOtp} inputMode="numeric" />
+              {otp.otpValues.map((data, index) => (
+                <input key={index} ref={el => otp.otpRefs.current[index] = el} maxLength="1"
+                  className={`w-14 h-16 sm:w-16 sm:h-20 border-2 rounded-2xl text-center text-3xl font-black outline-none shadow-sm transition-all duration-300 ${otp.otpError ? 'border-rose-400 bg-rose-50 text-rose-700 focus:ring-4 focus:ring-rose-500/20' : 'border-slate-200 bg-slate-50 text-slate-800 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10'}`}
+                  value={data} onChange={(e) => otp.handleOtpChange(e.target, index)} onKeyDown={e => otp.handleOtpKeyDown(e, index)} onPaste={otp.handlePasteOtp} inputMode="numeric" />
               ))}
             </div>
-            {otpError && <p className="text-center text-rose-500 text-sm font-bold mb-6 flex justify-center items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">error</span> {otpError}</p>}
+            {otp.otpError && <p className="text-center text-rose-500 text-sm font-bold mb-6 flex justify-center items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">error</span> {otp.otpError}</p>}
 
-            <Button onClick={handleVerifyOtp} disabled={otpLoading || otpInput.length !== 4}
-              isLoading={otpLoading}
+            <Button onClick={otp.handleVerifyOtp} disabled={otp.otpLoading || otp.otpInput.length !== 4}
+              isLoading={otp.otpLoading}
               fullWidth
               size="lg"
-              icon={!otpLoading && <span className="material-symbols-outlined text-[2xl]">shield_check</span>}
+              icon={!otp.otpLoading && <span className="material-symbols-outlined text-[2xl]">shield_check</span>}
               className="rounded-2xl py-5 mb-6">
-              {otpLoading ? 'Verifying...' : 'Verify Securely'}
+              {otp.otpLoading ? 'Verifying...' : 'Verify Securely'}
             </Button>
 
             <div className="text-center">
-              {canResend ? (
-                <button onClick={() => { handleSendOtp(); setTimer(60); setCanResend(false); }} className="text-indigo-600 font-bold hover:text-indigo-800 hover:bg-indigo-50 px-6 py-2 rounded-xl transition-colors">Resend Verification Code</button>
+              {otp.canResend ? (
+                <button onClick={otp.handleResend} className="text-indigo-600 font-bold hover:text-indigo-800 hover:bg-indigo-50 px-6 py-2 rounded-xl transition-colors">Resend Verification Code</button>
               ) : (
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">Resend code in <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-sm">{timer}s</span></p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">Resend code in <span className="bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md text-sm">{otp.timer}s</span></p>
               )}
             </div>
           </div>
