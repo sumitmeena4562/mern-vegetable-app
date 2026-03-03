@@ -23,6 +23,11 @@ export const registerVendor = async (req, res) => {
         }
 
         const { fullName, mobile, password, email, ...vendorData } = req.body;
+        console.log(`🏪 [VendorFlow] Registration Payload:`, { fullName, mobile, email, ...vendorData });
+        console.log(`🏪 [VendorFlow] Registering new vendor: ${fullName} (${mobile})`);
+
+        // Handle shop photos from Multer
+        const shopPhotos = req.files ? req.files.map(file => file.path) : [];
 
         const existing = await User.findOne({ mobile });
         if (existing) {
@@ -51,7 +56,8 @@ export const registerVendor = async (req, res) => {
             fssaiNumber: vendorData.fssaiNumber,
             deliveryRadius: vendorData.deliveryRadius || 5,
             acceptsOnlineOrders: vendorData.acceptsOnlineOrders !== undefined ? vendorData.acceptsOnlineOrders : true,
-            shopPhotos: vendorData.shopPhotos || []
+            shopPhotos: shopPhotos.length > 0 ? shopPhotos : (vendorData.shopPhotos || []),
+            preferredCategories: vendorData.preferredCategories || ['all']
         });
 
         await Notification.create({
@@ -78,6 +84,7 @@ export const registerVendor = async (req, res) => {
                 token
             }
         });
+        console.log(`✅ [VendorFlow] Vendor registered successfully: ${user._id}`);
 
     } catch (error) {
         console.error('Vendor Registration Error:', error);
@@ -130,6 +137,7 @@ export const getDashboardStats = async (req, res) => {
     try {
         const Order = (await import('../models/Order.js')).default;
         const vendor = await Vendor.findOne({ user: req.user.id });
+        console.log(`📊 [VendorFlow] Fetching dashboard stats for vendor: ${req.user.id}`);
 
         if (!vendor) {
             return res.status(404).json({ success: false, message: 'Vendor profile not found' });
@@ -188,6 +196,7 @@ export const getDashboardStats = async (req, res) => {
                 weeklySourcing
             }
         });
+        console.log(`✅ [VendorFlow] Stats fetched successfully for vendor: ${req.user.id}`);
     } catch (error) {
         console.error('Vendor getDashboardStats error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch stats' });
@@ -198,6 +207,7 @@ export const getDashboardStats = async (req, res) => {
 export const completeOnboarding = async (req, res) => {
     try {
         const { shopName, businessType, dailyCapacity, preferredVegetables, deliveryRadius, storeTimings } = req.body;
+        console.log(`🏪 [VendorFlow] Onboarding Payload:`, req.body);
 
         const updateData = { onboardingComplete: true };
         if (shopName) updateData.shopName = shopName;

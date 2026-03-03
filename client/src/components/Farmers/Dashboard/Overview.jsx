@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import StatsCards from './StatsCards';
 import LeftPanel from './LeftPanel';
 import RightPanel from './RightPanel';
-import { getFullProfile, getFarmerStats } from '@/api/userApi';
+import { getFullProfile, getFarmerStats, getFarmerOrders, getFarmerProducts } from '@/api/userApi';
 import WelcomeOnboarding from './WelcomeOnboarding';
 import DashboardSkeleton from './DashboardSkeleton';
 import { getGreeting } from '@/utils/dateUtils';
@@ -11,6 +11,8 @@ import DashboardWelcome from '../../common/Dashboard/DashboardWelcome';
 const Overview = () => {
   const [fullData, setFullData] = useState(null);
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
 
   const isNewFarmer = dashboardStats && dashboardStats.onboarding.productsCount === 0;
@@ -19,12 +21,16 @@ const Overview = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [profileRes, statsRes] = await Promise.all([
+        const [profileRes, statsRes, ordersRes, productsRes] = await Promise.all([
           getFullProfile(),
-          getFarmerStats()
+          getFarmerStats(),
+          getFarmerOrders('all'),
+          getFarmerProducts('all', 1, 5)
         ]);
         if (profileRes && profileRes.data) setFullData(profileRes.data);
         if (statsRes && statsRes.data) setDashboardStats(statsRes.data);
+        if (ordersRes && ordersRes.success) setOrders(ordersRes.data || []);
+        if (productsRes && productsRes.success) setProducts(productsRes.data || []);
       } catch (error) {
         console.error("Dashboard Data Fetch error!", error);
         setError("Failed to load dashboard data. Please try again.");
@@ -86,8 +92,8 @@ const Overview = () => {
         <>
           <StatsCards stats={dashboardStats?.stats} />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-start">
-            <LeftPanel />
-            <RightPanel isNew={false} />
+            <LeftPanel orders={orders} />
+            <RightPanel isNew={false} orders={orders} products={products} />
           </div>
         </>
       ) : (
@@ -144,7 +150,7 @@ const Overview = () => {
             </div>
           </div>
           <div className="lg:col-span-4">
-            <RightPanel isNew={true} />
+            <RightPanel isNew={true} orders={orders} products={products} />
           </div>
         </div>
       )}

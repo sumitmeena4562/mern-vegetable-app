@@ -51,6 +51,14 @@ const SharedTransactionList = ({ transactions, themeColor = "green" }) => {
                                     <span>{new Date(txn.createdAt).toLocaleDateString()}</span>
                                     <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                                     <span>{txn.status || txn.type}</span>
+                                    {txn.order && (
+                                        <>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                            <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[9px] font-black">
+                                                Order: #{txn.order.orderId || txn.order._id?.slice(-8)}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>

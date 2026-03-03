@@ -38,6 +38,7 @@ export const getWalletStats = async (req, res) => {
 export const getTransactionHistory = async (req, res) => {
     try {
         const transactions = await Transaction.find({ user: req.user.id })
+            .populate('order', 'orderId createdAt')
             .sort({ createdAt: -1 })
             .limit(50);
 
@@ -139,6 +140,7 @@ export const getVendorWalletStats = async (req, res) => {
 export const getVendorTransactions = async (req, res) => {
     try {
         const transactions = await Transaction.find({ user: req.user.id })
+            .populate('order', 'orderId createdAt')
             .sort({ createdAt: -1 })
             .limit(50);
 

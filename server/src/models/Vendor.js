@@ -22,6 +22,12 @@ const vendorSchema = new mongoose.Schema({
     default: 'retailer'
   },
 
+  preferredCategories: [{
+    type: String,
+    enum: ['tomato', 'potato', 'onion', 'carrot', 'spinach', 'cauliflower',
+      'brinjal', 'chili', 'cabbage', 'okra', 'cucumber', 'all']
+  }],
+
   shopType: {
     type: String,
     enum: ['kirana', 'supermarket', 'mandi', 'online', 'cart_vendor', 'other'],
@@ -65,11 +71,6 @@ const vendorSchema = new mongoose.Schema({
     min: [1, 'Daily capacity must be at least 1 kg']
   },
 
-  preferredVegetables: [{
-    type: String,
-    enum: ['tomato', 'potato', 'onion', 'carrot', 'spinach', 'cauliflower',
-      'brinjal', 'chili', 'cabbage', 'okra', 'cucumber', 'all']
-  }],
 
   paymentTerms: {
     type: String,

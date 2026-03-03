@@ -91,12 +91,33 @@ app.use(express.urlencoded({ extended: true }));
 // 3.5. INPUT SANITIZATION (Security)
 // app.use(mongoSanitize()); // Simplified usage if needed later
 
-// 4. CUSTOM LOGGING (Body parse hone ke baad)
+// 4. ADVANCED DIAGNOSTIC LOGGING (Ultra-Detailed)
 app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.originalUrl} - From: ${req.get('origin') || 'Direct'}`);
-  if (req.method === 'POST') {
-    console.log('📦 Request Body:', req.body);
-  }
+  const start = Date.now();
+  const requestId = Math.random().toString(36).substring(7).toUpperCase();
+
+  // Clone body and sanitize sensitive fields for logs
+  const sanitizedBody = { ...req.body };
+  ['password', 'otp', 'token', 'newPassword'].forEach(field => {
+    if (sanitizedBody[field]) sanitizedBody[field] = '********';
+  });
+
+  console.log(`\n--- 🌐 [${requestId}] ${req.method} ${req.originalUrl} ---`);
+  console.log(`🕒 Start: ${new Date().toISOString()}`);
+  console.log(`🏠 Origin: ${req.get('origin') || 'Direct/Postman'}`);
+  if (req.query && Object.keys(req.query).length > 0) console.log('🔍 Query:', req.query);
+  if (req.body && Object.keys(req.body).length > 0) console.log('📦 Data Payload:', sanitizedBody);
+
+  // Capture response to log status and time
+  const oldSend = res.send;
+  res.send = function (data) {
+    const duration = Date.now() - start;
+    console.log(`🏁 [${requestId}] Finished in ${duration}ms | Status: ${res.statusCode}`);
+    console.log(`--- End [${requestId}] ---\n`);
+    res.send = oldSend;
+    return res.send.apply(res, arguments);
+  };
+
   next();
 });
 

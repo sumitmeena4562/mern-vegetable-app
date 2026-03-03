@@ -11,6 +11,8 @@ import path from 'path';
 export const createProduct = async (req, res) => {
   try {
     let productData = req.body;
+    console.log(`🌱 [ProductFlow] Create Payload:`, req.body);
+    console.log(`🌱 [ProductFlow] Creating product for farmer: ${req.user.id}`);
     if (req.body.productData) {
       try {
         productData = JSON.parse(req.body.productData);
@@ -98,6 +100,7 @@ export const createProduct = async (req, res) => {
       message: 'Product created successfully',
       data: product
     });
+    console.log(`✅ [ProductFlow] Product created: ${product.name} (${product._id})`);
 
   } catch (error) {
     console.error("Create Product Error:", error);
@@ -114,6 +117,7 @@ export const createProduct = async (req, res) => {
  */
 export const getProducts = async (req, res) => {
   try {
+    console.log(`🔍 [ProductFlow] Fetching products with filters: ${JSON.stringify(req.query)}`);
     const {
       category,
       name,
@@ -144,7 +148,7 @@ export const getProducts = async (req, res) => {
       if (maxPrice) query.pricePerUnit.$lte = parseFloat(maxPrice);
     }
 
-    if (location) {
+    if (location && typeof location === 'string') {
       const [lng, lat] = location.split(',').map(Number);
       if (!isNaN(lng) && !isNaN(lat)) {
         query.location = {
@@ -401,6 +405,7 @@ export const getFarmerProducts = async (req, res) => {
 export const updateProductStatus = async (req, res) => {
   try {
     const { status } = req.body;
+    console.log(`🌱 [ProductFlow] Update Status Payload:`, req.body);
     const validStatuses = ['available', 'sold', 'reserved', 'expired'];
 
     if (!validStatuses.includes(status)) {
@@ -444,5 +449,72 @@ export const searchProducts = async (req, res) => {
     res.status(200).json({ success: true, data: { products } });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Search failed', error: error.message });
+  }
+};
+
+/**
+ * @desc    Bulk Update product status (Farmer only)
+ */
+export const bulkUpdateProductStatus = async (req, res) => {
+  try {
+    const { productIds, status } = req.body;
+    const validStatuses = ['available', 'sold', 'reserved', 'expired', 'removed'];
+
+    if (!validStatuses.includes(status) || !productIds || !Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, message: 'Invalid status or productIds' });
+    }
+
+    const result = await Product.updateMany(
+      { _id: { $in: productIds }, farmer: req.user.id },
+      { $set: { status } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `${result.modifiedCount} products updated successfully`,
+      data: { modifiedCount: result.modifiedCount }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Bulk update failed', error: error.message });
+  }
+};
+
+/**
+ * @desc    Bulk Delete products (Farmer only)
+ */
+export const bulkDeleteProducts = async (req, res) => {
+  try {
+    const { productIds } = req.body;
+
+    if (!productIds || !Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, message: 'Invalid productIds' });
+    }
+
+    // Find products to cleanup images first
+    const products = await Product.find({ _id: { $in: productIds }, farmer: req.user.id });
+
+    for (const product of products) {
+      if (product.images && product.images.length > 0) {
+        for (const img of product.images) {
+          if (img.publicId && img.publicId !== 'local') {
+            try {
+              await cloudinary.uploader.destroy(img.publicId);
+            } catch (err) {
+              console.error(`Failed to delete Cloudinary image: ${img.publicId}`, err);
+            }
+          }
+        }
+      }
+    }
+
+    const result = await Product.deleteMany({ _id: { $in: productIds }, farmer: req.user.id });
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} products deleted successfully`,
+      data: { deletedCount: result.deletedCount }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Bulk delete failed', error: error.message });
   }
 };

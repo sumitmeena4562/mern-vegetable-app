@@ -1,39 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/axios';
-import { getFarmerOrders } from '@/api/userApi';
+import { updateProductStatus } from '@/api/userApi';
+import { toast } from 'react-hot-toast';
 
-const RightPanel = ({ isNew }) => {
+const RightPanel = ({ isNew, orders, products: initialProducts }) => {
   const navigate = useNavigate();
   const [todayOrders, setTodayOrders] = useState([]);
   const [weather, setWeather] = useState(null);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [updatingId, setUpdatingId] = useState(null);
 
   useEffect(() => {
-    fetchTodayPickups();
     fetchWeather();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Fetch today's pending/confirmed/ready orders as "pickups" ---
-  const fetchTodayPickups = async () => {
-    try {
-      const res = await getFarmerOrders('all');
-      if (res.success && res.data) {
-        const today = new Date().toDateString();
-        const pickups = res.data
-          .filter(o => ['confirmed', 'processing', 'ready_for_pickup'].includes(o.status))
-          .filter(o => {
-            const orderDate = new Date(o.createdAt).toDateString();
-            return orderDate === today;
-          })
-          .slice(0, 3);
-        setTodayOrders(pickups);
-      }
-    } catch (e) {
-      console.error('Pickups fetch error:', e);
-    } finally {
+  useEffect(() => {
+    if (orders) {
+      const today = new Date().toDateString();
+      const pickups = orders
+        .filter(o => ['confirmed', 'processing', 'ready_for_pickup'].includes(o.status))
+        .filter(o => {
+          const orderDate = new Date(o.createdAt).toDateString();
+          return orderDate === today;
+        })
+        .slice(0, 3);
+      setTodayOrders(pickups);
       setLoadingOrders(false);
+    }
+  }, [orders]);
+
+  useEffect(() => {
+    if (initialProducts) {
+      setProducts(initialProducts.slice(0, 3));
+    }
+  }, [initialProducts]);
+
+  const handleToggleStatus = async (productId, currentStatus) => {
+    const newStatus = currentStatus === 'available' ? 'sold' : 'available';
+    setUpdatingId(productId);
+    try {
+      const res = await updateProductStatus(productId, newStatus);
+      if (res.success) {
+        setProducts(prev => prev.map(p => p._id === productId ? { ...p, status: newStatus } : p));
+        toast.success(`Inventory updated: ${newStatus === 'available' ? 'Now Available' : 'Marked Out of Stock'}`);
+      }
+    } catch (error) {
+      toast.error("Failed to update stock status");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -141,6 +158,45 @@ const RightPanel = ({ isNew }) => {
           </button>
         </div>
       </div>
+
+      {/* Quick Stock Update */}
+      {!isNew && products.length > 0 && (
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 p-6 rounded-[32px] shadow-xl shadow-slate-200/20">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-black text-slate-900 tracking-tight">Quick Stock Update</h3>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent</span>
+          </div>
+          <div className="space-y-3">
+            {products.map((product) => (
+              <div key={product._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-xl overflow-hidden shadow-sm">
+                    {product.images?.[0]?.url ? (
+                      <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="material-symbols-outlined text-slate-400">image</span>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 leading-tight">{product.name}</h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold uppercase tracking-wider">₹{product.price}/{product.unit}</p>
+                  </div>
+                </div>
+                <button
+                  disabled={updatingId === product._id}
+                  onClick={() => handleToggleStatus(product._id, product.status)}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${product.status === 'available'
+                    ? 'bg-green-100 text-green-700 border border-green-200 hover:bg-green-200'
+                    : 'bg-slate-200 text-slate-500 border border-slate-300 hover:bg-slate-300'
+                    } ${updatingId === product._id ? 'opacity-50 cursor-wait' : ''}`}
+                >
+                  {updatingId === product._id ? 'Updating...' : product.status === 'available' ? 'Available' : 'Sold Out'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Today's Pickups — Real Data */}
       {!isNew && (

@@ -4,7 +4,7 @@ import { getFarmerOrders } from '@/api/userApi';
 import api from '@/api/axios';
 import { getStatusBadge, getTimeAgo } from '@/components/common/orderUtils';
 
-const LeftPanel = () => {
+const LeftPanel = ({ orders }) => {
   const [revenueData, setRevenueData] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,16 +13,15 @@ const LeftPanel = () => {
     loadPanelData();
   }, []);
 
+  useEffect(() => {
+    if (orders) {
+      setRecentOrders(orders.slice(0, 3) || []);
+      setLoading(false);
+    }
+  }, [orders]);
+
   const loadPanelData = async () => {
     try {
-      setLoading(true);
-
-      // Fetch recent orders for Live Order Tracking
-      const ordersRes = await getFarmerOrders('all');
-      if (ordersRes.success) {
-        setRecentOrders(ordersRes.data?.slice(0, 3) || []);
-      }
-
       // Fetch analytics for revenue chart
       try {
         const analyticsRes = await api.get('/farmers/analytics');
@@ -35,8 +34,6 @@ const LeftPanel = () => {
 
     } catch (error) {
       console.error('LeftPanel data error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

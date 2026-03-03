@@ -4,6 +4,8 @@ import { toast } from 'react-hot-toast';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import { RegistrationCard, RegistrationHeader } from '../../common/Registration/SharedUI';
+import useGPS from '@/hooks/useGPS';
 
 const STEPS = [
     { id: 1, title: 'Farm Info', icon: 'home_work', desc: 'Enter your basic farm information' },
@@ -44,21 +46,6 @@ const SOIL_TYPES = [
     { value: 'other', label: 'Other', emoji: '⬜' },
 ];
 
-/* ─── inline styles for animations (no external CSS needed) ────── */
-const fadeStyle = {
-    animation: 'fadeSlideIn 0.35s ease-out',
-};
-const keyframesStyle = `
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse-ring {
-  0%   { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(1.4); opacity: 0; }
-}
-`;
-
 const FarmerOnboarding = ({ userName, onComplete }) => {
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +55,15 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
         farmingType: 'regular', soilType: 'other', irrigationSystem: 'manual',
         waterSource: 'well', hasColdStorage: false,
         primaryCrop: '', selectedCrops: [], farmingExperience: '', preferredPickupTime: 'morning',
+        location: { coordinates: [] }
     });
+
+    const { gpsLoading, handleGetLocation } = useGPS((coords) => {
+        setFormData(p => ({
+            ...p,
+            location: { coordinates: [coords.longitude, coords.latitude] }
+        }));
+    }, "Farm location verified! 📍");
 
     const handleChange = (field, value) => setFormData(p => ({ ...p, [field]: value }));
 
@@ -85,6 +80,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
         if (currentStep === 1) {
             if (!formData.farmName.trim()) { toast.error('Please enter your farm name'); return false; }
             if (!formData.farmSize || formData.farmSize <= 0) { toast.error('Please enter a valid farm size'); return false; }
+            if (formData.location.coordinates.length !== 2) { toast.error('Please verify your farm location via GPS'); return false; }
         }
         if (currentStep === 3) {
             if (formData.selectedCrops.length === 0) { toast.error('Please select at least one crop'); return false; }
@@ -114,6 +110,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                 crops: formData.selectedCrops.map(n => ({ name: n })),
                 farmingExperience: parseInt(formData.farmingExperience) || 0,
                 preferredPickupTime: formData.preferredPickupTime,
+                location: formData.location
             });
             toast.success('🎉 Onboarding complete! Welcome aboard!');
             if (onComplete) onComplete();
@@ -125,11 +122,11 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
     };
 
     /* ─── Shared classes ─── */
-    const labelCls = 'block text-[13px] font-bold text-slate-600 mb-2 tracking-wide uppercase';
+    const labelCls = 'block text-[11px] font-black text-slate-400 mb-2 tracking-widest uppercase';
 
     /* ─── STEP 1 ─── */
     const renderStep1 = () => (
-        <div style={fadeStyle} className="space-y-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Farm Name */}
             <Input
                 label={<>Farm Name <span className="text-red-400">*</span></>}
@@ -171,6 +168,41 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                 </div>
             </div>
 
+            {/* GPS Verification Section */}
+            <div className="p-5 rounded-3xl border-2 border-slate-50 bg-slate-50/50 space-y-3">
+                <label className={labelCls}>Precise Farm Location <span className="text-red-400">*</span></label>
+                <div className="flex items-center gap-4">
+                    <button
+                        type="button"
+                        onClick={handleGetLocation}
+                        disabled={gpsLoading}
+                        className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] ${formData.location.coordinates.length === 2
+                            ? 'bg-green-50 text-green-700 border-2 border-green-200'
+                            : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-green-400 shadow-sm'
+                            }`}
+                    >
+                        {gpsLoading ? (
+                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                        ) : (
+                            <span className="material-symbols-outlined">my_location</span>
+                        )}
+                        {formData.location.coordinates.length === 2 ? 'Location Verified' : 'Verify Farm Location'}
+                    </button>
+
+                    {formData.location.coordinates.length === 2 && (
+                        <div className="px-4 py-2 bg-white rounded-xl border border-green-100 flex flex-col items-center">
+                            <span className="text-[9px] font-black text-slate-400 uppercase">Registered GPS</span>
+                            <span className="text-[11px] font-bold text-green-600">
+                                {formData.location.coordinates[1].toFixed(4)}, {formData.location.coordinates[0].toFixed(4)}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                    📍 Precision location helps transport partners find your farm for quick pickups and better route planning.
+                </p>
+            </div>
+
             {/* Land Ownership */}
             <div>
                 <label className={labelCls}>Land Ownership</label>
@@ -185,7 +217,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                             <div className="text-[11px] text-slate-400">{o.d}</div>
                             {formData.landOwnership === o.v && (
                                 <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs">✓</span>
+                                    <span className="text-white text-xs font-black">✓</span>
                                 </div>
                             )}
                         </button>
@@ -197,7 +229,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
 
     /* ─── STEP 2 ─── */
     const renderStep2 = () => (
-        <div style={fadeStyle} className="space-y-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Farming Type */}
             <div>
                 <label className={labelCls}>Farming Type</label>
@@ -212,7 +244,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                             <div className="text-[11px] text-slate-400">{opt.desc}</div>
                             {formData.farmingType === opt.value && (
                                 <div className="absolute top-3 right-3 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white text-xs">✓</span>
+                                    <span className="text-white text-xs font-black">✓</span>
                                 </div>
                             )}
                         </button>
@@ -226,10 +258,10 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                 <div className="grid grid-cols-3 gap-2">
                     {SOIL_TYPES.map(s => (
                         <button key={s.value} type="button" onClick={() => handleChange('soilType', s.value)}
-                            className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 text-sm font-medium transition-all active:scale-[0.96] ${formData.soilType === s.value
-                                ? 'border-green-400 bg-green-50 text-green-700'
-                                : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}>
-                            <span>{s.emoji}</span>
+                            className={`flex items-center gap-2 px-3 py-3 rounded-xl border-2 text-xs font-bold transition-all active:scale-[0.96] uppercase tracking-wider ${formData.soilType === s.value
+                                ? 'border-green-600 bg-green-50 text-green-700 shadow-lg shadow-green-100'
+                                : 'border-slate-50 bg-slate-50 text-slate-500 hover:border-slate-200'}`}>
+                            <span className="text-base">{s.emoji}</span>
                             <span>{s.label}</span>
                         </button>
                     ))}
@@ -273,7 +305,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
             {/* Cold Storage Toggle */}
             <button type="button" onClick={() => handleChange('hasColdStorage', !formData.hasColdStorage)}
                 className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all active:scale-[0.98] ${formData.hasColdStorage
-                    ? 'border-blue-400 bg-blue-50'
+                    ? 'border-blue-400 bg-blue-50 shadow-lg shadow-blue-100/50'
                     : 'border-slate-100 bg-white hover:border-slate-200'}`}>
                 <div className={`w-12 h-7 rounded-full flex items-center transition-all duration-300 ${formData.hasColdStorage ? 'bg-blue-500 justify-end' : 'bg-slate-200 justify-start'}`}>
                     <div className={`w-5 h-5 bg-white rounded-full shadow-md mx-1 transition-all`} />
@@ -288,7 +320,7 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
 
     /* ─── STEP 3 ─── */
     const renderStep3 = () => (
-        <div style={fadeStyle} className="space-y-6">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Primary Crop */}
             <Input
                 label="Primary Crop (Specialization)"
@@ -306,19 +338,19 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {CROP_OPTIONS.map(crop => (
                         <button key={crop.name} type="button" onClick={() => toggleCrop(crop.name)}
-                            className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 text-xs font-medium transition-all active:scale-[0.94] ${formData.selectedCrops.includes(crop.name)
-                                ? 'border-green-400 bg-green-50 text-green-700 shadow-md shadow-green-100/40'
-                                : 'border-slate-100 bg-white text-slate-500 hover:border-slate-200'}`}>
-                            <span className="text-xl">{crop.emoji}</span>
-                            <span className="truncate w-full text-center">{crop.name}</span>
+                            className={`flex flex-col items-center gap-1 p-3 rounded-2xl border-2 text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.94] ${formData.selectedCrops.includes(crop.name)
+                                ? 'border-green-500 bg-green-50 text-green-700 shadow-lg shadow-green-100/40'
+                                : 'border-slate-50 bg-slate-50 text-slate-500 hover:border-slate-200'}`}>
+                            <span className="text-xl mb-1">{crop.emoji}</span>
+                            <span className="truncate w-full text-center leading-none">{crop.name}</span>
                             {formData.selectedCrops.includes(crop.name) && (
-                                <span className="text-green-500 text-[10px] font-bold">✓ Selected</span>
+                                <span className="absolute top-1 right-1 text-green-500 material-symbols-outlined text-sm font-black">check_circle</span>
                             )}
                         </button>
                     ))}
                 </div>
                 {formData.selectedCrops.length > 0 && (
-                    <p className="text-xs text-green-600 font-medium mt-2">
+                    <p className="text-[10px] text-green-600 font-black uppercase tracking-[0.2em] mt-3 bg-green-50 inline-block px-3 py-1 rounded-full border border-green-100">
                         {formData.selectedCrops.length} crop{formData.selectedCrops.length > 1 ? 's' : ''} selected
                     </p>
                 )}
@@ -357,106 +389,81 @@ const FarmerOnboarding = ({ userName, onComplete }) => {
     );
 
     /* ─── progress percentage ─── */
-    const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+    const progressPercent = Math.round(((currentStep - 1) / (STEPS.length - 1)) * 100);
 
-    /* ═══════════════════ MAIN RENDER ═══════════════════ */
     return (
-        <>
-            <style>{keyframesStyle}</style>
-            <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-slate-50 flex flex-col">
-
-                {/* ── Top Bar ── */}
-                <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-                    {/* Progress Bar */}
-                    <div className="h-1 bg-slate-100">
-                        <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500 ease-out rounded-r-full" style={{ width: `${progressPercent}%` }} />
-                    </div>
-
-                    <div className="flex items-center justify-between px-5 py-3">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white text-lg">eco</span>
-                            </div>
-                            <span className="text-sm font-bold text-slate-700">AgriConnect</span>
-                        </div>
-
-                        {/* Step Pills */}
-                        <div className="flex items-center gap-1.5">
-                            {STEPS.map((step, idx) => (
-                                <React.Fragment key={step.id}>
-                                    <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all duration-300 ${currentStep === step.id
-                                        ? 'bg-green-600 text-white shadow-lg shadow-green-200/50'
-                                        : currentStep > step.id
-                                            ? 'bg-green-100 text-green-600'
-                                            : 'bg-slate-100 text-slate-400'}`}>
-                                        {currentStep > step.id
-                                            ? <span className="material-symbols-outlined text-xs">check</span>
-                                            : <span>{step.id}</span>
-                                        }
-                                        <span className="hidden sm:inline">{step.title}</span>
-                                    </div>
-                                    {idx < STEPS.length - 1 && (
-                                        <div className={`w-4 h-0.5 rounded-full transition-colors duration-300 ${currentStep > step.id ? 'bg-green-300' : 'bg-slate-200'}`} />
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Main Content ── */}
-                <div className="flex-1 flex flex-col items-center justify-start px-4 py-6 sm:py-10">
-                    <div className="w-full max-w-lg">
-
-                        {/* Header */}
-                        <div className="text-center mb-6 sm:mb-8">
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 leading-tight">
-                                {currentStep === 1 && <>Welcome, {userName}! 👋</>}
-                                {currentStep === 2 && <>Let's set up your farm 🌾</>}
-                                {currentStep === 3 && <>Almost done! 🚀</>}
-                            </h1>
-                            <p className="text-slate-400 text-sm mt-1.5">
-                                Step {currentStep} of {STEPS.length} — {STEPS[currentStep - 1].desc}
-                            </p>
-                        </div>
-
-                        {/* Form Card */}
-                        <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/40 border border-slate-100/80 overflow-hidden">
-                            <div className="p-5 sm:p-7">
-                                {currentStep === 1 && renderStep1()}
-                                {currentStep === 2 && renderStep2()}
-                                {currentStep === 3 && renderStep3()}
-                            </div>
-                        </div>
-
-                        {/* Navigation */}
-                        <div className="flex items-center justify-between mt-5 gap-3">
-                            {currentStep > 1 ? (
-                                <Button onClick={handleBack} variant="outline" className="flex-1 sm:flex-none rounded-2xl px-6">
-                                    ← Back
-                                </Button>
-                            ) : <div className="flex-1 sm:flex-none" />}
-
-                            {currentStep < 3 ? (
-                                <Button onClick={handleNext} className="flex-1 sm:flex-none rounded-2xl px-8">
-                                    Continue →
-                                </Button>
-                            ) : (
-                                <Button onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting}
-                                    className="flex-1 sm:flex-none rounded-2xl px-8">
-                                    🚀 Start Farming
-                                </Button>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <p className="text-center text-[11px] text-slate-300 mt-6">
-                            This information helps us connect you with better prices and trusted vendors.
-                        </p>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-[#FDFDFD] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex flex-col justify-center">
+            {/* Background Decorative Elements */}
+            <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-green-100/30 rounded-full blur-[120px]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-[120px]" />
             </div>
-        </>
+
+            <RegistrationHeader
+                title={
+                    currentStep === 1 ? `Welcome, ${userName}! 👋` :
+                        currentStep === 2 ? "Farm Setup 🌾" :
+                            "Final Details 🚀"
+                }
+                subtitle={`Step ${currentStep} of ${STEPS.length}: ${STEPS[currentStep - 1].title}`}
+                icon={STEPS[currentStep - 1].icon}
+                iconBg="bg-green-600"
+                progress={progressPercent}
+                progressText={STEPS[currentStep - 1].desc}
+            />
+
+            <div className="sm:mx-auto sm:w-full sm:max-w-xl">
+                <RegistrationCard
+                    title={STEPS[currentStep - 1].title}
+                    icon={STEPS[currentStep - 1].icon}
+                    iconColor="text-green-600"
+                >
+                    <div className="mt-2">
+                        {currentStep === 1 && renderStep1()}
+                        {currentStep === 2 && renderStep2()}
+                        {currentStep === 3 && renderStep3()}
+                    </div>
+
+                    <div className="mt-10 flex items-center justify-between gap-4">
+                        {currentStep > 1 ? (
+                            <Button
+                                onClick={handleBack}
+                                variant="outline"
+                                className="flex-1 rounded-2xl border-slate-200 text-slate-600 hover:bg-slate-50"
+                            >
+                                <span className="material-symbols-outlined mr-2">arrow_back</span>
+                                Back
+                            </Button>
+                        ) : <div className="flex-1" />}
+
+                        {currentStep < 3 ? (
+                            <Button
+                                onClick={handleNext}
+                                className="flex-1 rounded-2xl bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200"
+                            >
+                                Continue
+                                <span className="material-symbols-outlined ml-2">arrow_forward</span>
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
+                                isLoading={isSubmitting}
+                                className="flex-1 rounded-2xl bg-green-600 hover:bg-green-700 shadow-xl shadow-green-200"
+                            >
+                                Start Farming
+                                <span className="material-symbols-outlined ml-2">eco</span>
+                            </Button>
+                        )}
+                    </div>
+                </RegistrationCard>
+
+                <p className="mt-8 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-relaxed">
+                    Supporting Indian Farmers & Merchants <br />
+                    AgriConnect Digital Ecosystem
+                </p>
+            </div>
+        </div>
     );
 };
 

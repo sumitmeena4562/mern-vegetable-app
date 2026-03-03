@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 
-const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
+const ProductCard = ({ product, trend, onAddToCart, onViewDetails, isComparing, onToggleCompare }) => {
+    // ... rest of component ...
     const farmerName = product.farmer?.fullName || product.farmer?.farmName || product.farmer || 'Unknown Farmer';
 
     const getRating = (r) => {
@@ -37,6 +38,12 @@ const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
                         <span className="material-symbols-outlined text-[14px] text-amber-500 animate-pulse">star</span>
                         {rating}
                     </div>
+                    {trend && product.pricePerUnit <= trend.avgPrice && (
+                        <div className="bg-emerald-500/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg flex items-center gap-1.5 border border-emerald-400/50 animate-in zoom-in duration-500">
+                            <span className="material-symbols-outlined text-[14px]">trending_down</span>
+                            {product.pricePerUnit <= trend.minPrice ? '7-Day Low' : 'Price Drop'}
+                        </div>
+                    )}
                 </div>
                 <div className="absolute top-4 right-4">
                     <div className="bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg border border-white/10 flex items-center gap-1">
@@ -92,9 +99,12 @@ const ProductCard = ({ product, onAddToCart, onViewDetails }) => {
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                    <button onClick={(e) => { e.stopPropagation(); onViewDetails?.(); }} className="flex-1 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 shadow-lg shadow-slate-900/20 hover:shadow-indigo-500/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm">
-                        <span>View Details</span>
-                        <span className="material-symbols-outlined text-base transition-transform group-hover:translate-x-1.5">arrow_forward</span>
+                    <button onClick={(e) => { e.stopPropagation(); onToggleCompare?.(); }} className={`w-12 h-12 rounded-2xl border-2 transition-all flex items-center justify-center shadow-sm ${isComparing ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-100 text-slate-400 hover:border-indigo-100 hover:text-indigo-600'}`}>
+                        <span className="material-symbols-outlined text-lg">{isComparing ? 'check_circle' : 'compare_arrows'}</span>
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onViewDetails?.(); }} className="flex-1 py-3.5 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 text-sm">
+                        <span>Details</span>
+                        <span className="material-symbols-outlined text-base">arrow_forward</span>
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); onAddToCart(); }} className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white border border-indigo-100 transition-all flex items-center justify-center shadow-sm">
                         <span className="material-symbols-outlined text-lg">shopping_cart</span>

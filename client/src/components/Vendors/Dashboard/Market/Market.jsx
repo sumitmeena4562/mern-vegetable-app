@@ -9,6 +9,7 @@ import Select from '../../../../components/ui/Select';
 
 const Market = () => {
     const [products, setProducts] = useState([]);
+    const [trends, setTrends] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -21,6 +22,8 @@ const Market = () => {
     const ITEMS_PER_PAGE = 10;
     const debounceTimer = useRef(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const [compareList, setCompareList] = useState([]);
+    const [showCompareModal, setShowCompareModal] = useState(false);
 
     // 300ms debounce on search
     const handleSearchChange = (value) => {
@@ -37,12 +40,19 @@ const Market = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await api.get('/vendors/products');
-            if (res.data.success) {
-                setProducts(res.data.data.products);
+            const [prodRes, trendRes] = await Promise.all([
+                api.get('/vendors/products'),
+                api.get('/vendors/market-trends')
+            ]);
+
+            if (prodRes.data.success) {
+                setProducts(prodRes.data.data.products);
+            }
+            if (trendRes.data.success) {
+                setTrends(trendRes.data.data);
             }
         } catch (error) {
-            console.error("Failed to fetch market products:", error);
+            console.error("Failed to fetch market data:", error);
             toast.error("Failed to load products");
         } finally {
             setLoading(false);
@@ -72,6 +82,19 @@ const Market = () => {
 
     const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
     const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    const toggleCompare = (product) => {
+        setCompareList(prev => {
+            if (prev.find(p => p._id === product._id)) {
+                return prev.filter(p => p._id !== product._id);
+            }
+            if (prev.length >= 3) {
+                toast.error("Can compare maximum 3 items");
+                return prev;
+            }
+            return [...prev, product];
+        });
+    };
 
     useEffect(() => { setCurrentPage(1); }, [debouncedSearch, filter, maxPrice, isOrganic, sortBy]);
 
@@ -199,9 +222,20 @@ const Market = () => {
                     <>
                         <p className="text-xs font-bold text-slate-400">Showing {paginatedProducts.length} of {filteredProducts.length} items</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {paginatedProducts.map((product) => (
-                                <ProductCard key={product._id} product={product} onAddToCart={() => { addToCart(product, product.minimumOrder || 1); toast.success(`${product.name} added to cart!`); }} onViewDetails={() => setSelectedProduct(product)} />
-                            ))}
+                            {paginatedProducts.map((product) => {
+                                const trend = trends.find(t => t.variety === product.variety);
+                                return (
+                                    <ProductCard
+                                        key={product._id}
+                                        product={product}
+                                        trend={trend}
+                                        isComparing={compareList.find(p => p._id === product._id)}
+                                        onToggleCompare={() => toggleCompare(product)}
+                                        onAddToCart={() => { addToCart(product, product.minimumOrder || 1); toast.success(`${product.name} added to cart!`); }}
+                                        onViewDetails={() => setSelectedProduct(product)}
+                                    />
+                                );
+                            })}
                         </div>
 
                         {/* Pagination */}
@@ -255,6 +289,102 @@ const Market = () => {
                     />
                 )
             }
+
+            {/* Comparison Bar */}
+            {compareList.length > 0 && (
+                <div className="fixed bottom-0 left-0 right-0 z-50 p-4 transition-all animate-in slide-in-from-bottom-10">
+                    <div className="max-w-[800px] mx-auto bg-slate-900 border border-slate-700/50 rounded-[32px] p-2 pl-6 shadow-2xl shadow-indigo-500/20 backdrop-blur-xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex -space-x-3">
+                                {compareList.map((p, i) => (
+                                    <div key={p._id} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-white overflow-hidden shadow-lg animate-in zoom-in duration-300" style={{ animationDelay: `${i * 100}ms` }}>
+                                        <img src={p.images?.[0]?.url || 'https://via.placeholder.com/40'} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="hidden sm:block">
+                                <p className="text-white text-xs font-black uppercase tracking-widest">{compareList.length} Items Selected</p>
+                                <p className="text-slate-400 text-[10px] font-bold">Compare prices & quality side-by-side</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setCompareList([])} className="px-4 py-2.5 text-slate-400 hover:text-white text-xs font-bold transition-colors uppercase tracking-widest">Clear</button>
+                            <button
+                                onClick={() => setShowCompareModal(true)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all scale-100 hover:scale-105"
+                            >
+                                Compare Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Comparison Modal (Simplified for now) */}
+            {showCompareModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-500">
+                    <div className="bg-white w-full max-w-5xl rounded-[40px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900">Compare Produce</h3>
+                                <p className="text-sm font-medium text-slate-500">Compare pricing, variety and farmer ratings</p>
+                            </div>
+                            <button onClick={() => setShowCompareModal(false)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors">
+                                <span className="material-symbols-outlined text-slate-600 font-bold">close</span>
+                            </button>
+                        </div>
+                        <div className="p-8 overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th className="text-left p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Specifications</th>
+                                        {compareList.map(p => (
+                                            <th key={p._id} className="p-4 text-center min-w-[200px]">
+                                                <div className="w-20 h-20 rounded-2xl bg-slate-50 mx-auto mb-3 overflow-hidden border border-slate-100">
+                                                    <img src={p.images?.[0]?.url} className="w-full h-full object-cover" alt="" />
+                                                </div>
+                                                <p className="text-sm font-black text-slate-900 leading-tight">{p.name}</p>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{p.variety}</p>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm font-bold text-slate-700">
+                                    <tr className="border-t border-slate-50">
+                                        <td className="p-4 bg-slate-50/50">Price per Unit</td>
+                                        {compareList.map(p => <td key={p._id} className="p-4 text-center text-indigo-600 font-black">₹{p.pricePerUnit}/{p.unit}</td>)}
+                                    </tr>
+                                    <tr className="border-t border-slate-50">
+                                        <td className="p-4 bg-slate-50/50">Min Order</td>
+                                        {compareList.map(p => <td key={p._id} className="p-4 text-center">{p.minOrder || product.minimumOrder} {p.unit}</td>)}
+                                    </tr>
+                                    <tr className="border-t border-slate-50">
+                                        <td className="p-4 bg-slate-50/50">Farmer</td>
+                                        {compareList.map(p => <td key={p._id} className="p-4 text-center text-slate-500 uppercase tracking-tighter text-xs">{p.farmer?.farmName || p.farmer?.fullName || 'Standard Farm'}</td>)}
+                                    </tr>
+                                    <tr className="border-t border-slate-50">
+                                        <td className="p-4 bg-slate-50/50">Location</td>
+                                        {compareList.map(p => <td key={p._id} className="p-4 text-center"><span className="material-symbols-outlined text-xs align-middle mr-1">location_on</span>{p.location?.city || 'Mandya'}</td>)}
+                                    </tr>
+                                    <tr className="border-t border-slate-50">
+                                        <td className="p-4 bg-slate-50/50">Action</td>
+                                        {compareList.map(p => (
+                                            <td key={p._id} className="p-4 text-center">
+                                                <button
+                                                    onClick={() => { addToCart(p, p.minOrder || 1); toast.success("Added to cart"); }}
+                                                    className="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                                >
+                                                    Add to Cart
+                                                </button>
+                                            </td>
+                                        ))}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

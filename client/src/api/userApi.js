@@ -81,6 +81,16 @@ export const deleteProduct = async (productId) => {
     return response.data;
 };
 
+export const bulkUpdateProductStatus = async (productIds, status) => {
+    const response = await api.put('/farmers/products/bulk-status', { productIds, status });
+    return response.data;
+};
+
+export const bulkDeleteProducts = async (productIds) => {
+    const response = await api.post('/farmers/products/bulk-delete', { productIds });
+    return response.data;
+};
+
 export const updateProduct = async (productId, productData) => {
     const response = await api.put(`/farmers/products/${productId}`, productData);
     return response.data;

@@ -25,6 +25,8 @@ export const registerFarmer = async (req, res) => {
     }
 
     const { fullName, mobile, password, email, ...farmerData } = req.body;
+    console.log(`🚜 [FarmerFlow] Registration Payload:`, { fullName, mobile, email, ...farmerData });
+    console.log(`🚜 [FarmerFlow] Registering new farmer: ${fullName} (${mobile})`);
 
     // 2. Check duplicate
     const existing = await User.findOne({ mobile });
@@ -99,6 +101,7 @@ export const registerFarmer = async (req, res) => {
         token
       }
     });
+    console.log(`✅ [FarmerFlow] Farmer registered successfully: ${user._id}`);
 
   } catch (error) {
     console.error('Farmer Registration Error:', error);
@@ -113,8 +116,15 @@ export const registerFarmer = async (req, res) => {
 // Get Farmer Profile (Own)
 export const getMyProfile = async (req, res) => {
   try {
-    const farmer = await Farmer.findOne({ user: req.user.id }).populate('user', '-password');
+    const farmerId = req.user._id || req.user.id;
+    const farmer = await Farmer.findOne({ user: farmerId }).populate('user', '-password');
+
+    // Safety check if user reference becomes detached
     if (!farmer) return res.status(404).json({ success: false, message: 'Farmer profile not found' });
+    if (!farmer.user) {
+      console.warn(`⚠️ [FarmerProfile] Detached user reference for farmer: ${farmer._id}`);
+    }
+
     res.status(200).json({ success: true, data: farmer });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -134,7 +144,8 @@ export const updateProfile = async (req, res) => {
       if (address) userUpdate.address = address;
       if (location) userUpdate.location = location;
 
-      await User.findByIdAndUpdate(req.user.id, userUpdate);
+      const updateId = req.user._id || req.user.id;
+      await User.findByIdAndUpdate(updateId, userUpdate);
     }
 
     // SECURITY FIX: Only allow safe fields to be updated
@@ -150,7 +161,7 @@ export const updateProfile = async (req, res) => {
     }
 
     const farmer = await Farmer.findOneAndUpdate(
-      { user: req.user.id },
+      { user: req.user._id || req.user.id },
       safeFarmData,
       { new: true, runValidators: true }
     );
@@ -164,7 +175,8 @@ export const updateProfile = async (req, res) => {
 // Get Dashboard Stats (Optimized — DB-level aggregation)
 export const getDashboardStats = async (req, res) => {
   try {
-    const farmerId = req.user.id;
+    const farmerId = req.user._id || req.user.id;
+    console.log(`📊 [FarmerFlow] Fetching dashboard stats for farmer: ${farmerId}`);
     const farmerObjectId = new mongoose.Types.ObjectId(farmerId);
 
     // 1. Product count
@@ -217,6 +229,7 @@ export const getDashboardStats = async (req, res) => {
       }
     });
 
+    console.log(`✅ [FarmerFlow] Stats fetched successfully for farmer: ${farmerId}`);
   } catch (error) {
     console.error('Stats fetch error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch stats' });
@@ -227,7 +240,7 @@ export const getDashboardStats = async (req, res) => {
 // @access  Private (Farmer)
 export const getFarmerAnalytics = async (req, res) => {
   try {
-    const farmerId = req.user.id;
+    const farmerId = req.user._id || req.user.id;
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -330,6 +343,7 @@ export const completeOnboarding = async (req, res) => {
       farmingType, soilType, irrigationSystem, waterSource, hasColdStorage,
       primaryCrop, crops, farmingExperience, preferredPickupTime
     } = req.body;
+    console.log(`🚜 [FarmerFlow] Onboarding Payload:`, req.body);
 
     // Validate required fields
     if (!farmName || !farmSize || !crops || crops.length === 0) {

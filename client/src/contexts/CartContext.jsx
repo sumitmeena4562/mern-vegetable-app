@@ -11,27 +11,43 @@ export const CartProvider = ({ children }) => {
     const { user } = useAuth();
     const [cart, setCart] = useState([]);
 
-    // Load cart from local storage on mount (namespaced by user ID)
+    // Load cart from server or local storage on mount
     useEffect(() => {
-        if (user && user._id) {
-            const savedCart = localStorage.getItem(`vendor_cart_${user._id}`);
-            if (savedCart) {
+        const fetchCart = async () => {
+            if (user && user._id) {
                 try {
-                    // eslint-disable-next-line react-hooks/set-state-in-effect
-                    setCart(JSON.parse(savedCart));
+                    const res = await api.get('/auth/cart');
+                    if (res.data.success && res.data.cart?.length > 0) {
+                        setCart(res.data.cart);
+                    } else {
+                        const savedCart = localStorage.getItem(`vendor_cart_${user._id}`);
+                        if (savedCart) setCart(JSON.parse(savedCart));
+                    }
                 } catch (e) {
-                    console.error("Failed to parse saved cart", e);
+                    console.error("Failed to fetch cart from server", e);
                 }
+            } else {
+                setCart([]);
             }
-        } else {
-            setCart([]);
-        }
+        };
+        fetchCart();
     }, [user]);
 
-    // Save cart to local storage whenever it changes
+    // Save cart to local storage and sync with server whenever it changes
     useEffect(() => {
         if (user && user._id) {
             localStorage.setItem(`vendor_cart_${user._id}`, JSON.stringify(cart));
+
+            // Debounced sync with server
+            const timeoutId = setTimeout(async () => {
+                try {
+                    await api.post('/auth/cart/sync', { cart });
+                } catch (error) {
+                    console.error("Failed to sync cart with server:", error);
+                }
+            }, 2000);
+
+            return () => clearTimeout(timeoutId);
         }
     }, [cart, user]);
 

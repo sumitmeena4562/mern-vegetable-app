@@ -96,7 +96,16 @@ const userSchema = new mongoose.Schema({
       push: { type: Boolean, default: true }
     },
     language: { type: String, default: 'english' }
-  }
+  },
+
+  cart: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product'
+    },
+    quantity: Number,
+    farmerId: mongoose.Schema.Types.ObjectId
+  }]
 
 }, {
   timestamps: true
@@ -108,24 +117,12 @@ userSchema.index({ role: 1, isActive: 1 });
 
 // Hash password
 userSchema.pre('save', async function () {
-  console.log("🔄 User pre-save hook called");
-
-  // Check if password is modified
   if (!this.isModified('password')) {
-    console.log("Password not modified, skipping hash");
-    return; // ✅ Just return, no next() needed
+    return;
   }
 
-  try {
-    console.log("Hashing password...");
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    console.log("Password hashed successfully");
-    // ✅ No need to call next() in async functions in Mongoose v6+
-  } catch (error) {
-    console.error("Password hash error:", error);
-    throw error; // ✅ Throw error instead of calling next(error)
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare password

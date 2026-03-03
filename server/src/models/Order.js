@@ -142,7 +142,11 @@ const orderSchema = new mongoose.Schema({
     trackingId: String,
     estimatedDelivery: Date,
     actualDelivery: Date,
-    deliveryProof: [String]
+    deliveryProof: [String],
+    deliveryOtp: {
+      type: String,
+      select: false
+    }
   },
 
   // Review
@@ -195,7 +199,6 @@ orderSchema.pre('validate', async function () {
 // Indexes
 orderSchema.index({ farmer: 1, status: 1 });
 orderSchema.index({ buyer: 1, status: 1 });
-orderSchema.index({ orderId: 1 });
 orderSchema.index({ createdAt: -1 });
 
 // Virtual for total items

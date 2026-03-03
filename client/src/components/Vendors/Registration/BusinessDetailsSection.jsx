@@ -66,6 +66,48 @@ const BusinessDetailsSection = ({ formData, errors, isTouched, handleChange, han
                     />
                 </div>
 
+                {/* Shop Photo Upload */}
+                <div className="md:col-span-2">
+                    <label className="block text-[13px] font-bold text-slate-700 mb-3">
+                        Shop Photos <span className="text-slate-400 font-normal ml-1 lowercase">(Max 3)</span>
+                    </label>
+                    <div className="grid grid-cols-1 gap-4">
+                        <PhotoUpload
+                            data={{ images: formData.shopPhotos || [] }}
+                            onChange={(name, files) => onPhotoChange('shopPhotos', files)}
+                        />
+                    </div>
+                </div>
+
+                {/* Preferred Categories */}
+                <div className="md:col-span-2 space-y-3">
+                    <label className="block text-[13px] font-bold text-slate-700">
+                        Preferred Categories <span className="text-slate-400 font-normal ml-1 lowercase">(Personalize feed)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                        {['tomato', 'potato', 'onion', 'carrot', 'spinach', 'cauliflower', 'brinjal', 'chili', 'cabbage', 'okra', 'cucumber'].map(cat => (
+                            <button
+                                key={cat}
+                                type="button"
+                                onClick={() => {
+                                    const current = formData.preferredCategories || [];
+                                    const updated = current.includes(cat)
+                                        ? current.filter(c => c !== cat)
+                                        : [...current, cat];
+                                    onCategoriesChange(updated);
+                                }}
+                                className={`px-4 py-2 rounded-full text-xs font-bold capitalize transition-all border-2
+                                    ${formData.preferredCategories?.includes(cat)
+                                        ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200'
+                                        : 'bg-white border-slate-100 text-slate-500 hover:border-violet-200'
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Daily Capacity */}
                 <div className="md:col-span-1">
                     <Input

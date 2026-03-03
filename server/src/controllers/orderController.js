@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import Notification from '../models/Notification.js';
+import mongoose from 'mongoose';
 
 /**
  * @desc    Create order(s) from vendor cart
@@ -8,27 +9,36 @@ import Notification from '../models/Notification.js';
  * @access  Private (Vendor)
  */
 export const createOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const { items, deliveryType, paymentMethod, deliveryAddress, notes } = req.body;
+        console.log(`🛒 [OrderFlow] Payload Received:`, req.body);
+        console.log(`🛒 [OrderFlow] Initiating order creation for user: ${req.user.id}`);
+        console.log(`📦 [OrderFlow] Items count: ${items?.length || 0}`);
 
         if (!items || items.length === 0) {
+            console.error('❌ [OrderFlow] Attempted to create order with empty cart');
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ success: false, message: 'Cart is empty' });
         }
 
         // Group items by farmer
         const farmerGroups = {};
         for (const item of items) {
-            const product = await Product.findById(item.productId).populate('farmer', 'fullName');
+            const product = await Product.findById(item.productId).session(session).populate('farmer', 'fullName');
             if (!product) {
-                return res.status(400).json({ success: false, message: `Product not found: ${item.productId}` });
+                console.error(`❌ [OrderFlow] Product not found: ${item.productId}`);
+                throw new Error(`Product not found: ${item.productId}`);
             }
             if (product.availableQuantity < item.quantity) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Insufficient stock for ${product.name}. Available: ${product.availableQuantity} ${product.unit}`
-                });
+                console.error(`❌ [OrderFlow] Insufficient stock: ${product.name} (Req: ${item.quantity}, Avail: ${product.availableQuantity})`);
+                throw new Error(`Insufficient stock for ${product.name}. Available: ${product.availableQuantity} ${product.unit}`);
             }
 
+            console.log(`✅ [OrderFlow] Checked stock for ${product.name} - OK`);
             const farmerId = product.farmer._id?.toString() || product.farmer.toString();
             if (!farmerGroups[farmerId]) {
                 farmerGroups[farmerId] = { farmerId, products: [] };
@@ -53,7 +63,7 @@ export const createOrder = async (req, res) => {
             const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
             const orderId = `ORDV${timestamp}${random}`;
 
-            const order = await Order.create({
+            const [order] = await Order.create([{
                 orderId,
                 farmer: group.farmerId,
                 buyer: req.user.id,
@@ -69,31 +79,48 @@ export const createOrder = async (req, res) => {
                 },
                 notes: notes || '',
                 status: 'pending'
-            });
+            }], { session });
 
             // Deduct product stock
             for (const p of group.products) {
-                await Product.findByIdAndUpdate(p.product, {
-                    $inc: { availableQuantity: -p.quantity }
-                });
+                const updatedProduct = await Product.findOneAndUpdate(
+                    { _id: p.product, availableQuantity: { $gte: p.quantity } },
+                    { $inc: { availableQuantity: -p.quantity } },
+                    { session, new: true }
+                );
+
+                if (!updatedProduct) {
+                    throw new Error(`Stock conflict for ${p.name}. Please try again.`);
+                }
             }
 
-            // Notify farmer
-            const notif = await Notification.create({
+            // Notify farmer (Notifications can be outside or inside transaction, depending on preference)
+            const notif = await Notification.create([{
                 user: group.farmerId,
                 title: 'New Order Received! 🛒',
                 message: `You have a new order #${order.orderId} worth ₹${totalAmount}`,
                 type: 'order',
                 metadata: { orderId: order._id }
-            });
-
-            // Real-time notification
-            const io = req.app.get('io');
-            if (io) {
-                io.to(group.farmerId).emit('receive-notification', notif);
-            }
+            }], { session });
 
             createdOrders.push(order);
+            console.log(`📦 [OrderFlow] Created order #${order.orderId} for farmer: ${group.farmerId}`);
+        }
+
+        console.log(`💾 [OrderFlow] Committing transaction for ${createdOrders.length} orders...`);
+        await session.commitTransaction();
+        session.endSession();
+        console.log('✅ [OrderFlow] Transaction committed successfully');
+
+        // Send real-time notifications AFTER commit
+        const io = req.app.get('io');
+        if (io) {
+            createdOrders.forEach(async (order) => {
+                const notif = await Notification.findOne({ 'metadata.orderId': order._id });
+                if (notif) {
+                    io.to(order.farmer.toString()).emit('receive-notification', notif);
+                }
+            });
         }
 
         res.status(201).json({
@@ -103,8 +130,10 @@ export const createOrder = async (req, res) => {
         });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         console.error('createOrder error:', error);
-        res.status(500).json({ success: false, message: 'Failed to place order', error: error.message });
+        res.status(500).json({ success: false, message: error.message || 'Failed to place order' });
     }
 };
 
@@ -192,9 +221,13 @@ export const updateOrderStatus = async (req, res) => {
         order.status = status;
         if (notes) order.notes = notes;
 
-        // If status is ready_for_pickup, update individual product statuses too
+        // If status is ready_for_pickup, generate a 4-digit OTP
         if (status === 'ready_for_pickup') {
             order.products.forEach(p => p.status = 'packed');
+
+            // Generate a 4-digit numeric OTP
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
+            order.logistics.deliveryOtp = otp;
         }
 
         await order.save();
@@ -228,6 +261,76 @@ export const updateOrderStatus = async (req, res) => {
     } catch (error) {
         console.error('updateOrderStatus error:', error);
         res.status(500).json({ success: false, message: 'Failed to update order status' });
+    }
+};
+
+/**
+ * @desc    Verify delivery OTP and complete order
+ * @route   PUT /api/farmers/orders/:id/verify-delivery
+ * @access  Private (Farmer)
+ */
+export const verifyDeliveryOtp = async (req, res) => {
+    try {
+        const { otp } = req.body;
+
+        const order = await Order.findOne({
+            _id: req.params.id,
+            farmer: req.user.id
+        }).select('+logistics.deliveryOtp');
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.status !== 'ready_for_pickup' && order.status !== 'in_transit') {
+            return res.status(400).json({ success: false, message: 'Order is not in a deliverable state' });
+        }
+
+        if (order.logistics.deliveryOtp !== otp) {
+            return res.status(400).json({ success: false, message: 'Invalid delivery OTP' });
+        }
+
+        // Mark as delivered
+        order.status = 'delivered';
+        order.logistics.actualDelivery = new Date();
+        order.payment.status = 'paid'; // Assumes delivery confirms payment if COD, or finalizes if online
+        order.payment.paidAt = new Date();
+
+        // Clear OTP
+        order.logistics.deliveryOtp = undefined;
+
+        await order.save();
+
+        // Notify Buyer
+        const notif = await Notification.create({
+            user: order.buyer,
+            title: 'Order Delivered! 📦',
+            message: `Your order #${order.orderId} has been successfully delivered.`,
+            type: 'order_update',
+            metadata: { orderId: order._id }
+        });
+
+        // Emit real-time socket notification
+        const io = req.app.get('io');
+        if (io) {
+            io.to(order.buyer.toString()).emit('receive-notification', notif);
+            io.to(order.buyer.toString()).emit('order-status-updated', {
+                orderId: order._id,
+                orderCode: order.orderId,
+                status: 'delivered',
+                updatedAt: new Date()
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Order delivered successfully',
+            data: order
+        });
+
+    } catch (error) {
+        console.error('verifyDeliveryOtp error:', error);
+        res.status(500).json({ success: false, message: 'Verification failed', error: error.message });
     }
 };
 

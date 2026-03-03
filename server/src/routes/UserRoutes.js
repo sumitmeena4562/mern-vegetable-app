@@ -9,7 +9,9 @@ import {
     sendForgotPasswordOtp,
     verifyResetOtp,
     resetPasswordWithOtp,
-    loginWithOtp
+    loginWithOtp,
+    getCart,
+    syncCart
 } from "../controllers/userController.js";
 import auth from "../middleware/auth.js";
 const router = express.Router();
@@ -35,5 +37,9 @@ router.post('/reset-password-with-otp', auth(), resetPasswordWithOtp);
 
 // Unified Profile Route (Restored)
 router.get('/profile', auth(), getProfile);
+
+// Cart Routes
+router.get('/cart', auth(), getCart);
+router.post('/cart/sync', auth(), syncCart);
 
 export default router;

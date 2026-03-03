@@ -74,3 +74,4 @@ export const uploadMultiple = (fieldName, maxCount) => upload.array(fieldName, m
 export const uploadFields = (fields) => upload.fields(fields);
 
 export { cloudinary };
+export default upload;

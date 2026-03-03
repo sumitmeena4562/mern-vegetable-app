@@ -17,6 +17,9 @@ const VendorOrders = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [showDateRange, setShowDateRange] = useState(false);
     const ORDERS_PER_PAGE = 9;
 
     const statuses = [
@@ -146,7 +149,23 @@ const VendorOrders = () => {
     const filteredOrders = orders.filter(o => {
         const matchesFilter = filter === 'All' || o.status.toLowerCase() === filter.toLowerCase();
         const matchesSearch = !searchQuery.trim() || o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.farmer.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesFilter && matchesSearch;
+
+        let matchesDate = true;
+        if (startDate || endDate) {
+            const orderDate = new Date(o.date);
+            if (startDate) {
+                const s = new Date(startDate);
+                s.setHours(0, 0, 0, 0);
+                matchesDate = matchesDate && orderDate >= s;
+            }
+            if (endDate) {
+                const e = new Date(endDate);
+                e.setHours(23, 59, 59, 999);
+                matchesDate = matchesDate && orderDate <= e;
+            }
+        }
+
+        return matchesFilter && matchesSearch && matchesDate;
     });
 
     const totalPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE);
@@ -155,181 +174,214 @@ const VendorOrders = () => {
     useEffect(() => { setCurrentPage(1); }, [searchQuery, filter]);
 
     return (
-        <>
-            <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
-
-                {/* Page Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Purchase History</h2>
-                        <p className="text-slate-500 font-medium text-sm mt-1">Track and manage your orders from farmers</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all w-64 md:w-80">
-                            <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by order ID or farmer..."
-                                className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full placeholder:text-slate-300"
-                            />
-                            {searchQuery && (
-                                <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
-                                    <span className="material-symbols-outlined text-lg">close</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Purchase History</h2>
+                    <p className="text-slate-500 font-medium text-sm mt-1">Track and manage your orders from farmers</p>
                 </div>
+                <div className="flex flex-col md:flex-row items-center gap-2">
+                    <button
+                        onClick={() => setShowDateRange(!showDateRange)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all border-2 ${showDateRange ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200 shadow-sm'}`}
+                    >
+                        <span className="material-symbols-outlined text-lg">calendar_today</span>
+                        Date Range {(startDate || endDate) && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
+                    </button>
 
-                {/* Status Tabs */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
-                    {statuses.map((s) => (
-                        <button
-                            key={s.id}
-                            onClick={() => setFilter(s.id)}
-                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap border-2 ${filter === s.id
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200'
-                                : 'bg-white text-slate-500 border-white hover:border-slate-100 hover:bg-slate-50'
-                                }`}
-                        >
-                            <span className="material-symbols-outlined text-lg">{s.icon}</span>
-                            {s.label}
-                        </button>
-                    ))}
-                </div>
-
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <Skeleton key={i} variant="rectangular" className="h-48 rounded-[32px] w-full" />
-                        ))}
-                    </div>
-                ) : filteredOrders.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white/40 backdrop-blur-xl border border-white rounded-[32px]">
-                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 opacity-50">
-                            <span className="material-symbols-outlined text-5xl">{searchQuery ? 'search_off' : 'shopping_cart_off'}</span>
-                        </div>
-                        <h3 className="text-xl font-black text-slate-800 tracking-tight">{searchQuery ? 'No matching orders' : 'No orders found'}</h3>
-                        <p className="text-sm font-medium mt-1">{searchQuery ? 'Try a different search term.' : 'Try changing the status filter or complete a new purchase.'}</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* Result count */}
-                        <div className="flex items-center justify-between">
-                            <p className="text-xs font-bold text-slate-400">
-                                Showing {paginatedOrders.length} of {filteredOrders.length} orders
-                                {searchQuery && <span> for "{searchQuery}"</span>}
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {paginatedOrders.map((order) => (
-                                <div
-                                    key={order.id}
-                                    className="bg-white group rounded-[32px] p-6 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden relative"
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <Badge type={order.status.toLowerCase()}>
-                                            {order.status}
-                                        </Badge>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                            {new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{order.id}</h4>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 overflow-hidden border border-slate-200">
-                                                    <span className="material-symbols-outlined text-[12px]">agriculture</span>
-                                                </div>
-                                                <p className="text-xs font-bold text-slate-600 uppercase tracking-tighter">{order.farmer}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-6 py-4 border-y border-slate-50">
-                                            <div className="flex-1">
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Items Summary</p>
-                                                <p className="text-sm font-black text-slate-800 tracking-tight truncate pr-2">{order.items}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value</p>
-                                                <p className="text-sm font-black text-indigo-600 tracking-tight">₹{order.total}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <button onClick={() => setSelectedOrder(order)} className="flex-1 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">
-                                                View Details
-                                            </button>
-                                            <button className="w-12 h-12 bg-white text-slate-400 rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
-                                                <span className="material-symbols-outlined text-lg">receipt_long</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Decorative Background Element */}
-                                    <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-slate-50 rounded-full group-hover:scale-150 group-hover:bg-indigo-50 transition-transform duration-700 pointer-events-none -z-0 opacity-50"></div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-2 pt-4">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-lg">chevron_left</span>
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                    .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                                    .map((page, idx, arr) => (
-                                        <React.Fragment key={page}>
-                                            {idx > 0 && arr[idx - 1] !== page - 1 && (
-                                                <span className="text-slate-300 text-sm font-bold">…</span>
-                                            )}
-                                            <button
-                                                onClick={() => setCurrentPage(page)}
-                                                className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page
-                                                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
-                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        </React.Fragment>
-                                    ))}
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                                >
-                                    <span className="material-symbols-outlined text-lg">chevron_right</span>
-                                </button>
-                            </div>
+                    <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all w-64 md:w-80">
+                        <span className="material-symbols-outlined text-slate-400 text-lg">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by ID or farmer..."
+                            className="bg-transparent outline-none text-sm font-medium text-slate-700 w-full placeholder:text-slate-300"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-300 hover:text-slate-500">
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
                         )}
-                    </>
-                )}
+                    </div>
+                </div>
             </div>
 
+            {/* Date Range Picker Panel */}
+            {showDateRange && (
+                <div className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm flex flex-wrap items-end gap-6 animate-in slide-in-from-top-2">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Start Date</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="block w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">End Date</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="block w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 transition-all"
+                        />
+                    </div>
+                    <button
+                        onClick={() => { setStartDate(''); setEndDate(''); }}
+                        className="text-xs font-bold text-slate-400 hover:text-red-500 underline underline-offset-2 transition-colors px-2 py-2 mb-1"
+                    >
+                        Clear Dates
+                    </button>
+                </div>
+            )}
+
+            {/* Status Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                {statuses.map((s) => (
+                    <button
+                        key={s.id}
+                        onClick={() => setFilter(s.id)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap border-2 ${filter === s.id
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200'
+                            : 'bg-white text-slate-500 border-white hover:border-slate-100 hover:bg-slate-50'
+                            }`}
+                    >
+                        <span className="material-symbols-outlined text-lg">{s.icon}</span>
+                        {s.label}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <Skeleton key={i} variant="rectangular" className="h-48 rounded-[32px] w-full" />
+                    ))}
+                </div>
+            ) : filteredOrders.length === 0 ? (
+                <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white/40 backdrop-blur-xl border border-white rounded-[32px]">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 opacity-50">
+                        <span className="material-symbols-outlined text-5xl">{searchQuery ? 'search_off' : 'shopping_cart_off'}</span>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 tracking-tight">{searchQuery ? 'No matching orders' : 'No orders found'}</h3>
+                    <p className="text-sm font-medium mt-1">{searchQuery ? 'Try a different search term.' : 'Try changing the status filter or complete a new purchase.'}</p>
+                </div>
+            ) : (
+                <>
+                    {/* Result count */}
+                    <div className="flex items-center justify-between">
+                        <p className="text-xs font-bold text-slate-400">
+                            Showing {paginatedOrders.length} of {filteredOrders.length} orders
+                            {searchQuery && <span> for "{searchQuery}"</span>}
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {paginatedOrders.map((order) => (
+                            <div
+                                key={order.id}
+                                className="bg-white group rounded-[32px] p-6 border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-indigo-200/30 transition-all overflow-hidden relative"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <Badge type={order.status.toLowerCase()}>
+                                        {order.status}
+                                    </Badge>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        {new Date(order.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-lg font-black text-slate-900 tracking-tight leading-tight">{order.id}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 overflow-hidden border border-slate-200">
+                                                <span className="material-symbols-outlined text-[12px]">agriculture</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-600 uppercase tracking-tighter">{order.farmer}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-6 py-4 border-y border-slate-50">
+                                        <div className="flex-1">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Items Summary</p>
+                                            <p className="text-sm font-black text-slate-800 tracking-tight truncate pr-2">{order.items}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value</p>
+                                            <p className="text-sm font-black text-indigo-600 tracking-tight">₹{order.total}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button onClick={() => setSelectedOrder(order)} className="flex-1 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">
+                                            View Details
+                                        </button>
+                                        <button className="w-12 h-12 bg-white text-slate-400 rounded-xl border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 transition-all flex items-center justify-center shadow-sm">
+                                            <span className="material-symbols-outlined text-lg">receipt_long</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Decorative Background Element */}
+                                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-slate-50 rounded-full group-hover:scale-150 group-hover:bg-indigo-50 transition-transform duration-700 pointer-events-none -z-0 opacity-50"></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 pt-4">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_left</span>
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                .map((page, idx, arr) => (
+                                    <React.Fragment key={page}>
+                                        {idx > 0 && arr[idx - 1] !== page - 1 && (
+                                            <span className="text-slate-300 text-sm font-bold">…</span>
+                                        )}
+                                        <button
+                                            onClick={() => setCurrentPage(page)}
+                                            className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${currentPage === page
+                                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-300'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    </React.Fragment>
+                                ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <span className="material-symbols-outlined text-lg">chevron_right</span>
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
+
             {/* Order Detail Modal */}
-            {
-                selectedOrder && (
-                    <VendorOrderDetailModal
-                        order={selectedOrder}
-                        onClose={() => setSelectedOrder(null)}
-                        onCancel={handleCancelOrder}
-                        onReview={handleReview}
-                        onReorder={handleReorder}
-                    />
-                )
-            }
-        </>
+            {selectedOrder && (
+                <VendorOrderDetailModal
+                    order={selectedOrder}
+                    onClose={() => setSelectedOrder(null)}
+                    onCancel={handleCancelOrder}
+                    onReview={handleReview}
+                    onReorder={handleReorder}
+                />
+            )}
+        </div>
     );
 };
 

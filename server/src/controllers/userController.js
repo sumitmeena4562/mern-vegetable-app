@@ -20,7 +20,7 @@ export const login = async (req, res) => {
             identifier = mobile || email;
         }
 
-        console.log("Trying login for:", identifier);
+        console.log(`🔑 [UserAuth] Login attempt for identifier: ${identifier}`);
 
         // Determine verify field (Email or Mobile)
         const isEmail = identifier && identifier.includes('@');
@@ -61,6 +61,7 @@ export const login = async (req, res) => {
                 token
             }
         });
+        console.log(`✅ [UserAuth] Login successful for: ${identifier}`);
 
     } catch (error) {
         console.error('Login error:', error);
@@ -107,7 +108,7 @@ export const sendOtp = async (req, res) => {
         const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
         if (!isEmail) await Otp.deleteMany({ mobile: uniqueId });
-        else await Otp.deleteMany({ email: uniqueId });
+        else await Otp.deleteMany({ email: uniqueId.toLowerCase() });
 
         await Otp.create({
             mobile: userMobile,
@@ -212,10 +213,16 @@ export const loginWithOtp = async (req, res) => {
 // Get Current User (Context Loader)
 export const getMe = async (req, res) => {
     try {
+        console.log(`👤 [UserAuth] Fetching profile for user ID: ${req.user.id}`);
         const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            console.warn(`⚠️ [UserAuth] User not found during getMe: ${req.user.id}`);
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        console.log(`✅ [UserAuth] Profile fetched for: ${user.fullName}`);
         res.status(200).json({ success: true, user });
     } catch (error) {
-        console.error("Error fetching profile:", error);
+        console.error("❌ [UserAuth] Error fetching profile:", error);
         res.status(500).json({ success: false, message: "Server Error" });
     }
 };
@@ -233,6 +240,9 @@ export const getProfile = async (req, res) => {
             profileData = await Vendor.findOne({ user: userId }).populate('user', '-password');
         } else if (role === 'customer') {
             profileData = await Customer.findOne({ user: userId }).populate('user', '-password');
+        } else {
+            console.warn(`⚠️ [GetProfile] Unsupported role: ${role}`);
+            return res.status(400).json({ success: false, message: "Invalid role for profile fetch" });
         }
 
         if (!profileData) {
@@ -361,5 +371,41 @@ export const resetPasswordWithOtp = async (req, res) => {
     } catch (error) {
         console.error("Reset Password Error:", error);
         res.status(500).json({ success: false, message: "Failed to reset password" });
+    }
+};
+
+export const syncCart = async (req, res) => {
+    try {
+        const { cart } = req.body;
+        console.log(`🛒 [UserCart] Sync Payload:`, req.body);
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        console.log(`🛒 [UserCart] Syncing cart for user: ${req.user.id}, items: ${cart?.length || 0}`);
+        user.cart = cart || [];
+        await user.save();
+        console.log(`✅ [UserCart] Cart synced for user: ${req.user.id}`);
+
+        res.status(200).json({ success: true, message: 'Cart synced' });
+    } catch (error) {
+        console.error('syncCart error:', error);
+        res.status(500).json({ success: false, message: 'Failed to sync cart' });
+    }
+};
+
+export const getCart = async (req, res) => {
+    try {
+        console.log(`🛒 [UserCart] Fetching cart for user: ${req.user.id}`);
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            console.warn(`⚠️ [UserCart] User not found during getCart: ${req.user.id}`);
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        console.log(`✅ [UserCart] Cart fetched for user: ${req.user.id}, items: ${user.cart?.length || 0}`);
+        res.status(200).json({ success: true, cart: user.cart || [] });
+    } catch (error) {
+        console.error('getCart error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch cart' });
     }
 };

@@ -5,11 +5,33 @@ import Badge from '@/components/ui/Badge';
 
 const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
     const [updating, setUpdating] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [verifying, setVerifying] = useState(false);
 
     const handleAction = async (newStatus) => {
         setUpdating(true);
         await onUpdateStatus(order._id, newStatus);
         setUpdating(false);
+    };
+
+    const handleVerifyOtp = async () => {
+        if (!otp || otp.length !== 4) {
+            alert('Please enter a valid 4-digit OTP');
+            return;
+        }
+        setVerifying(true);
+        try {
+            const res = await api.put(`/farmers/orders/${order._id}/verify-delivery`, { otp });
+            if (res.data.success) {
+                onUpdateStatus(order._id, 'delivered'); // Trigger refresh in parent
+                onClose();
+            }
+        } catch (error) {
+            console.error('OTP Verification failed:', error);
+            alert(error.response?.data?.message || 'Invalid OTP');
+        } finally {
+            setVerifying(false);
+        }
     };
 
     const statusFlow = {
@@ -91,6 +113,34 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* Delivery Verification - OTP Input */}
+                {(order.status === 'ready_for_pickup' || order.status === 'in_transit') && (
+                    <div className="p-6 bg-indigo-50 border border-indigo-200 rounded-3xl space-y-4 shadow-sm">
+                        <div className="flex items-center gap-3 text-indigo-700">
+                            <span className="material-symbols-outlined font-black">lock_open</span>
+                            <span className="text-sm font-black uppercase tracking-widest">Delivery Verification</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-500">Ask the Vendor for the 4-digit delivery code to complete this transaction.</p>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                maxLength={4}
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                placeholder="4-Digit OTP"
+                                className="flex-1 bg-white border-2 border-slate-200 rounded-2xl px-5 py-3.5 text-lg font-black tracking-[0.5em] text-center focus:border-indigo-500 outline-none transition-all placeholder:tracking-normal placeholder:text-sm placeholder:font-bold"
+                            />
+                            <Button
+                                isLoading={verifying}
+                                onClick={handleVerifyOtp}
+                                className="bg-indigo-600 px-8"
+                            >
+                                Verify
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Notes or Extras */}
                 {order.notes && (
