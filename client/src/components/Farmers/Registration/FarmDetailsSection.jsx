@@ -1,5 +1,6 @@
 import React from 'react';
-import CustomSelect from '../../common/CustomSelect';
+import Select from '../../ui/Select';
+import Input from '../../ui/Input';
 
 const FarmDetailsSection = ({
     formData,
@@ -18,47 +19,38 @@ const FarmDetailsSection = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* Farm Size */}
-                    <div className="relative group md:col-span-1">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            Farm Size (Acres) <span className="text-red-500">*</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.farmSize && errors.farmSize ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-amber-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.farmSize && errors.farmSize ? 'text-red-500' : formData.farmSize ? 'text-amber-500' : 'text-slate-400'}`}>landscape</span>
-                            </div>
-                            <input
-                                type="number"
-                                name="farmSize"
-                                value={formData.farmSize}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                min="0.1"
-                                step="0.1"
-                                className={`w-full pl-12 pr-12 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] text-slate-700 font-medium
-                  ${isTouched.farmSize && errors.farmSize ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-50'}
-                `}
-                                placeholder="e.g. 2.5"
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                <span className="text-slate-400 font-medium text-sm">Acres</span>
-                            </div>
-                        </div>
-                        {isTouched.farmSize && errors.farmSize && <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span> {errors.farmSize}</p>}
+                    <div className="md:col-span-1">
+                        <Input
+                            label={<>Farm Size (Acres) <span className="text-red-500">*</span></>}
+                            name="farmSize"
+                            type="number"
+                            value={formData.farmSize}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            min="0.1"
+                            step="0.1"
+                            icon="landscape"
+                            suffix="Acres"
+                            placeholder="e.g. 2.5"
+                            error={isTouched.farmSize && errors.farmSize ? errors.farmSize : null}
+                            className={`rounded-full ${isTouched.farmSize && errors.farmSize ? '' : 'focus:border-amber-500 focus:ring-amber-50'}`}
+                        />
                     </div>
 
                     {/* Preferred Pickup Time */}
-                    <CustomSelect
+                    <Select
                         label="Preferred Pickup Time"
                         name="pickup"
                         value={formData.pickup}
                         options={[
+                            { value: "", label: "Select a time" },
                             { value: 'Morning (6 AM - 10 AM)', label: 'Morning (6 AM - 10 AM)' },
                             { value: 'Afternoon (12 PM - 4 PM)', label: 'Afternoon (12 PM - 4 PM)' },
                             { value: 'Evening (4 PM - 8 PM)', label: 'Evening (4 PM - 8 PM)' }
                         ]}
                         onChange={handleChange}
-                        placeholder="Select a time"
                         icon="schedule"
+                        className="rounded-full"
                     />
 
                 </div>

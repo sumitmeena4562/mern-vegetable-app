@@ -42,7 +42,7 @@ const VendorInvoice = () => {
         );
     }
 
-    const { farmer, products, orderId, createdAt, finalAmount, totalAmount, deliveryCharges, tax, discount, buyer } = order;
+    const { farmer, products, orderId, createdAt, finalAmount, totalAmount, deliveryCharges, tax, discount } = order;
 
     return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:p-0 print:bg-white flex flex-col items-center">
@@ -75,7 +75,7 @@ const VendorInvoice = () => {
                             <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-white text-2xl">eco</span>
                             </div>
-                            <h1 className="text-3xl font-black text-slate-900 tracking-tight">AgriConnect</h1>
+                            <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none pt-1">AgriConnect</h1>
                         </div>
                         <p className="text-slate-500 font-medium">B2B Sourcing Invoice</p>
                     </div>

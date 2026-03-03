@@ -1,4 +1,5 @@
 import React from 'react';
+import Input from '../../ui/Input';
 
 const CropsSection = ({
     formData,
@@ -62,28 +63,18 @@ const CropsSection = ({
 
                 {/* Conditional "Other Crops" Input with smooth animation */}
                 <div className={`overflow-hidden transition-all duration-500 ease-in-out ${formData.crops.others ? 'max-h-40 opacity-100 mt-6' : 'max-h-0 opacity-0 mt-0'}`}>
-                    <div className="relative group">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            Specify Other Crops <span className="text-red-500">*</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-emerald-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.otherCropName && errors.otherCropName ? 'text-red-500' : formData.otherCropName ? 'text-emerald-500' : 'text-slate-400'}`}>edit_note</span>
-                            </div>
-                            <input
-                                type="text"
-                                name="otherCropName"
-                                value={formData.otherCropName}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
-                  ${isTouched.otherCropName && errors.otherCropName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'}
-                `}
-                                placeholder="e.g. Wheat, Brinjal, Cabbage"
-                            />
-                        </div>
-                        {isTouched.otherCropName && errors.otherCropName && <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span> {errors.otherCropName}</p>}
-                    </div>
+                    <Input
+                        label={<>Specify Other Crops <span className="text-red-500">*</span></>}
+                        name="otherCropName"
+                        type="text"
+                        value={formData.otherCropName}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        icon="edit_note"
+                        placeholder="e.g. Wheat, Brinjal, Cabbage"
+                        error={isTouched.otherCropName && errors.otherCropName ? errors.otherCropName : null}
+                        className={`rounded-full ${isTouched.otherCropName && errors.otherCropName ? '' : 'focus:border-emerald-500 focus:ring-emerald-50'}`}
+                    />
                 </div>
             </div>
         </div>

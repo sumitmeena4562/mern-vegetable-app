@@ -1,4 +1,5 @@
 import React from 'react';
+import Input from '../../ui/Input';
 
 const BusinessDetailsSection = ({
     formData,
@@ -54,78 +55,53 @@ const BusinessDetailsSection = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Shop Name */}
-                    <div className="relative group md:col-span-2">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            Shop/Business Name <span className="text-red-500">*</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.shopName && errors.shopName ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-violet-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.shopName && errors.shopName ? 'text-red-500' : formData.shopName ? 'text-violet-600' : 'text-slate-400'}`}>storefront</span>
-                            </div>
-                            <input
-                                type="text"
-                                name="shopName"
-                                value={formData.shopName}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
-                  ${isTouched.shopName && errors.shopName ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-50'}
-                `}
-                                placeholder="e.g. Fresh Mart, The Grand Hotel"
-                            />
-                        </div>
-                        {isTouched.shopName && errors.shopName && <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span> {errors.shopName}</p>}
+                    <div className="md:col-span-2">
+                        <Input
+                            label={<>Shop/Business Name <span className="text-red-500">*</span></>}
+                            name="shopName"
+                            type="text"
+                            value={formData.shopName}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            icon="storefront"
+                            placeholder="e.g. Fresh Mart, The Grand Hotel"
+                            error={isTouched.shopName && errors.shopName ? errors.shopName : null}
+                            className="rounded-full focus:ring-violet-500/30 focus:border-violet-500"
+                        />
                     </div>
 
                     {/* Daily Capacity */}
-                    <div className="relative group">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            Daily Capacity (kg) <span className="text-red-500">*</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.dailyCapacity && errors.dailyCapacity ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-violet-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.dailyCapacity && errors.dailyCapacity ? 'text-red-500' : formData.dailyCapacity ? 'text-violet-600' : 'text-slate-400'}`}>inventory_2</span>
-                            </div>
-                            <input
-                                type="number"
-                                name="dailyCapacity"
-                                value={formData.dailyCapacity}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                min="1"
-                                className={`w-full pl-12 pr-12 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
-                  ${isTouched.dailyCapacity && errors.dailyCapacity ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-50'}
-                `}
-                                placeholder="e.g. 50"
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                <span className="text-slate-400 font-medium text-sm">kg</span>
-                            </div>
-                        </div>
-                        {isTouched.dailyCapacity && errors.dailyCapacity && <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span> {errors.dailyCapacity}</p>}
+                    <div className="md:col-span-1">
+                        <Input
+                            label={<>Daily Capacity (kg) <span className="text-red-500">*</span></>}
+                            name="dailyCapacity"
+                            type="number"
+                            value={formData.dailyCapacity}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            min="1"
+                            icon="inventory_2"
+                            suffix="kg"
+                            placeholder="e.g. 50"
+                            error={isTouched.dailyCapacity && errors.dailyCapacity ? errors.dailyCapacity : null}
+                            className="rounded-full focus:ring-violet-500/30 focus:border-violet-500"
+                        />
                     </div>
 
                     {/* FSSAI Number */}
-                    <div className="relative group">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            FSSAI Number <span className="text-slate-400 font-normal ml-1 lowercase">(Optional)</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.fssaiNumber && errors.fssaiNumber ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-violet-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.fssaiNumber && errors.fssaiNumber ? 'text-red-500' : formData.fssaiNumber ? 'text-violet-600' : 'text-slate-400'}`}>verified</span>
-                            </div>
-                            <input
-                                type="text"
-                                name="fssaiNumber"
-                                value={formData.fssaiNumber}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
-                  ${isTouched.fssaiNumber && errors.fssaiNumber ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-50/50'}
-                `}
-                                placeholder="14-digit FSSAI No."
-                            />
-                        </div>
+                    <div className="md:col-span-1">
+                        <Input
+                            label={<>FSSAI Number <span className="text-slate-400 font-normal ml-1 lowercase">(Optional)</span></>}
+                            name="fssaiNumber"
+                            type="text"
+                            value={formData.fssaiNumber}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            icon="verified"
+                            placeholder="14-digit FSSAI No."
+                            error={isTouched.fssaiNumber && errors.fssaiNumber ? errors.fssaiNumber : null}
+                            className="rounded-full focus:ring-violet-500/30 focus:border-violet-500"
+                        />
                     </div>
                 </div>
             </div>

@@ -27,8 +27,8 @@ const Header = () => {
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? 'bg-white/90 backdrop-blur-xl shadow-lg shadow-black/[0.04] border-b border-slate-100'
-          : 'bg-transparent'
+        ? 'bg-white/90 backdrop-blur-xl shadow-lg shadow-black/[0.04] border-b border-slate-100'
+        : 'bg-transparent'
         }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 sm:h-18 items-center justify-between">
@@ -38,7 +38,7 @@ const Header = () => {
               <div className="w-9 h-9 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200/50 group-hover:shadow-green-300/60 transition-shadow">
                 <span className="material-symbols-outlined text-white text-xl">eco</span>
               </div>
-              <span className="text-xl font-black tracking-tight text-slate-800">
+              <span className="text-xl font-black tracking-tight text-slate-800 leading-none mt-0.5">
                 Agri<span className="text-green-600">Connect</span>
               </span>
             </Link>

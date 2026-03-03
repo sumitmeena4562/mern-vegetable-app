@@ -1,5 +1,7 @@
 import React from 'react';
-import CustomSelect from '../../common/CustomSelect';
+import Select from '../../ui/Select';
+import Input from '../../ui/Input';
+import Button from '../../ui/Button';
 
 const LocationSection = ({
     formData,
@@ -21,68 +23,67 @@ const LocationSection = ({
                         <span className="material-symbols-outlined text-cyan-600">location_on</span>
                         Shop Location
                     </div>
-                    <button
+                    <Button
                         type="button"
                         onClick={handleGetLocation}
                         disabled={gpsLoading}
-                        className={`text-[12px] font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300
-              ${gpsLoading ? 'bg-cyan-100 text-cyan-400 cursor-default' : 'bg-white text-cyan-600 hover:bg-cyan-50 shadow-sm border border-cyan-100'}
-            `}
+                        isLoading={gpsLoading}
+                        variant="outline"
+                        size="sm"
+                        className={`rounded-full ${gpsLoading ? 'bg-cyan-100 text-cyan-400' : 'text-cyan-600 border-cyan-100 hover:bg-cyan-50'}`}
+                        icon="my_location"
                     >
-                        <span className={`material-symbols-outlined text-[18px] ${gpsLoading ? 'animate-spin' : ''}`}>my_location</span>
-                        {gpsLoading ? 'Detecting...' : 'Use GPS'}
-                    </button>
+                        Use GPS
+                    </Button>
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* State Dropdown */}
-                    <CustomSelect
+                    <Select
                         label="State"
                         name="state"
                         value={formData.state}
-                        options={states.map(s => ({ value: s, label: s }))}
+                        options={[
+                            { value: "", label: "Select State" },
+                            ...states.map(s => ({ value: s, label: s }))
+                        ]}
                         onChange={handleChange}
-                        placeholder="Select State"
                         icon="map"
                         loading={isFetchingLocations && !districts.length}
+                        className="rounded-full focus:ring-cyan-500/30 focus:border-cyan-500"
                     />
 
                     {/* District Dropdown */}
-                    <CustomSelect
+                    <Select
                         label="City/District"
                         name="city"
                         value={formData.city}
-                        options={districts.map(d => ({ value: d, label: d }))}
+                        options={[
+                            { value: "", label: "Select District" },
+                            ...districts.map(d => ({ value: d, label: d }))
+                        ]}
                         onChange={handleChange}
-                        placeholder="Select District"
                         icon="location_city"
                         disabled={!formData.state}
                         loading={isFetchingLocations}
                         error={isTouched.city && errors.city}
+                        className="rounded-full focus:ring-cyan-500/30 focus:border-cyan-500"
                     />
 
                     {/* Detailed Address */}
-                    <div className="relative group md:col-span-2">
-                        <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                            Detailed Address <span className="text-red-500">*</span>
-                        </label>
-                        <div className={`relative rounded-full transition-all duration-300 ${isTouched.address && errors.address ? 'ring-2 ring-red-200' : 'group-hover:ring-2 group-hover:ring-cyan-100'}`}>
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span className={`material-symbols-outlined font-normal text-[20px] transition-colors duration-300 ${isTouched.address && errors.address ? 'text-red-500' : formData.address ? 'text-cyan-600' : 'text-slate-400'}`}>home</span>
-                            </div>
-                            <input
-                                type="text"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                className={`w-full pl-12 pr-4 py-3 bg-white border outline-none rounded-full transition-all duration-300 text-[14px] font-medium text-slate-700
-                  ${isTouched.address && errors.address ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-50' : 'border-slate-200 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50'}
-                `}
-                                placeholder="Street, Landmark, Area"
-                            />
-                        </div>
-                        {isTouched.address && errors.address && <p className="text-red-500 text-xs mt-2 font-medium flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span> {errors.address}</p>}
+                    <div className="md:col-span-2">
+                        <Input
+                            label={<>Detailed Address <span className="text-red-500">*</span></>}
+                            name="address"
+                            type="text"
+                            value={formData.address}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
+                            icon="home"
+                            placeholder="Street, Landmark, Area"
+                            error={isTouched.address && errors.address ? errors.address : null}
+                            className="rounded-full focus:ring-cyan-500/30 focus:border-cyan-500"
+                        />
                     </div>
 
                     {/* GPS Success Message */}

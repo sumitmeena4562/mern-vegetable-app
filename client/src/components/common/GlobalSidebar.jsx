@@ -67,11 +67,11 @@ const GlobalSidebar = ({
                     <div className={`w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br ${theme.gradient} rounded-xl flex items-center justify-center shadow-lg ${theme.shadow} transition-all`}>
                         <span className="material-symbols-outlined text-white text-xl sm:text-2xl">{roleIcon}</span>
                     </div>
-                    <div>
-                        <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800">
+                    <div className="flex flex-col justify-center">
+                        <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-800 leading-none mb-0.5 mt-0.5">
                             Agri<span className={theme.textTitle}>Connect</span>
                         </h1>
-                        <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">{roleTitle} Panel</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider leading-none">{roleTitle} Panel</p>
                     </div>
                 </Link>
 
