@@ -7,6 +7,7 @@ import PersonalInfoForm from '../../../common/settings/PersonalInfoForm';
 import ShopDetailsForm from '../../../common/settings/ShopDetailsForm';
 import BankDetailsForm from '../../../common/settings/BankDetailsForm';
 import SecurityForm from '../../../common/settings/SecurityForm';
+import Button from '../../../ui/Button';
 
 const Settings = () => {
     const { user } = useAuth();
@@ -198,20 +199,15 @@ const Settings = () => {
 
             {/* Save Button */}
             <div className="flex justify-end mt-8">
-                <button
+                <Button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+                    isLoading={saving}
+                    icon={!saving && <span className="material-symbols-outlined text-lg">save</span>}
+                    className="rounded-2xl px-8 py-4 text-[10px] uppercase tracking-widest"
                 >
-                    {saving ? (
-                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                    ) : (
-                        <>
-                            <span className="material-symbols-outlined text-lg">save</span>
-                            Save Changes
-                        </>
-                    )}
-                </button>
+                    Save Changes
+                </Button>
             </div>
 
 

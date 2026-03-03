@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../../../api/axios';
+import Loader from '../../../ui/Loader';
 
 const VendorInvoice = () => {
     const { id } = useParams();
@@ -25,12 +26,7 @@ const VendorInvoice = () => {
     }, [id]);
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 h-screen">
-                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-2xl animate-spin mb-4"></div>
-                <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Generating Invoice...</p>
-            </div>
-        );
+        return <Loader variant="fullPage" color="indigo" size="lg" text="Generating Invoice..." />;
     }
 
     if (!order) {
