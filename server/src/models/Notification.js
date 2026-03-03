@@ -6,38 +6,38 @@ const notificationSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  
+
   title: {
     type: String,
     required: true,
     maxlength: [100, 'Title cannot be more than 100 characters']
   },
-  
+
   message: {
     type: String,
     required: true,
     maxlength: [500, 'Message cannot be more than 500 characters']
   },
-  
+
   type: {
     type: String,
-    enum: ['order', 'payment', 'market', 'system', 'promotion', 'success', 'error'],
+    enum: ['order', 'order_update', 'payment', 'market', 'system', 'promotion', 'success', 'error'],
     default: 'system'
   },
-  
+
   data: mongoose.Schema.Types.Mixed,
-  
+
   read: {
     type: Boolean,
     default: false
   },
-  
+
   priority: {
     type: String,
     enum: ['low', 'medium', 'high'],
     default: 'medium'
   },
-  
+
   expiresAt: Date
 }, {
   timestamps: true
