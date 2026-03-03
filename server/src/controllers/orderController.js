@@ -9,8 +9,9 @@ import mongoose from 'mongoose';
  * @access  Private (Vendor)
  */
 export const createOrder = async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // Array to track stock deductions for manual rollback if needed
+    const stockDeductions = [];
+    const createdOrders = [];
 
     try {
         const { items, deliveryType, paymentMethod, deliveryAddress, notes } = req.body;
@@ -20,8 +21,6 @@ export const createOrder = async (req, res) => {
 
         if (!items || items.length === 0) {
             console.error('❌ [OrderFlow] Attempted to create order with empty cart');
-            await session.abortTransaction();
-            session.endSession();
             return res.status(400).json({ success: false, message: 'Cart is empty' });
         }
 
@@ -46,15 +45,14 @@ export const createOrder = async (req, res) => {
             farmerGroups[farmerId].products.push({
                 product: product._id,
                 name: product.name,
-                quantity: item.quantity,
+                quantity: Number(item.quantity),
                 unit: product.unit,
                 pricePerUnit: product.pricePerUnit,
-                totalPrice: product.pricePerUnit * item.quantity
+                totalPrice: product.pricePerUnit * Number(item.quantity)
             });
         }
 
         // Create one order per farmer
-        const createdOrders = [];
         for (const group of Object.values(farmerGroups)) {
             const totalAmount = group.products.reduce((sum, p) => sum + p.totalPrice, 0);
 
@@ -63,6 +61,26 @@ export const createOrder = async (req, res) => {
             const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
             const orderId = `ORDV${timestamp}${random}`;
 
+            // Deduct product stock first (Manual Transaction step 1)
+            for (const p of group.products) {
+                const updatedProduct = await Product.findOneAndUpdate(
+                    {
+                        _id: p.product,
+                        $expr: { $gte: [{ $subtract: ["$quantity", "$soldQuantity"] }, p.quantity] }
+                    },
+                    { $inc: { soldQuantity: p.quantity } },
+                    { new: true }
+                );
+
+                if (!updatedProduct) {
+                    throw new Error(`Stock conflict for ${p.name}. Please try again.`);
+                }
+
+                // Track for manual rollback
+                stockDeductions.push({ productId: p.product, quantity: p.quantity });
+            }
+
+            // Create Order (Manual Transaction step 2)
             const [order] = await Order.create([{
                 orderId,
                 farmer: group.farmerId,
@@ -80,22 +98,10 @@ export const createOrder = async (req, res) => {
                 notes: notes || '',
                 status: 'pending'
             }]);
+            createdOrders.push(order);
 
-            // Deduct product stock
-            for (const p of group.products) {
-                const updatedProduct = await Product.findOneAndUpdate(
-                    { _id: p.product, availableQuantity: { $gte: p.quantity } },
-                    { $inc: { availableQuantity: -p.quantity } },
-                    { session, new: true }
-                );
-
-                if (!updatedProduct) {
-                    throw new Error(`Stock conflict for ${p.name}. Please try again.`);
-                }
-            }
-
-            // Notify farmer (Notifications can be outside or inside transaction, depending on preference)
-            const notif = await Notification.create([{
+            // Notify farmer
+            await Notification.create([{
                 user: group.farmerId,
                 title: 'New Order Received! 🛒',
                 message: `You have a new order #${order.orderId} worth ₹${totalAmount}`,
@@ -103,16 +109,12 @@ export const createOrder = async (req, res) => {
                 metadata: { orderId: order._id }
             }]);
 
-            createdOrders.push(order);
             console.log(`📦 [OrderFlow] Created order #${order.orderId} for farmer: ${group.farmerId}`);
         }
 
-        console.log(`💾 [OrderFlow] Committing transaction for ${createdOrders.length} orders...`);
-        await session.commitTransaction();
-        session.endSession();
-        console.log('✅ [OrderFlow] Transaction committed successfully');
+        console.log(`✅ [OrderFlow] Order process completed successfully for ${createdOrders.length} orders.`);
 
-        // Send real-time notifications AFTER commit
+        // Send real-time notifications AFTER everything succeeds
         const io = req.app.get('io');
         if (io) {
             createdOrders.forEach(async (order) => {
@@ -130,9 +132,27 @@ export const createOrder = async (req, res) => {
         });
 
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-        console.error('createOrder error:', error);
+        console.error('❌ [OrderFlow] createOrder error. Initiating manual rollback:', error.message);
+
+        // Manual Rollback for standalone Mongo
+        try {
+            // 1. Restore stock
+            for (const deduction of stockDeductions) {
+                await Product.findByIdAndUpdate(deduction.productId, {
+                    $inc: { soldQuantity: -deduction.quantity }
+                });
+                console.log(`[Rollback] Restored ${deduction.quantity} stock to product ${deduction.productId}`);
+            }
+            // 2. Delete created orders and notifications
+            for (const order of createdOrders) {
+                await Order.findByIdAndDelete(order._id);
+                await Notification.deleteMany({ 'metadata.orderId': order._id });
+                console.log(`[Rollback] Deleted order ${order._id}`);
+            }
+        } catch (rollbackError) {
+            console.error('🧨 [OrderFlow] CRITICAL ERROR during manual rollback:', rollbackError);
+        }
+
         res.status(500).json({ success: false, message: error.message || 'Failed to place order' });
     }
 };
