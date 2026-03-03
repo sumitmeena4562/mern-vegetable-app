@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../../contexts/CartContext';
 import { toast } from 'react-hot-toast';
+import Button from '../../../ui/Button';
 
 const VendorCart = () => {
     const navigate = useNavigate();
@@ -44,13 +45,11 @@ const VendorCart = () => {
                     </div>
                     <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Your Cart is Empty</h3>
                     <p className="text-sm font-medium text-slate-400 mb-8">Browse the market to add fresh produce</p>
-                    <button
-                        onClick={() => navigate('/vendor-dashboard/market')}
-                        className="px-8 py-3.5 bg-slate-900 text-white font-black text-sm rounded-2xl hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/20 hover:shadow-indigo-500/30 flex items-center gap-2"
-                    >
-                        <span className="material-symbols-outlined text-lg">storefront</span>
+                    <Button onClick={() => navigate('/vendor-dashboard/market')}
+                        icon={<span className="material-symbols-outlined text-lg">storefront</span>}
+                        className="rounded-2xl px-8">
                         Browse Market
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -65,20 +64,16 @@ const VendorCart = () => {
                     <p className="text-slate-500 font-medium text-sm mt-1">{cartItemCount} item{cartItemCount !== 1 ? 's' : ''} in your cart</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/vendor-dashboard/market')}
-                        className="px-5 py-2.5 bg-white text-slate-600 font-bold text-xs uppercase tracking-widest rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:text-indigo-600 transition-all flex items-center gap-2"
-                    >
-                        <span className="material-symbols-outlined text-sm">add</span>
+                    <Button onClick={() => navigate('/vendor-dashboard/market')} variant="outline" size="sm"
+                        icon={<span className="material-symbols-outlined text-sm">add</span>}
+                        className="rounded-2xl text-xs uppercase tracking-widest">
                         Add More
-                    </button>
-                    <button
-                        onClick={() => { clearCart(); toast.success('Cart cleared'); }}
-                        className="px-5 py-2.5 bg-white text-red-500 font-bold text-xs uppercase tracking-widest rounded-2xl border-2 border-red-50 hover:bg-red-50 transition-all flex items-center gap-2"
-                    >
-                        <span className="material-symbols-outlined text-sm">delete_sweep</span>
+                    </Button>
+                    <Button onClick={() => { clearCart(); toast.success('Cart cleared'); }} variant="danger" size="sm"
+                        icon={<span className="material-symbols-outlined text-sm">delete_sweep</span>}
+                        className="rounded-2xl text-xs uppercase tracking-widest">
                         Clear All
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -229,23 +224,16 @@ const VendorCart = () => {
                         </div>
 
                         {/* Place Order Button */}
-                        <button
+                        <Button
                             onClick={handlePlaceOrder}
                             disabled={placing || cart.length === 0}
-                            className="w-full py-4 bg-slate-900 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/20 hover:shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {placing ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Placing Order...
-                                </>
-                            ) : (
-                                <>
-                                    <span className="material-symbols-outlined text-lg">shopping_bag</span>
-                                    Place Order • ₹{cartTotal.toLocaleString()}
-                                </>
-                            )}
-                        </button>
+                            isLoading={placing}
+                            fullWidth
+                            size="lg"
+                            icon={!placing && <span className="material-symbols-outlined text-lg">shopping_bag</span>}
+                            className="rounded-2xl uppercase tracking-widest">
+                            {placing ? 'Placing Order...' : `Place Order • ₹${cartTotal.toLocaleString()}`}
+                        </Button>
 
                         {/* Info */}
                         <p className="text-[10px] text-slate-400 font-medium text-center leading-relaxed">

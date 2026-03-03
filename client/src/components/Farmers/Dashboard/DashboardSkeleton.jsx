@@ -1,5 +1,5 @@
 import React from 'react';
-import { Skeleton, SkeletonCircle } from '../../common/Skeleton';
+import Skeleton from '../../ui/Skeleton';
 
 const DashboardSkeleton = () => {
     return (
@@ -57,7 +57,7 @@ const DashboardSkeleton = () => {
                         </div>
                         <div className="space-y-4">
                             <div className="flex gap-4 items-start">
-                                <div className="mt-2"><SkeletonCircle size="w-4 h-4" /></div>
+                                <div className="mt-2"><Skeleton variant="circular" width="w-4" height="h-4" /></div>
                                 <div className="flex-1 p-4 border border-white/40 rounded-xl bg-white/40">
                                     <Skeleton className="w-32 h-3 mb-2" />
                                     <Skeleton className="w-48 h-5 mb-2" />
@@ -65,7 +65,7 @@ const DashboardSkeleton = () => {
                                 </div>
                             </div>
                             <div className="flex gap-4 items-start">
-                                <div className="mt-2"><SkeletonCircle size="w-4 h-4" /></div>
+                                <div className="mt-2"><Skeleton variant="circular" width="w-4" height="h-4" /></div>
                                 <div className="flex-1 p-4 border border-white/40 rounded-xl bg-white/40">
                                     <Skeleton className="w-32 h-3 mb-2" />
                                     <Skeleton className="w-48 h-5 mb-2" />
