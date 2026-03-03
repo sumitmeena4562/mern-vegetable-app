@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import PersonalInfoSection from './Registration/PersonalInfoSection';
 import BusinessDetailsSection from './Registration/BusinessDetailsSection';
 import LocationSection from './Registration/LocationSection';
+import Button from '../ui/Button';
+import Loader from '../ui/Loader';
 
 const VendorRegistration = () => {
   const navigate = useNavigate();
@@ -56,14 +58,6 @@ const VendorRegistration = () => {
 
   // OTP Refs
   const otpRefs = useRef([]);
-
-  // --- Helper: Loading Spinner Component ---
-  const Spinner = () => (
-    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-  );
 
   // GPS Logic
   const handleGetLocation = () => {
@@ -441,7 +435,7 @@ const VendorRegistration = () => {
                   <p className="text-lg font-bold text-gray-900">Registration Successful! 🎉</p>
                   <p className="mt-1 text-sm text-gray-500 leading-relaxed">Welcome to <span className="font-bold text-blue-600">AgriConnect</span>! We are setting up your workspace.</p>
                   <p className="mt-3 text-xs font-semibold text-blue-600 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm animate-spin">sync</span> Redirecting...
+                    <Loader variant="inline" color="blue" /> Redirecting...
                   </p>
                 </div>
               </div>
@@ -548,21 +542,16 @@ const VendorRegistration = () => {
 
           {/* Submit Section */}
           <div className="pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-            <button
+            <Button
               type="submit"
               disabled={loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100}
-              className={`w-full py-4 rounded-full text-white font-bold text-[16px] shadow-lg flex items-center justify-center gap-3 transition-all duration-300 active:scale-[0.98]
-                ${loading || Object.values(errors).some(x => x) || !isVerified || formProgress < 100
-                  ? 'bg-slate-300 cursor-not-allowed shadow-none'
-                  : 'bg-slate-900 hover:bg-slate-800 hover:shadow-xl shadow-slate-200'}
-              `}
+              isLoading={loading}
+              fullWidth
+              icon={!loading && <span className="material-symbols-outlined">how_to_reg</span>}
+              className="rounded-full py-4 text-[16px]"
             >
-              {loading ? (
-                <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
-              ) : (
-                <><span className="material-symbols-outlined">how_to_reg</span> Complete Vendor Setup</>
-              )}
-            </button>
+              {loading ? 'Processing...' : 'Complete Vendor Setup'}
+            </Button>
 
             <p className="mt-6 text-center text-sm font-medium text-slate-500">
               Already have an account?{' '}
@@ -597,10 +586,14 @@ const VendorRegistration = () => {
             </div>
             {otpError && <p className="text-center text-rose-500 text-sm font-bold mb-6 flex justify-center items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">error</span> {otpError}</p>}
 
-            <button onClick={handleVerifyOtp} disabled={otpLoading || otpInput.length !== 4}
-              className={`w-full py-5 rounded-2xl font-black flex justify-center items-center gap-2 mb-6 transition-all duration-300 ${otpInput.length === 4 ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/30 active:scale-[0.98]' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'}`}>
-              {otpLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : <><span className="material-symbols-outlined text-[2xl]">shield_check</span> Verify Securely</>}
-            </button>
+            <Button onClick={handleVerifyOtp} disabled={otpLoading || otpInput.length !== 4}
+              isLoading={otpLoading}
+              fullWidth
+              size="lg"
+              icon={!otpLoading && <span className="material-symbols-outlined text-[2xl]">shield_check</span>}
+              className="rounded-2xl py-5 mb-6">
+              {otpLoading ? 'Verifying...' : 'Verify Securely'}
+            </Button>
 
             <div className="text-center">
               {canResend ? (
