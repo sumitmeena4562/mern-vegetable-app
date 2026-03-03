@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import api from '../../../api/axios';
 import Loader from '../../ui/Loader';
+import { getGreeting } from '@/utils/dateUtils';
+import DashboardWelcome from '../../common/Dashboard/DashboardWelcome';
+import StatsGrid, { VENDOR_STATS_THEME } from '../../common/Dashboard/StatsGrid';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from 'recharts';
 
 const Overview = () => {
@@ -33,20 +36,14 @@ const Overview = () => {
         fetchStats();
     }, []);
 
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return { text: 'Good Morning', emoji: '☀️' };
-        if (hour < 17) return { text: 'Good Afternoon', emoji: '🌤️' };
-        return { text: 'Good Evening', emoji: '🌙' };
-    };
 
     const greeting = getGreeting();
 
     const cards = [
-        { label: 'Total Spent', value: `₹${stats.totalSpent}`, sub: 'This Month', icon: 'payments', emoji: '💸', color: 'indigo' },
-        { label: 'Active Orders', value: stats.activeOrders, sub: 'In Transit', icon: 'local_shipping', emoji: '🚚', color: 'violet' },
-        { label: 'Pending Pickups', value: stats.pendingDeliveries, sub: 'To Collect', icon: 'inventory_2', emoji: '📦', color: 'cyan' },
-        { label: 'Credit Used', value: `₹${stats.creditUsed}`, sub: 'Of Limit', icon: 'credit_score', emoji: '💳', color: 'blue' },
+        { label: 'Total Spent', value: `₹${stats.totalSpent}`, sub: 'This Month', icon: 'payments', emoji: '💸', iconContainerBg: 'bg-indigo-600 text-white shadow-indigo-100', textColor: 'text-slate-400 group-hover:text-indigo-600' },
+        { label: 'Active Orders', value: stats.activeOrders, sub: 'In Transit', icon: 'local_shipping', emoji: '🚚', iconContainerBg: 'bg-violet-600 text-white shadow-violet-100', textColor: 'text-slate-400 group-hover:text-violet-600' },
+        { label: 'Pending Pickups', value: stats.pendingDeliveries, sub: 'To Collect', icon: 'inventory_2', emoji: '📦', iconContainerBg: 'bg-cyan-600 text-white shadow-cyan-100', textColor: 'text-slate-400 group-hover:text-cyan-600' },
+        { label: 'Credit Used', value: `₹${stats.creditUsed}`, sub: 'Of Limit', icon: 'credit_score', emoji: '💳', iconContainerBg: 'bg-blue-600 text-white shadow-blue-100', textColor: 'text-slate-400 group-hover:text-blue-600' },
     ];
 
     if (loading) {
@@ -57,66 +54,18 @@ const Overview = () => {
         <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-8 relative z-10 pb-20 xl:pb-8 animate-in fade-in duration-700">
 
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-                    <div className="flex items-center gap-3 mb-2">
-                        <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100/50">Vendor Portal</span>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider italic">System Live</span>
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        {greeting.text}, {user?.fullName?.split(' ')[0] || 'Vendor'}!
-                        <span className="inline-block animate-bounce animation-delay-500">{greeting.emoji}</span>
-                    </h2>
-                    <p className="text-slate-500 font-bold text-sm mt-1 uppercase tracking-wide opacity-70">
-                        Operational Intelligence & Performance Hub
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto animate-in fade-in slide-in-from-right-4 duration-700">
-                    <div className="px-5 py-3 bg-white/60 backdrop-blur-md rounded-2xl border border-slate-100 flex items-center gap-3 shadow-sm group hover:border-indigo-200 transition-all cursor-default">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[18px]">verified_user</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trust Score</span>
-                            <span className="text-sm font-black text-slate-800">Elite Tier</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <DashboardWelcome
+                greeting={greeting}
+                userName={user?.fullName || 'Vendor'}
+                portalName="Vendor Portal"
+                tagline="Operational Intelligence & Performance Hub"
+                badgeText="Elite Tier"
+                badgeIcon="verified_user"
+                themeColor="indigo"
+            />
 
             {/* Stats Cards Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                {cards.map((card, idx) => (
-                    <div
-                        key={idx}
-                        style={{ animationDelay: `${idx * 100}ms` }}
-                        className="animate-in fade-in slide-in-from-bottom-4 duration-700 bg-white/70 backdrop-blur-sm p-6 rounded-[2rem] border border-white shadow-[0_10px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(49,46,129,0.06)] hover:-translate-y-1.5 transition-all duration-500 group relative overflow-hidden"
-                    >
-                        <div className="relative z-10">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg 
-                                    ${card.color === 'indigo' ? 'bg-indigo-600 text-white shadow-indigo-100' :
-                                        card.color === 'violet' ? 'bg-violet-600 text-white shadow-violet-100' :
-                                            card.color === 'cyan' ? 'bg-cyan-600 text-white shadow-cyan-100' :
-                                                'bg-blue-600 text-white shadow-blue-100'}`}
-                                >
-                                    <span className="material-symbols-outlined text-[24px]">{card.icon}</span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-600 transition-colors">{card.sub}</span>
-                                    <span className="text-xs">{card.emoji}</span>
-                                </div>
-                            </div>
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{card.label}</p>
-                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{card.value}</h3>
-                        </div>
-                        {/* Decorative Gradient Blob */}
-                        <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-gradient-to-br from-indigo-50/50 to-violet-50/50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                    </div>
-                ))}
-            </div>
+            <StatsGrid cards={cards} theme={VENDOR_STATS_THEME} />
 
             {/* Main Content Sections */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

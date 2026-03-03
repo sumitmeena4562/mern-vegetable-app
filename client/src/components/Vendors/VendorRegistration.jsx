@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import PersonalInfoSection from '../common/Registration/PersonalInfoSection';
+import { RegistrationHeader } from '../common/Registration/SharedUI';
 import { VENDOR_THEME } from '../common/Registration/PersonalInfoSection';
 import BusinessDetailsSection from './Registration/BusinessDetailsSection';
 import LocationSection from '../common/Registration/LocationSection';
@@ -345,18 +346,14 @@ const VendorRegistration = () => {
         ></div>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-10 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <div className="inline-flex items-center justify-center p-4 rounded-[2rem] bg-white shadow-xl shadow-indigo-100/50 mb-6 group border border-slate-100 transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-500">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
-            <span className="material-symbols-outlined text-4xl text-white">storefront</span>
-          </div>
-        </div>
-        <h2 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-3">Agri<span className="text-indigo-600">Connect</span></h2>
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100">
-          <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-          <p className="text-sm font-bold text-indigo-700 uppercase tracking-widest">Vendor Portal 🛒</p>
-        </div>
-      </div>
+      <RegistrationHeader
+        title="AgriConnect"
+        subtitle="Vendor Registration Portal 🏢"
+        icon="storefront"
+        iconBg="bg-gradient-to-br from-indigo-600 to-blue-600"
+        progress={formProgress}
+        progressText={formProgress >= 100 ? "Ready to join!" : "Complete all fields"}
+      />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-[700px] relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 mb-20">
         <form onSubmit={handleSubmit} className="space-y-6">

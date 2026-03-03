@@ -5,6 +5,8 @@ import RightPanel from './RightPanel';
 import { getFullProfile, getFarmerStats } from '@/api/userApi';
 import WelcomeOnboarding from './WelcomeOnboarding';
 import DashboardSkeleton from './DashboardSkeleton';
+import { getGreeting } from '@/utils/dateUtils';
+import DashboardWelcome from '../../common/Dashboard/DashboardWelcome';
 
 const Overview = () => {
   const [fullData, setFullData] = useState(null);
@@ -13,13 +15,6 @@ const Overview = () => {
 
   const isNewFarmer = dashboardStats && dashboardStats.onboarding.productsCount === 0;
 
-  // Time-based greeting
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return { text: 'Good Morning', emoji: '☀️' };
-    if (hour < 17) return { text: 'Good Afternoon', emoji: '🌤️' };
-    return { text: 'Good Evening', emoji: '🌙' };
-  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,29 +62,15 @@ const Overview = () => {
 
       {/* Welcome Section */}
       {!isNewFarmer && (
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-800">
-              {greeting.text}, {fullData.user?.fullName}! {greeting.emoji}
-            </h2>
-            <p className="text-slate-400 font-medium text-sm mt-1">
-              Here's your farm's performance summary for today.
-            </p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <div className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-slate-600 border border-slate-100 flex items-center justify-center gap-1.5 shadow-sm">
-              <span className="material-symbols-outlined text-green-500 text-base">check_circle</span>
-              Tasks: 4/5
-            </div>
-            <div
-              className="flex-1 sm:flex-none px-3 py-2 bg-white rounded-xl text-xs font-bold text-blue-500 border border-blue-100 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer hover:bg-blue-50 transition-all transition-transform active:scale-95"
-              onClick={() => window.location.hash = '#/farmer-dashboard/analytics'}
-            >
-              <span className="material-symbols-outlined text-blue-500 text-base">monitoring</span>
-              Market Insights
-            </div>
-          </div>
-        </div>
+        <DashboardWelcome
+          greeting={greeting}
+          userName={fullData.user?.fullName}
+          portalName="Farmer Portal"
+          tagline="Farm Performance & Market Intelligence"
+          badgeText="Verified Farmer"
+          badgeIcon="eco"
+          themeColor="green"
+        />
       )}
 
       {/* Welcome Onboarding for New Farmers */}

@@ -5,8 +5,9 @@ import { useNavigate } from 'react-router-dom';
 
 import CustomSelect from '../common/CustomSelect';
 import PersonalInfoSection from '../common/Registration/PersonalInfoSection';
-import { FARMER_THEME } from '../common/Registration/PersonalInfoSection';
 import LocationSection from '../common/Registration/LocationSection';
+import { RegistrationHeader } from '../common/Registration/SharedUI';
+import { FARMER_THEME } from '../common/Registration/PersonalInfoSection';
 import { FARMER_LOCATION_THEME } from '../common/Registration/LocationSection';
 import FarmDetailsSection from './Registration/FarmDetailsSection';
 import CropsSection from './Registration/CropsSection';
@@ -443,18 +444,14 @@ const FarmerRegistration = () => {
         <div className="absolute bottom-[-20%] left-[-10%] w-[40%] h-[40%] bg-yellow-300/20 rounded-full blur-[80px]"></div>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8 relative z-10 flex flex-col items-center">
-        <div className="h-16 w-16 mb-4 rounded-[20px] bg-[#2AC47E] flex items-center justify-center text-white shadow-[0_8px_16px_rgba(42,196,126,0.3)]">
-          <span className="material-symbols-outlined text-[32px]">eco</span>
-        </div>
-        <h2 className="text-[28px] font-black text-slate-900 tracking-tight">AgriConnect</h2>
-        <div className="mt-1 text-sm font-bold text-emerald-500 flex items-center justify-center gap-1">
-          Farmer Registration Portal <span className="text-[14px]">🌾</span>
-        </div>
-        <div className="mt-3 text-[12px] font-medium text-slate-500">
-          Progress: {formProgress}% • {formProgress >= 100 ? "Ready to submit!" : "Complete all fields"}
-        </div>
-      </div>
+      <RegistrationHeader
+        title="AgriConnect"
+        subtitle="Farmer Registration Portal 🌾"
+        icon="eco"
+        iconBg="bg-[#2AC47E]"
+        progress={formProgress}
+        progressText={formProgress >= 100 ? "Ready to submit!" : "Complete all fields"}
+      />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-[1024px] relative z-10">
         <div className="bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)] rounded-[36px] px-6 py-8 sm:px-12 sm:py-12 relative overflow-hidden">

@@ -10,6 +10,7 @@ const Input = ({
     id,
     className = '',
     wrapperClassName = '',
+    loading, // Destructure to prevent leakage to DOM
     ...props
 }) => {
     const generatedId = useId();
