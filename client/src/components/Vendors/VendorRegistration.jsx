@@ -3,9 +3,11 @@ import api from '../../api/axios';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import PersonalInfoSection from './Registration/PersonalInfoSection';
+import PersonalInfoSection from '../common/Registration/PersonalInfoSection';
+import { VENDOR_THEME } from '../common/Registration/PersonalInfoSection';
 import BusinessDetailsSection from './Registration/BusinessDetailsSection';
-import LocationSection from './Registration/LocationSection';
+import LocationSection from '../common/Registration/LocationSection';
+import { VENDOR_LOCATION_THEME } from '../common/Registration/LocationSection';
 import Button from '../ui/Button';
 import Loader from '../ui/Loader';
 import { checkPasswordStrength } from '../../utils/passwordUtils';
@@ -373,6 +375,7 @@ const VendorRegistration = () => {
             setShowConfirmPassword={setShowConfirmPassword}
             handleSendOtp={handleSendOtp}
             loading={otp.otpLoading}
+            theme={VENDOR_THEME}
           />
 
           {/* Section 2: Location (Cyan Theme) */}
@@ -387,6 +390,7 @@ const VendorRegistration = () => {
             isFetchingLocations={isFetchingLocations}
             gpsLoading={gpsLoading}
             handleGetLocation={handleGetLocation}
+            theme={VENDOR_LOCATION_THEME}
           />
 
           {/* Section 3: Business Details (Violet Theme) */}

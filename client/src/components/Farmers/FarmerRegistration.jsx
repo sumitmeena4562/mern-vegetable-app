@@ -4,8 +4,10 @@ import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import CustomSelect from '../common/CustomSelect';
-import PersonalInfoSection from './Registration/PersonalInfoSection';
-import LocationSection from './Registration/LocationSection';
+import PersonalInfoSection from '../common/Registration/PersonalInfoSection';
+import { FARMER_THEME } from '../common/Registration/PersonalInfoSection';
+import LocationSection from '../common/Registration/LocationSection';
+import { FARMER_LOCATION_THEME } from '../common/Registration/LocationSection';
 import FarmDetailsSection from './Registration/FarmDetailsSection';
 import CropsSection from './Registration/CropsSection';
 import Button from '../ui/Button';
@@ -474,9 +476,9 @@ const FarmerRegistration = () => {
                   showConfirmPassword={showConfirmPassword}
                   setShowConfirmPassword={setShowConfirmPassword}
                   passwordStrength={passwordStrength}
-                  setShowOtpModal={otp.setShowOtpModal}
                   handleSendOtp={handleSendOtp}
                   loading={otp.otpLoading}
+                  theme={FARMER_THEME}
                 />
 
                 <LocationSection
@@ -490,6 +492,7 @@ const FarmerRegistration = () => {
                   isFetchingLocations={isFetchingLocations}
                   gpsLoading={gpsLoading}
                   handleGetLocation={handleGetLocation}
+                  theme={FARMER_LOCATION_THEME}
                 />
               </div>
 
