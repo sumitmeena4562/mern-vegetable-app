@@ -13,19 +13,41 @@ const ProductInventory = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalProducts, setTotalProducts] = useState(0);
     const ITEMS_PER_PAGE = 8;
+
+    // Debounce search so we don't spam the API
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         fetchProducts();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter]);
+    }, [filter, currentPage, debouncedSearch]);
+
+    // Reset page to 1 when filter or search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, debouncedSearch]);
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const res = await getFarmerProducts(filter);
+            const res = await getFarmerProducts(filter, currentPage, ITEMS_PER_PAGE, debouncedSearch);
             if (res.success) {
                 setProducts(res.data);
+                if (res.pagination) {
+                    setTotalPages(res.pagination.pages);
+                    setTotalProducts(res.pagination.total);
+                } else {
+                    setTotalPages(1);
+                    setTotalProducts(res.count || res.data.length);
+                }
             }
         } catch (error) {
             console.error("Inventory loading error:", error);
@@ -51,7 +73,12 @@ const ProductInventory = () => {
             setIsDeleting(true);
             const res = await deleteProduct(deleteModal.id);
             if (res.success) {
-                setProducts(products.filter(p => p._id !== deleteModal.id));
+                // If it's the last item on the page, go to prev page
+                if (products.length === 1 && currentPage > 1) {
+                    setCurrentPage(prev => prev - 1);
+                } else {
+                    fetchProducts(); // refresh list
+                }
                 setDeleteModal({ show: false, id: null, name: '' });
             }
         } catch (error) {
@@ -60,18 +87,6 @@ const ProductInventory = () => {
             setIsDeleting(false);
         }
     };
-
-    // Client-side search
-    const filteredProducts = products.filter(p => {
-        if (!searchQuery.trim()) return true;
-        const q = searchQuery.toLowerCase();
-        return p.name?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || p.variety?.toLowerCase().includes(q);
-    });
-
-    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-    const paginatedProducts = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-    useEffect(() => { setCurrentPage(1); }, [searchQuery, filter]);
 
     return (
         <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full space-y-8 animate-in fade-in duration-500">
@@ -117,7 +132,7 @@ const ProductInventory = () => {
                         <div key={i} className="h-64 bg-slate-100 rounded-[32px]"></div>
                     ))}
                 </div>
-            ) : filteredProducts.length === 0 ? (
+            ) : products.length === 0 ? (
                 <div className="py-20 flex flex-col items-center justify-center text-slate-400 bg-white/40 backdrop-blur-xl border border-white rounded-[40px]">
                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6 opacity-30">
                         <span className="material-symbols-outlined text-5xl">{searchQuery ? 'search_off' : 'inventory_2'}</span>
@@ -127,9 +142,9 @@ const ProductInventory = () => {
                 </div>
             ) : (
                 <>
-                    <p className="text-xs font-bold text-slate-400">Showing {paginatedProducts.length} of {filteredProducts.length} products</p>
+                    <p className="text-xs font-bold text-slate-400">Showing {products.length} of {totalProducts} products</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {paginatedProducts.map((product) => (
+                        {products.map((product) => (
                             <div
                                 key={product._id}
                                 className="bg-white group rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:shadow-green-200/30 transition-all overflow-hidden flex flex-col"

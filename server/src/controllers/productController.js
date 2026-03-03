@@ -211,7 +211,16 @@ export const getProduct = async (req, res) => {
  */
 export const updateProduct = async (req, res) => {
   try {
-    const updates = req.body;
+    let updates = req.body;
+
+    if (req.body.productData) {
+      try {
+        updates = JSON.parse(req.body.productData);
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid productData JSON' });
+      }
+    }
+
     delete updates.farmer;
     delete updates.soldQuantity;
 
@@ -222,6 +231,62 @@ export const updateProduct = async (req, res) => {
 
     if (product.farmer.toString() !== req.user.id) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    // Handle existing images
+    if (updates.images !== undefined) {
+      if (typeof updates.images === 'string') {
+        try {
+          updates.images = JSON.parse(updates.images);
+        } catch (e) {
+          updates.images = product.images; // fallback
+        }
+      }
+
+      // Delete removed images from Cloudinary
+      const keptPublicIds = updates.images.map(img => img.publicId);
+      for (const oldImg of product.images) {
+        if (!keptPublicIds.includes(oldImg.publicId) && oldImg.publicId && oldImg.publicId !== 'local') {
+          try {
+            await cloudinary.uploader.destroy(oldImg.publicId);
+            console.log("Deleted old Cloudinary image:", oldImg.publicId);
+          } catch (err) {
+            console.error("Failed to delete Cloudinary image:", oldImg.publicId, err);
+          }
+        }
+      }
+    } else {
+      updates.images = product.images;
+    }
+
+    // Handle new images
+    if (req.files && req.files.length > 0) {
+      const newImages = [];
+      for (const file of req.files) {
+        try {
+          const result = await uploadToCloudinary(file.buffer, 'agriconnect/products');
+          newImages.push({
+            url: result.secure_url,
+            publicId: result.public_id,
+            isPrimary: updates.images.length === 0 && newImages.length === 0
+          });
+        } catch (uploadError) {
+          console.error("Cloudinary Upload Failed:", uploadError.message);
+        }
+      }
+      updates.images = [...(updates.images || []), ...newImages];
+    }
+
+    // Fix location format if sent
+    if (updates.location && updates.location.coordinates) {
+      updates.location = {
+        type: 'Point',
+        coordinates: updates.location.coordinates,
+        address: updates.location.address || product.location.address || '',
+        city: updates.location.city || req.user.address?.city || '',
+        state: updates.location.state || req.user.address?.state || '',
+        pincode: updates.location.pincode || req.user.address?.pincode || ''
+      };
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -288,15 +353,43 @@ export const deleteProduct = async (req, res) => {
 export const getFarmerProducts = async (req, res) => {
   try {
     const farmerId = req.user.id;
-    const { status } = req.query;
+    const { status, page = 1, limit = 10, search } = req.query;
     let query = { farmer: farmerId, status: { $ne: 'removed' } };
 
     if (status && status !== 'all') {
       query.status = status;
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: products.length, data: products });
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { variety: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    const total = await Product.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      data: products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }

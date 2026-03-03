@@ -43,7 +43,7 @@ router.put('/complete-onboarding', auth('farmer'), completeOnboarding);
 // Protected: Product Management
 router.post('/products', auth('farmer'), uploadMultiple('images', 5), createProduct);
 router.get('/products', auth('farmer'), getFarmerProducts);
-router.put('/products/:id', auth('farmer'), updateProduct);
+router.put('/products/:id', auth('farmer'), uploadMultiple('images', 5), updateProduct);
 router.put('/products/:id/status', auth('farmer'), updateProductStatus);
 router.delete('/products/:id', auth('farmer'), deleteProduct);
 

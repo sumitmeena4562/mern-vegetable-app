@@ -64,8 +64,10 @@ export const updateOrderStatus = async (orderId, statusData) => {
 };
 
 // Product Management APIs
-export const getFarmerProducts = async (status = 'all') => {
-    const response = await api.get(`/farmers/products?status=${status}`);
+export const getFarmerProducts = async (status = 'all', page = 1, limit = 10, search = '') => {
+    const params = new URLSearchParams({ status, page, limit });
+    if (search) params.append('search', search);
+    const response = await api.get(`/farmers/products?${params.toString()}`);
     return response.data;
 };
 

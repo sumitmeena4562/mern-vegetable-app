@@ -20,8 +20,28 @@ const ProductEditModal = ({ product, onClose, onSuccess }) => {
         isOrganic: product.tags?.includes('organic') || false,
     });
 
+    const [images, setImages] = useState(product.images || []);
+    const [newImages, setNewImages] = useState([]);
+
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleImageUpload = (e) => {
+        const files = Array.from(e.target.files);
+        if (images.length + newImages.length + files.length > 5) {
+            toast.error("You can upload a maximum of 5 images");
+            return;
+        }
+        setNewImages(prev => [...prev, ...files]);
+    };
+
+    const removeExistingImage = (publicId) => {
+        setImages(images.filter(img => img.publicId !== publicId));
+    };
+
+    const removeNewImage = (index) => {
+        setNewImages(newImages.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e) => {
@@ -32,13 +52,22 @@ const ProductEditModal = ({ product, onClose, onSuccess }) => {
         }
         setLoading(true);
         try {
-            const payload = {
+            const formData = new FormData();
+            const productData = {
                 ...form,
                 quantity: Number(form.quantity),
                 pricePerUnit: Number(form.pricePerUnit),
                 minimumOrder: Number(form.minimumOrder),
+                images: images
             };
-            const res = await updateProduct(product._id, payload);
+
+            formData.append('productData', JSON.stringify(productData));
+
+            newImages.forEach(file => {
+                formData.append('images', file);
+            });
+
+            const res = await updateProduct(product._id, formData);
             if (res.success) {
                 toast.success('Product updated successfully!');
                 onSuccess?.();
@@ -73,6 +102,47 @@ const ProductEditModal = ({ product, onClose, onSuccess }) => {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Image Upload Area */}
+                    <div>
+                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">Product Images ({images.length + newImages.length}/5)</label>
+                        <div className="grid grid-cols-5 gap-3">
+                            {/* Existing Images */}
+                            {images.map((img) => (
+                                <div key={img.publicId} className="aspect-square relative rounded-xl overflow-hidden group border border-slate-200">
+                                    <img src={img.url} alt="Product" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeExistingImage(img.publicId)}
+                                        className="absolute top-1 right-1 w-6 h-6 bg-red-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">close</span>
+                                    </button>
+                                </div>
+                            ))}
+                            {/* New Previews */}
+                            {newImages.map((file, idx) => (
+                                <div key={idx} className="aspect-square relative rounded-xl overflow-hidden group border border-green-200">
+                                    <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeNewImage(idx)}
+                                        className="absolute top-1 right-1 w-6 h-6 bg-red-500/90 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">close</span>
+                                    </button>
+                                </div>
+                            ))}
+                            {/* Upload Button */}
+                            {(images.length + newImages.length) < 5 && (
+                                <label className="aspect-square rounded-xl border-2 border-dashed border-slate-200 hover:border-green-400 hover:bg-green-50/50 flex flex-col items-center justify-center cursor-pointer transition-all text-slate-400 hover:text-green-500">
+                                    <span className="material-symbols-outlined text-2xl mb-1">add_photo_alternate</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Add</span>
+                                    <input type="file" multiple accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                </label>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Product Name */}
                     <div>
                         <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">Product Name *</label>

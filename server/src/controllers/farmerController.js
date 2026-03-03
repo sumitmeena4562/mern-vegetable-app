@@ -16,11 +16,8 @@ export const validateCreateFarmer = [
   body('farmSize').isNumeric().withMessage('Farm size must be a number')
 ];
 
-// Register Farmer (Create User + Farmer Profile)
 export const registerFarmer = async (req, res) => {
   try {
-    console.log("🌾 Farmer Registration Started...");
-
     // 1. Validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
