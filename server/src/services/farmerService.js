@@ -23,7 +23,7 @@ export const createFarmerService = async (data) => {
         console.log("🔍 Checking for existing user...");
         const existingUser = await User.findOne({
             $or: [{ mobile: data.mobile }, { email: data.email }]
-        }).session(session);
+        });
 
         if (existingUser) {
             console.error("❌ User already exists:", existingUser.email || existingUser.mobile);
@@ -43,7 +43,7 @@ export const createFarmerService = async (data) => {
         };
 
         const newUser = new User(userPayload);
-        await newUser.save({ session });
+        await newUser.save({});
         console.log("✅ User entry saved. ID:", newUser._id);
 
         // 3. Create the Farmer Profile linked to the User
@@ -59,7 +59,7 @@ export const createFarmerService = async (data) => {
         };
 
         const newFarmer = new Farmer(farmerPayload);
-        await newFarmer.save({ session });
+        await newFarmer.save({});
         console.log("✅ Farmer profile saved. ID:", newFarmer._id);
 
         await session.commitTransaction();

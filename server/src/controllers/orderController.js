@@ -28,7 +28,7 @@ export const createOrder = async (req, res) => {
         // Group items by farmer
         const farmerGroups = {};
         for (const item of items) {
-            const product = await Product.findById(item.productId).session(session).populate('farmer', 'fullName');
+            const product = await Product.findById(item.productId).populate('farmer', 'fullName');
             if (!product) {
                 console.error(`❌ [OrderFlow] Product not found: ${item.productId}`);
                 throw new Error(`Product not found: ${item.productId}`);
@@ -79,7 +79,7 @@ export const createOrder = async (req, res) => {
                 },
                 notes: notes || '',
                 status: 'pending'
-            }], { session });
+            }]);
 
             // Deduct product stock
             for (const p of group.products) {
@@ -101,7 +101,7 @@ export const createOrder = async (req, res) => {
                 message: `You have a new order #${order.orderId} worth ₹${totalAmount}`,
                 type: 'order',
                 metadata: { orderId: order._id }
-            }], { session });
+            }]);
 
             createdOrders.push(order);
             console.log(`📦 [OrderFlow] Created order #${order.orderId} for farmer: ${group.farmerId}`);
