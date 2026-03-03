@@ -27,9 +27,9 @@ const OrderManagement = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStatus]);
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await getFarmerOrders(selectedStatus);
             if (res.success) {
                 setOrders(res.data);
@@ -37,7 +37,7 @@ const OrderManagement = () => {
         } catch (error) {
             console.error("Orders loading error:", error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -45,7 +45,7 @@ const OrderManagement = () => {
         try {
             const res = await updateOrderStatus(orderId, { status: newStatus });
             if (res.success) {
-                fetchOrders();
+                fetchOrders(true);
                 if (selectedOrder && selectedOrder._id === orderId) {
                     setSelectedOrder(res.data);
                 }
