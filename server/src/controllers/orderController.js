@@ -48,7 +48,13 @@ export const createOrder = async (req, res) => {
         for (const group of Object.values(farmerGroups)) {
             const totalAmount = group.products.reduce((sum, p) => sum + p.totalPrice, 0);
 
+            // Generate order ID explicitly
+            const timestamp = Date.now().toString().slice(-6);
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const orderId = `ORDV${timestamp}${random}`;
+
             const order = await Order.create({
+                orderId,
                 farmer: group.farmerId,
                 buyer: req.user.id,
                 buyerType: 'vendor',
@@ -77,7 +83,7 @@ export const createOrder = async (req, res) => {
                 user: group.farmerId,
                 title: 'New Order Received! 🛒',
                 message: `You have a new order #${order.orderId} worth ₹${totalAmount}`,
-                type: 'order_update',
+                type: 'order',
                 metadata: { orderId: order._id }
             });
 

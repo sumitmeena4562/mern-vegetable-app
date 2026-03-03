@@ -8,6 +8,8 @@ const ProductDetailModal = ({ product, onClose }) => {
     const { addToCart } = useCart();
     const [quantity, setQuantity] = useState(product.minimumOrder || product.minOrder || 1);
     const [ordering, setOrdering] = useState(false);
+    const [deliveryType, setDeliveryType] = useState('pickup');
+    const [notes, setNotes] = useState('');
 
     const price = product.pricePerUnit || product.price || 0;
     const total = price * quantity;
@@ -31,8 +33,10 @@ const ProductDetailModal = ({ product, onClose }) => {
         try {
             const res = await api.post('/vendors/orders', {
                 items: [{ productId: product._id, quantity }],
-                deliveryType: 'pickup',
-                paymentMethod: 'online'
+                deliveryType,
+                paymentMethod: 'online',
+                deliveryAddress: {},
+                notes
             });
             if (res.data.success) {
                 toast.success(res.data.message || 'Order placed!');
@@ -136,6 +140,41 @@ const ProductDetailModal = ({ product, onClose }) => {
                                 <span className="text-slate-700 font-bold text-right max-w-[60%] leading-snug">{item.value}</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* ── Checkout Options (Delivery & Notes) ── */}
+                <div className="px-5 pb-4 space-y-4">
+                    {/* Delivery Method */}
+                    <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Delivery Method</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {['pickup', 'delivery'].map(type => (
+                                <button
+                                    key={type}
+                                    onClick={() => setDeliveryType(type)}
+                                    className={`py-2 px-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 flex items-center justify-center gap-1.5 ${deliveryType === type
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                                            : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200'
+                                        }`}
+                                >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                        {type === 'pickup' ? 'store' : 'local_shipping'}
+                                    </span>
+                                    {type === 'pickup' ? 'Pickup' : 'Delivery'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Add delivery note or instructions..."
+                            className="w-full bg-slate-50 rounded-xl p-2.5 text-xs text-slate-700 font-medium border border-slate-100 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200/50 outline-none resize-none h-14 placeholder:text-slate-300"
+                        />
                     </div>
                 </div>
 
