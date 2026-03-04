@@ -100,7 +100,7 @@ const VendorCart = () => {
                                     const lineTotal = price * item.quantity;
 
                                     return (
-                                        <div key={item.product._id} className="p-5 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                                        <div key={item.product._id} className="p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center gap-y-4 gap-x-4 hover:bg-slate-50/50 transition-colors relative">
                                             {/* Product Image */}
                                             <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
                                                 {item.product.images?.[0]?.url ? (
@@ -113,39 +113,42 @@ const VendorCart = () => {
                                             </div>
 
                                             {/* Product Info */}
-                                            <div className="flex-1 min-w-0">
+                                            <div className="flex-1 min-w-0 pr-8 sm:pr-0">
                                                 <h4 className="font-black text-slate-800 text-sm truncate">{item.product.name}</h4>
-                                                <p className="text-xs font-bold text-slate-400 mt-0.5">
+                                                <p className="text-xs font-bold text-slate-400 mt-0.5 truncate">
                                                     ₹{price}/{item.product.unit} • {item.product.variety || 'Standard'}
                                                 </p>
                                             </div>
 
-                                            {/* Quantity Controls */}
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <button
-                                                    onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
-                                                    className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">remove</span>
-                                                </button>
-                                                <span className="w-10 text-center font-black text-sm text-slate-800">{item.quantity}</span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                                                    className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">add</span>
-                                                </button>
+                                            {/* Controls Container */}
+                                            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pl-20 sm:pl-0">
+                                                {/* Quantity Controls */}
+                                                <div className="flex items-center gap-1 shrink-0 bg-slate-50/50 rounded-xl p-0.5 border border-slate-100/50">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                                                        className="w-8 h-8 rounded-[10px] bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">remove</span>
+                                                    </button>
+                                                    <span className="w-8 text-center font-black text-sm text-slate-800">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                                                        className="w-8 h-8 rounded-[10px] bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-sm">add</span>
+                                                    </button>
+                                                </div>
+
+                                                {/* Line Total */}
+                                                <div className="text-right shrink-0 sm:w-20">
+                                                    <p className="font-black text-indigo-600 text-sm">₹{lineTotal.toLocaleString()}</p>
+                                                </div>
                                             </div>
 
-                                            {/* Line Total */}
-                                            <div className="text-right shrink-0 w-20">
-                                                <p className="font-black text-indigo-600 text-sm">₹{lineTotal.toLocaleString()}</p>
-                                            </div>
-
-                                            {/* Remove */}
+                                            {/* Remove Button */}
                                             <button
                                                 onClick={() => { removeFromCart(item.product._id); toast.success('Removed'); }}
-                                                className="w-8 h-8 rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shrink-0"
+                                                className="absolute top-4 right-4 sm:static sm:top-auto sm:right-auto w-8 h-8 rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center shrink-0"
                                             >
                                                 <span className="material-symbols-outlined text-lg">close</span>
                                             </button>
