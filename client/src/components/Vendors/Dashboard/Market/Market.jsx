@@ -220,7 +220,7 @@ const Market = () => {
                     </div>
                 ) : (
                     <>
-                        <p className="text-xs font-bold text-slate-400">Showing {paginatedProducts.length} of {filteredProducts.length} items</p>
+                        <p className="text-sm font-bold text-slate-500 mb-2">Showing {paginatedProducts.length} of {filteredProducts.length} items</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {paginatedProducts.map((product) => {
                                 const trend = trends.find(t => t.variety === product.variety);

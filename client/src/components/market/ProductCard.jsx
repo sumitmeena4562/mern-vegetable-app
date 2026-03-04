@@ -30,7 +30,7 @@ const ProductCard = ({ product, trend, onAddToCart, onViewDetails, isComparing, 
                         <span className="material-symbols-outlined text-4xl">inventory_2</span>
                     </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent"></div>
 
                 {/* Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">

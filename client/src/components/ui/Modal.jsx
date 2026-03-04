@@ -34,7 +34,7 @@ const Modal = ({
 
             {/* Modal Content */}
             <div
-                className={`relative bg-white rounded-[32px] w-full ${maxWidth} max-h-[90vh] overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${className}`}
+                className={`relative bg-white rounded-[32px] w-full ${maxWidth} max-h-[90vh] overflow-hidden overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${className}`}
             >
                 {/* Header */}
                 {(title || subtitle) && (
@@ -55,7 +55,7 @@ const Modal = ({
                 )}
 
                 {/* Body */}
-                <div className={title || subtitle ? '' : 'pt-4'}>
+                <div className="w-full">
                     {children}
                 </div>
             </div>

@@ -53,7 +53,7 @@ const ProductDetailModal = ({ product, onClose }) => {
     return (
         <Modal isOpen={true} onClose={onClose} maxWidth="max-w-[440px]">
             {/* ── Image ── */}
-            <div className="relative h-52 bg-slate-100 -mt-6 -mx-6 mb-4">
+            <div className="relative h-64 bg-slate-100 shrink-0 w-full">
                 {product.images?.[0]?.url ? (
                     <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover" />
                 ) : (

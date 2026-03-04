@@ -90,7 +90,7 @@ const PersonalInfoSection = ({
                             placeholder="Ramesh Kumar"
                             maxLength="50"
                             error={isTouched.fullName && errors.fullName ? errors.fullName : null}
-                            className={`rounded-full ${t.focusRing}`}
+                            className={`rounded-xl ${t.focusRing}`}
                         />
                     </div>
 
@@ -109,7 +109,7 @@ const PersonalInfoSection = ({
                             icon="mail"
                             placeholder="ramesh@example.com"
                             error={isTouched.email && errors.email ? errors.email : null}
-                            className={`rounded-full ${t.focusRing}`}
+                            className={`rounded-xl ${t.focusRing}`}
                         />
                     </div>
 
@@ -133,7 +133,7 @@ const PersonalInfoSection = ({
                                 placeholder="9876543210"
                                 maxLength="10"
                                 error={isTouched.mobile && errors.mobile ? errors.mobile : null}
-                                className={`rounded-full ${isVerified ? `bg-slate-50 ${t.verifiedBorderClass} text-slate-600` : t.mobileFocusClass}`}
+                                className={`rounded-xl ${isVerified ? `bg-slate-50 ${t.verifiedBorderClass} text-slate-600` : t.mobileFocusClass}`}
                                 wrapperClassName="flex-1"
                             />
                             <Button
@@ -143,7 +143,7 @@ const PersonalInfoSection = ({
                                 isLoading={loading}
                                 icon={isVerified ? "verified_user" : null}
                                 variant={isVerified ? "soft" : (formData.mobile.length === 10 && !errors.mobile ? "primary" : "outline")}
-                                className={`rounded-full min-w-[100px] h-[46px] ${isVerified
+                                className={`rounded-xl min-w-[100px] h-[46px] ${isVerified
                                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 cursor-default'
                                     : (formData.mobile.length === 10 && !errors.mobile ? t.verifyBtnClass : '')
                                     }`}
@@ -167,7 +167,7 @@ const PersonalInfoSection = ({
                             icon="lock"
                             placeholder={t.passwordPlaceholder}
                             error={isTouched.password && errors.password ? errors.password : null}
-                            className={`rounded-full pr-11 ${t.focusRing}`}
+                            className={`rounded-xl pr-11 ${t.focusRing}`}
                             rightElement={
                                 <button
                                     type="button"
@@ -229,7 +229,7 @@ const PersonalInfoSection = ({
                             icon="lock_reset"
                             placeholder={t.confirmPlaceholder}
                             error={isTouched.confirmPassword && errors.confirmPassword ? errors.confirmPassword : null}
-                            className={`rounded-full pr-11 ${t.focusRing}`}
+                            className={`rounded-xl pr-11 ${t.focusRing}`}
                             rightElement={
                                 <button
                                     type="button"
