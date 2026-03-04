@@ -95,12 +95,13 @@ const VendorCart = () => {
 
                             {/* Items */}
                             <div className="divide-y divide-slate-50">
-                                {group.items.map((item) => {
-                                    const price = item.product.pricePerUnit || item.product.price || 0;
+                                {group.items.map((item, index) => {
+                                    const price = item.product?.pricePerUnit || item.product?.price || 0;
                                     const lineTotal = price * item.quantity;
+                                    const itemKey = item.product?._id || item.product?.id || item.id || `cart-item-${index}`;
 
                                     return (
-                                        <div key={item.product._id} className="p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center gap-y-4 gap-x-4 hover:bg-slate-50/50 transition-colors relative">
+                                        <div key={itemKey} className="p-4 sm:p-5 flex flex-wrap sm:flex-nowrap items-center gap-y-4 gap-x-4 hover:bg-slate-50/50 transition-colors relative">
                                             {/* Product Image */}
                                             <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
                                                 {item.product.images?.[0]?.url ? (
@@ -167,10 +168,10 @@ const VendorCart = () => {
 
                         {/* Items Summary */}
                         <div className="space-y-3">
-                            {cart.map(item => (
-                                <div key={item.product._id} className="flex justify-between text-xs">
-                                    <span className="text-slate-500 font-medium truncate pr-2">{item.product.name} × {item.quantity}</span>
-                                    <span className="font-bold text-slate-700 shrink-0">₹{((item.product.pricePerUnit || item.product.price || 0) * item.quantity).toLocaleString()}</span>
+                            {cart.map((item, index) => (
+                                <div key={item.product?._id || index} className="flex justify-between text-xs">
+                                    <span className="text-slate-500 font-medium truncate pr-2">{item.product?.name || 'Product'} × {item.quantity}</span>
+                                    <span className="font-bold text-slate-700 shrink-0">₹{((item.product?.pricePerUnit || item.product?.price || 0) * item.quantity).toLocaleString()}</span>
                                 </div>
                             ))}
                         </div>
