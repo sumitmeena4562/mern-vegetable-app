@@ -46,9 +46,35 @@ const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').repla
 // Trust Proxy (Required for Rate Limiting behind proxies like Ngrok/Heroku/Vercel)
 app.set('trust proxy', 1);
 
-// 1. HELMET & MORGAN (Security & Logs)
+// 1. HELMET & LOGGER CONFIG
 app.use(helmet());
-app.use(morgan('dev'));
+
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  green: '\x1b[32m',
+  blue: '\x1b[34m',
+  yellow: '\x1b[33m',
+  red: '\x1b[31m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m'
+};
+
+const log = {
+  info: (msg) => console.info(`   ${colors.blue}ℹ${colors.reset} ${msg}`),
+  success: (msg) => console.info(`   ${colors.green}✓${colors.reset} ${msg}`),
+  warning: (msg) => console.warn(`   ${colors.yellow}⚠${colors.reset} ${msg}`),
+  error: (msg) => console.error(`   ${colors.red}✖${colors.reset} ${msg}`),
+  server: (msg) => console.info(`   ${colors.cyan}🚀${colors.reset} ${msg}`),
+  banner: () => {
+    console.info(`\n${colors.cyan}   ╔══════════════════════════════════════╗`);
+    console.info(`   ║        🚀 SMART TIFFIN SYSTEM        ║`);
+    console.info(`   ║        Production Backend            ║`);
+    console.info(`   ╚══════════════════════════════════════╝${colors.reset}\n`);
+  }
+};
+
+global.log = log; // Optional global assignment if needed elsewhere
 
 // 2. CORS (Sabse Important - Routes se pehle aana chahiye)
 // ✅ SECURITY FIX: Whitelist specific domains instead of allowing all
@@ -92,35 +118,7 @@ app.use(express.urlencoded({ extended: true }));
 // app.use(mongoSanitize()); // Simplified usage if needed later
 
 // 4. ADVANCED DIAGNOSTIC LOGGING (Ultra-Detailed)
-app.use((req, res, next) => {
-  const start = Date.now();
-  const requestId = Math.random().toString(36).substring(7).toUpperCase();
-
-  // Clone body and sanitize sensitive fields for logs
-  const sanitizedBody = { ...req.body };
-  ['password', 'otp', 'token', 'newPassword'].forEach(field => {
-    if (sanitizedBody[field]) sanitizedBody[field] = '********';
-  });
-
-  console.log(`\n--- 🌐 [${requestId}] ${req.method} ${req.originalUrl} ---`);
-  console.log(`🕒 Start: ${new Date().toISOString()}`);
-  console.log(`🏠 Origin: ${req.get('origin') || 'Direct/Postman'}`);
-  if (req.query && Object.keys(req.query).length > 0) console.log('🔍 Query:', req.query);
-  if (req.body && Object.keys(req.body).length > 0) console.log('📦 Data Payload:', sanitizedBody);
-
-  // Capture response to log status and time
-  const oldSend = res.send;
-  res.send = function (data) {
-    const duration = Date.now() - start;
-    console.log(`🏁 [${requestId}] Finished in ${duration}ms | Status: ${res.statusCode}`);
-    console.log(`--- End [${requestId}] ---\n`);
-    res.send = oldSend;
-    return res.send.apply(res, arguments);
-  };
-
-  next();
-});
-
+// Removed noisy per-request logs as requested to keep the console output clean and purely SaaS-like.
 // ====================================================
 // 1.5. RATE LIMITING (Security)
 // ====================================================
@@ -286,8 +284,24 @@ const startServer = (port, attempts = 0, maxAttempts = 5) => {
   });
 
   server.once('listening', () => {
-    console.log(`🚀 Server running on port ${port}`);
-    console.log(`🔗 API Base URL: http://localhost:${port}/api`);
+    log.banner();
+
+    console.info(`   ${colors.green}✓${colors.reset} Server Status: ${colors.green}LIVE${colors.reset}`);
+    console.info(`   ${colors.blue}🌐${colors.reset} API URL:      http://localhost:${port}/api`);
+    console.info(`   ${colors.yellow}📡${colors.reset} Socket:       ws://localhost:${port}`);
+    console.info(`   ${colors.cyan}🗄 ${colors.reset} Database:     Connected`);
+    console.info(`   ${colors.bright}🔐${colors.reset} Auth:         JWT Enabled`);
+    console.info(`   ${colors.bright}🌍${colors.reset} Environment:  ${process.env.NODE_ENV || 'development'}`);
+    console.info(`   ${colors.gray}🕒${colors.reset} Started At:   ${new Date().toLocaleString()}\n`);
+
+    console.info(`   ${colors.bright}Available Routes:${colors.reset}`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/auth`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/farmers`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/vendors`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/customers`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/notifications`);
+    console.info(`   ${colors.gray}├─${colors.reset} /api/locations`);
+    console.info(`   ${colors.gray}└─${colors.reset} /api/health\n`);
   });
 
   server.listen(port);
