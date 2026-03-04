@@ -176,10 +176,6 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                         </div>
                     )}
 
-                    import {generateInvoice} from '../../../../utils/InvoiceGenerator';
-
-                    // ... inside component ...
-
                     {/* Download Invoice Action */}
                     {order.status?.toLowerCase() === 'delivered' && (
                         <div className="pt-2">
