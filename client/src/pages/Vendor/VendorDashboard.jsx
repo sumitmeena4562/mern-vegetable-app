@@ -13,6 +13,7 @@ import VendorOnboarding from "../../components/Vendors/Dashboard/VendorOnboardin
 import VendorCart from "../../components/Vendors/Dashboard/Cart/VendorCart";
 import Notifications from "../../components/Farmers/Dashboard/notification/Notifications";
 import VendorInvoice from "../../components/Vendors/Dashboard/Orders/VendorInvoice";
+import Loader from "../../components/ui/Loader";
 
 
 export default function VendorDashboard() {
@@ -48,7 +49,7 @@ export default function VendorDashboard() {
     }, [location.pathname]);
 
     // Handle Unauthorized Access (if not a vendor)
-    if (authLoading) return <div className="h-screen w-full flex items-center justify-center bg-[#f8fafc]"><div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div></div>;
+    if (authLoading) return <Loader variant="fullPage" color="indigo" size="lg" text="Loading Dashboard..." />;
 
     if (!user || user.role !== 'vendor') {
         return (

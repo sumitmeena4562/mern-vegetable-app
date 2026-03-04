@@ -20,8 +20,6 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
         setIsReviewing(false);
     };
 
-    const badge = getStatusBadge(order.status?.toLowerCase());
-
     const getStatusSteps = () => {
         const steps = [
             { key: 'pending', label: 'Order Placed', icon: 'receipt_long' },
@@ -39,35 +37,40 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
         }));
     };
 
+    const statusSteps = getStatusSteps();
+    const completedCount = statusSteps.filter(s => s.completed).length;
+    const totalSteps = statusSteps.length;
+    const progressPercent = totalSteps > 1 ? ((completedCount - 1) / (totalSteps - 1)) * 100 : 0;
+
     return (
         <Modal isOpen={true} onClose={onClose} maxWidth="max-w-lg">
             <div className="max-h-[85vh] overflow-y-auto">
                 {/* Header */}
-                <div className="sticky top-0 bg-white/95 backdrop-blur-xl z-10 p-6 pb-4 border-b border-slate-100 -mt-6 -mx-6 mb-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900">Order #{order.id || order.orderId}</h3>
+                <div className="sticky top-0 bg-white z-20 px-6 pt-6 pb-4 border-b border-slate-100">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-black text-slate-900 truncate">
+                                Order #{order.id || order.orderId}
+                            </h3>
                             <p className="text-xs text-slate-400 font-medium mt-0.5">
                                 {order.date ? new Date(order.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                                 {order.date && ` • ${getTimeAgo(order.date)}`}
                             </p>
                         </div>
-                        <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
+                        <button onClick={onClose} className="w-10 h-10 shrink-0 rounded-2xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
                             <span className="material-symbols-outlined text-slate-600">close</span>
                         </button>
                     </div>
                 </div>
 
                 <div className="p-6 space-y-6">
-                    {/* Status Badge */}
+                    {/* Status Badge - FIXED: use 'status' prop, not 'type' */}
                     <div className="flex items-center gap-3">
-                        <Badge type={order.status?.toLowerCase()}>
-                            {order.status}
-                        </Badge>
+                        <Badge status={order.status?.toLowerCase()} />
                     </div>
 
                     {/* Delivery OTP - FOR VENDOR EYES ONLY */}
-                    {order.status === 'ready_for_pickup' && (
+                    {order.status?.toLowerCase() === 'ready_for_pickup' && (
                         <div className="bg-amber-500 rounded-2xl p-5 border border-amber-400 shadow-lg shadow-amber-200/50 flex items-center justify-between overflow-hidden relative group">
                             <div className="relative z-10">
                                 <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-1">Delivery OTP</p>
@@ -86,32 +89,37 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                         </div>
                     )}
 
-                    {/* Progress Timeline - Vertical Vertical */}
-                    <div className="space-y-4 py-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Tracking History</p>
+                    {/* Progress Timeline */}
+                    <div className="space-y-3 py-2">
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Tracking History</p>
                         <div className="space-y-0 relative">
-                            {/* Vertical Line */}
-                            <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100"></div>
+                            {/* Vertical Line - Background */}
+                            <div className="absolute left-[19px] top-5 bottom-5 w-[3px] bg-slate-100 rounded-full"></div>
+                            {/* Vertical Line - Active Progress */}
+                            <div
+                                className="absolute left-[19px] top-5 w-[3px] bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full transition-all duration-700 z-[1]"
+                                style={{ height: `calc(${progressPercent}% - ${progressPercent > 0 ? '20px' : '0px'})` }}
+                            ></div>
 
-                            {getStatusSteps().map((step, idx) => (
-                                <div key={step.key} className="relative pl-10 pb-6 last:pb-0">
+                            {statusSteps.map((step) => (
+                                <div key={step.key} className="relative pl-14 pb-7 last:pb-0">
                                     {/* Circle */}
-                                    <div className={`absolute left-0 top-0 w-8 h-8 rounded-full z-10 flex items-center justify-center transition-all duration-500
-                                        ${step.completed ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-100' :
-                                            step.active ? 'bg-white border-4 border-indigo-600 text-indigo-600 scale-110' :
-                                                'bg-slate-100 text-slate-300 scale-90'}`}>
-                                        <span className="material-symbols-outlined text-sm">
-                                            {step.completed ? 'check_circle' : step.icon}
+                                    <div className={`absolute left-0 top-0 w-10 h-10 rounded-full z-[2] flex items-center justify-center transition-all duration-500
+                                        ${step.completed ? 'bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200/60' :
+                                            step.active ? 'bg-white border-[3px] border-indigo-500 text-indigo-600 scale-110 shadow-lg shadow-indigo-100/80' :
+                                                'bg-slate-50 border-2 border-slate-200 text-slate-300 scale-90'}`}>
+                                        <span className="material-symbols-outlined text-base">
+                                            {step.completed ? 'check' : step.icon}
                                         </span>
                                     </div>
 
                                     {/* Content */}
-                                    <div className="min-h-[32px] flex flex-col justify-center">
-                                        <h4 className={`text-xs font-black transition-colors ${step.completed || step.active ? 'text-slate-900' : 'text-slate-400'}`}>
+                                    <div className="min-h-[40px] flex flex-col justify-center">
+                                        <h4 className={`text-sm font-bold transition-colors ${step.completed || step.active ? 'text-slate-900' : 'text-slate-400'}`}>
                                             {step.label}
                                         </h4>
                                         {(step.completed || step.active) && (
-                                            <p className="text-[10px] font-medium text-slate-500 mt-0.5">
+                                            <p className={`text-[10px] font-semibold mt-0.5 ${step.active ? 'text-indigo-500' : 'text-slate-400'}`}>
                                                 {step.active ? 'In Progress' : 'Completed'}
                                             </p>
                                         )}
@@ -122,31 +130,44 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                     </div>
 
                     {/* Farmer Info */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Farmer</p>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-indigo-600">agriculture</span>
+                    <div className="bg-gradient-to-br from-slate-50 to-indigo-50/30 rounded-2xl p-5 border border-slate-100/80">
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Farmer</p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center shadow-sm">
+                                <span className="material-symbols-outlined text-indigo-600 text-xl">agriculture</span>
                             </div>
-                            <div>
-                                <p className="font-bold text-slate-800">{order.farmer || 'Unknown Farmer'}</p>
+                            <div className="min-w-0 flex-1">
+                                <p className="font-bold text-slate-800 text-sm truncate">{order.farmer || 'Unknown Farmer'}</p>
+                                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Verified Farmer</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Items */}
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Items</p>
-                        <div className="text-sm text-slate-700 font-medium bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                            {order.items || order.products || 'Various Items'}
+                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-3">Items</p>
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                            {/* items comes as a comma-separated string from VendorOrders formatOrder */}
+                            {typeof order.items === 'string' ? (
+                                order.items.split(', ').map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 border-b border-slate-100/80 last:border-0">
+                                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-slate-100 shrink-0">
+                                            <span className="material-symbols-outlined text-green-600 text-sm">eco</span>
+                                        </div>
+                                        <p className="text-sm text-slate-700 font-medium flex-1 min-w-0">{item}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-slate-700 font-medium">{order.items || order.products || 'Various Items'}</p>
+                            )}
                         </div>
                     </div>
 
                     {/* Total */}
-                    <div className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-2xl p-5 border border-indigo-100">
+                    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 shadow-lg shadow-indigo-200/40">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-600">Total Amount</span>
-                            <span className="text-2xl font-black text-indigo-700">₹{order.total?.toLocaleString() || 0}</span>
+                            <span className="text-xs font-bold text-white/70 uppercase tracking-widest">Total Amount</span>
+                            <span className="text-2xl font-black text-white">₹{order.total?.toLocaleString() || 0}</span>
                         </div>
                     </div>
 
@@ -213,7 +234,7 @@ const VendorOrderDetailModal = ({ order, onClose, onCancel, onReview, onReorder 
                                         onClick={() => setRating(star)}
                                         className={`transition-all ${star <= rating ? 'text-amber-400 scale-110' : 'text-slate-300 hover:text-amber-200'}`}
                                     >
-                                        <span className={`material-symbols-outlined text-3xl ${star <= rating ? 'font-[Material_Symbols_Outlined_Solid]' : ''}`} style={star <= rating ? { fontVariationSettings: "'FILL' 1" } : {}}>star</span>
+                                        <span className={`material-symbols-outlined text-3xl`} style={star <= rating ? { fontVariationSettings: "'FILL' 1" } : {}}>star</span>
                                     </button>
                                 ))}
                             </div>
