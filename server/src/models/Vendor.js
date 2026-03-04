@@ -123,6 +123,11 @@ const vendorSchema = new mongoose.Schema({
   currentCreditUsed: {
     type: Number,
     default: 0
+  },
+
+  onboardingComplete: {
+    type: Boolean,
+    default: false
   }
 
 }, {

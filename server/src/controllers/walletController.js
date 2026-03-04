@@ -75,30 +75,57 @@ export const requestWithdrawal = async (req, res) => {
             return res.status(400).json({ message: 'Insufficient wallet balance' });
         }
 
-        // Create a transaction record
-        const transaction = await Transaction.create({
-            user: req.user.id,
-            type: 'payout',
-            amount,
-            status: 'pending',
-            paymentMethod: paymentMethod || 'bank_transfer',
-            description: 'Withdrawal request',
-            balanceAfter: farmer.walletBalance - amount,
-            payout: {
-                bankDetails: bankDetails || farmer.bankDetails
+        let createdTransaction = null;
+        const originalBalance = farmer.walletBalance;
+        const originalPending = farmer.pendingPayouts || 0;
+
+        try {
+            // 1. Update farmer balance first
+            farmer.walletBalance -= amount;
+            farmer.pendingPayouts = originalPending + amount;
+            await farmer.save();
+
+            // 2. Create the transaction record
+            createdTransaction = await Transaction.create({
+                user: req.user.id,
+                type: 'payout',
+                amount,
+                status: 'pending',
+                paymentMethod: paymentMethod || 'bank_transfer',
+                description: 'Withdrawal request',
+                balanceAfter: farmer.walletBalance,
+                payout: {
+                    bankDetails: bankDetails || farmer.bankDetails
+                }
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Withdrawal request submitted successfully',
+                data: createdTransaction
+            });
+            console.log(`💰 [WalletFlow] Withdrawal request of ₹${amount} initiated for farmer ${req.user.id}`);
+
+        } catch (opError) {
+            console.error('Wallet Operation Error:', opError);
+            // Manual Rollback to ensure data consistency without native Mongoose transactions
+            try {
+                console.log(`🔄 [WalletFlow] Initiating manual rollback for farmer ${req.user.id}`);
+                // Restore balance
+                farmer.walletBalance = originalBalance;
+                farmer.pendingPayouts = originalPending;
+                await farmer.save();
+
+                if (createdTransaction) {
+                    await Transaction.findByIdAndDelete(createdTransaction._id);
+                }
+                console.log(`✅ [WalletFlow] Manual rollback successful`);
+            } catch (rollbackError) {
+                console.error('CRITICAL: Wallet Rollback failed:', rollbackError);
             }
-        });
+            throw opError; // Forward to the outer handler
+        }
 
-        // Update farmer balance
-        farmer.walletBalance -= amount;
-        farmer.pendingPayouts += amount;
-        await farmer.save();
-
-        res.status(200).json({
-            success: true,
-            message: 'Withdrawal request submitted successfully',
-            data: transaction
-        });
     } catch (error) {
         console.error('requestWithdrawal error:', error);
         res.status(500).json({ message: 'Failed to process withdrawal request' });

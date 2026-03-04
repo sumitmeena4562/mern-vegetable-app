@@ -121,9 +121,22 @@ export const updateProfile = async (req, res) => {
             await User.findByIdAndUpdate(req.user.id, userUpdate);
         }
 
+        // SECURITY FIX: Only allow safe fields to be updated by Vendor
+        const allowedVendorFields = [
+            'shopName', 'businessType', 'preferredCategories', 'shopType',
+            'shopPhotos', 'fssaiNumber', 'deliveryRadius', 'acceptsOnlineOrders',
+            'gstNumber', 'businessLicense', 'dailyCapacity', 'paymentTerms',
+            'bankDetails', 'storeTimings', 'preferredPickupTime'
+        ];
+
+        const safeVendorData = {};
+        for (const key of allowedVendorFields) {
+            if (vendorData[key] !== undefined) safeVendorData[key] = vendorData[key];
+        }
+
         const vendor = await Vendor.findOneAndUpdate(
             { user: req.user.id },
-            vendorData,
+            safeVendorData,
             { new: true, runValidators: true }
         );
 
@@ -136,6 +149,7 @@ export const updateProfile = async (req, res) => {
 export const getDashboardStats = async (req, res) => {
     try {
         const Order = (await import('../models/Order.js')).default;
+        const mongoose = (await import('mongoose')).default;
         const vendor = await Vendor.findOne({ user: req.user.id });
         console.log(`📊 [VendorFlow] Fetching dashboard stats for vendor: ${req.user.id}`);
 
@@ -143,56 +157,85 @@ export const getDashboardStats = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Vendor profile not found' });
         }
 
-        // Aggregate order stats
-        const allOrders = await Order.find({ buyer: req.user.id });
+        const userObjectId = new mongoose.Types.ObjectId(req.user.id);
 
-        const totalSpent = allOrders
-            .filter(o => o.status === 'delivered')
-            .reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0);
+        // 1. Overall Order Stats
+        const [orderStats] = await Order.aggregate([
+            { $match: { buyer: userObjectId } },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    deliveredOrders: { $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0] } },
+                    activeOrders: { $sum: { $cond: [{ $in: ['$status', ['pending', 'confirmed', 'processing', 'in_transit']] }, 1, 0] } },
+                    pendingDeliveries: { $sum: { $cond: [{ $in: ['$status', ['ready_for_pickup', 'in_transit']] }, 1, 0] } },
+                    totalSpent: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ['$status', 'delivered'] },
+                                { $ifNull: ['$finalAmount', '$totalAmount'] },
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
 
-        const activeOrders = allOrders.filter(o =>
-            ['pending', 'confirmed', 'processing', 'in_transit'].includes(o.status)
-        ).length;
+        // 2. Weekly Sourcing Stats
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
 
-        const pendingDeliveries = allOrders.filter(o =>
-            ['ready_for_pickup', 'in_transit'].includes(o.status)
-        ).length;
+        const weeklyAgg = await Order.aggregate([
+            {
+                $match: {
+                    buyer: userObjectId,
+                    createdAt: { $gte: sevenDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", timezone: "Asia/Kolkata", date: "$createdAt" } },
+                    orders: { $sum: 1 },
+                    spent: {
+                        $sum: { $ifNull: ['$finalAmount', '$totalAmount'] }
+                    }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
 
-        // --- Generate Chart Data ---
-        // 1. Weekly Sourcing (Last 7 days)
+        // Format weeklySourcing to ensure all 7 days are present
+        const weeklyDict = weeklyAgg.reduce((acc, curr) => {
+            acc[curr._id] = curr;
+            return acc;
+        }, {});
+
         const weeklySourcing = [];
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
-            date.setHours(0, 0, 0, 0);
-
-            const nextDate = new Date(date);
-            nextDate.setDate(nextDate.getDate() + 1);
-
-            const dayOrders = allOrders.filter(o => {
-                const oDate = new Date(o.createdAt);
-                return oDate >= date && oDate < nextDate;
-            });
-
-            const daySpent = dayOrders.reduce((sum, o) => sum + (o.finalAmount || o.totalAmount || 0), 0);
+            const dateStr = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD
+            const data = weeklyDict[dateStr] || { orders: 0, spent: 0 };
 
             weeklySourcing.push({
-                name: date.toLocaleDateString('en-US', { weekday: 'short' }),
-                spent: daySpent,
-                orders: dayOrders.length
+                name: date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+                spent: data.spent,
+                orders: data.orders
             });
         }
 
         res.status(200).json({
             success: true,
             data: {
-                totalSpent,
-                activeOrders,
-                pendingDeliveries,
+                totalSpent: orderStats?.totalSpent || 0,
+                activeOrders: orderStats?.activeOrders || 0,
+                pendingDeliveries: orderStats?.pendingDeliveries || 0,
                 creditUsed: vendor.currentCreditUsed || 0,
                 creditLimit: vendor.creditLimit || 0,
-                totalOrders: allOrders.length,
-                deliveredOrders: allOrders.filter(o => o.status === 'delivered').length,
+                totalOrders: orderStats?.totalOrders || 0,
+                deliveredOrders: orderStats?.deliveredOrders || 0,
                 weeklySourcing
             }
         });
@@ -206,14 +249,14 @@ export const getDashboardStats = async (req, res) => {
 // Complete Vendor Onboarding
 export const completeOnboarding = async (req, res) => {
     try {
-        const { shopName, businessType, dailyCapacity, preferredVegetables, deliveryRadius, storeTimings } = req.body;
+        const { shopName, businessType, dailyCapacity, preferredCategories, deliveryRadius, storeTimings } = req.body;
         console.log(`🏪 [VendorFlow] Onboarding Payload:`, req.body);
 
         const updateData = { onboardingComplete: true };
         if (shopName) updateData.shopName = shopName;
         if (businessType) updateData.businessType = businessType;
         if (dailyCapacity) updateData.dailyCapacity = dailyCapacity;
-        if (preferredVegetables) updateData.preferredVegetables = preferredVegetables;
+        if (preferredCategories) updateData.preferredCategories = preferredCategories;
         if (deliveryRadius) updateData.deliveryRadius = deliveryRadius;
         if (storeTimings) updateData.storeTimings = storeTimings;
 
