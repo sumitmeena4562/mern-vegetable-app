@@ -148,163 +148,186 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-slate-50">
-      {/* Premium Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 pointer-events-none" />
-      <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-200/20 to-emerald-200/20 blur-[100px] animate-pulse" />
-      <div className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-blue-200/20 to-teal-200/20 blur-[100px] animate-pulse" style={{ animationDelay: '2s' }} />
+    <div className="h-screen flex bg-slate-50 font-sans overflow-hidden">
+      {/* 🚀 LEFT SIDE: PREMIUM BANNER (Hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] relative overflow-hidden bg-slate-900 border-r border-slate-100/10">
+        <img
+          src="/brain/619ad8c0-e861-4076-8641-c0083538fb5e/agriconnect_login_banner_1773675710213.png"
+          alt="AgriConnect Banner"
+          className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <Link to="/" className="inline-block relative group">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center shadow-xl shadow-green-500/20 transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-              <span className="material-symbols-outlined text-5xl text-white">eco</span>
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+              <span className="material-symbols-outlined text-green-600 text-3xl">eco</span>
             </div>
+            <span className="text-2xl font-black text-white tracking-tight">AgriConnect</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-black text-slate-800 tracking-tight">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-slate-500 font-medium">
-            Sign in to manage your farm & orders
-          </p>
+
+          <div>
+            <h1 className="text-4xl xl:text-6xl font-black text-white leading-[1.1] mb-6 tracking-tight">
+              Connect Directly <br />
+              <span className="text-green-400">Grow Digitally.</span>
+            </h1>
+            <p className="text-base xl:text-lg text-slate-300 font-medium max-w-md leading-relaxed">
+              Join India's most trusted agricultural network. Empowering farmers and vendors with real-time mandate market insights.
+            </p>
+          </div>
+
+          <div className="flex gap-8 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+            <span>© 2024 AgriConnect</span>
+            <Link to="#" className="hover:text-white transition-colors">Privacy</Link>
+            <Link to="#" className="hover:text-white transition-colors">Terms</Link>
+          </div>
         </div>
+      </div>
 
-        {/* Glass Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 p-8 sm:p-10 border border-white/60 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500" />
+      {/* 🚀 RIGHT SIDE: LOGIN FORM */}
+      <div className="flex-1 flex flex-col justify-center relative bg-white lg:bg-slate-50 overflow-y-auto hide-scrollbar">
+        <div className="mx-auto w-full max-w-[420px] py-8 px-6 sm:px-8 lg:px-4">
+          {/* Logo (Mobile Only) */}
+          <div className="lg:hidden text-center mb-8">
+            <Link to="/" className="inline-block">
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl mx-auto border border-slate-100">
+                <span className="material-symbols-outlined text-green-600 text-2xl font-bold">eco</span>
+              </div>
+            </Link>
+          </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Login Toggle */}
-            <div className="bg-slate-100/80 p-1.5 rounded-2xl flex relative">
-              <div
-                className={`absolute inset-y-1.5 w-1/2 bg-white rounded-xl shadow-sm transition-all duration-300 ease-spring ${loginMethod === 'otp' ? 'translate-x-[calc(100%-4px)]' : 'left-1.5'}`}
-              />
-              <button
-                type="button"
-                onClick={() => setLoginMethod('password')}
-                className={`relative z-10 flex-1 py-2.5 text-sm font-bold text-center transition-colors duration-300 ${loginMethod === 'password' ? 'text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                Password
-              </button>
-              <button
-                type="button"
-                onClick={() => setLoginMethod('otp')}
-                className={`relative z-10 flex-1 py-2.5 text-sm font-bold text-center transition-colors duration-300 ${loginMethod === 'otp' ? 'text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                OTP Verification
-              </button>
-            </div>
+          <div className="mb-6 text-center lg:text-left">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-1">
+              Welcome Back
+            </h2>
+            <p className="text-slate-500 font-bold text-[13px]">
+              Enter your credentials to manage your business
+            </p>
+          </div>
 
-            {/* Inputs */}
-            <div className="space-y-5">
-              <div className="group">
+          {/* Login Card - Compact Version */}
+          <div className="bg-white rounded-[32px] p-8 shadow-2xl shadow-slate-200/60 border border-slate-100 relative group transition-all duration-500">
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {/* Login Toggle */}
+              <div className="bg-slate-100/80 p-1 rounded-2xl flex relative">
+                <div
+                  className={`absolute inset-y-1 w-1/2 bg-white rounded-xl shadow-sm transition-all duration-300 ease-in-out ${loginMethod === 'otp' ? 'translate-x-[calc(100%-4px)]' : 'left-1'}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('password')}
+                  className={`relative z-10 flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${loginMethod === 'password' ? 'text-slate-900' : 'text-slate-400'}`}
+                >
+                  Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLoginMethod('otp')}
+                  className={`relative z-10 flex-1 py-2 text-[10px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${loginMethod === 'otp' ? 'text-slate-900' : 'text-slate-400'}`}
+                >
+                  OTP Sign-in
+                </button>
+              </div>
+
+              {/* Inputs */}
+              <div className="space-y-4">
                 <Input
-                  label="Email or Mobile"
+                  label="Account Identifier"
                   name="identifier"
                   type="text"
                   value={formData.identifier}
                   onChange={handleChange}
                   icon="person"
-                  placeholder="example@gmail.com"
-                  className="rounded-2xl py-3.5"
+                  placeholder="Mobile or Email"
+                  className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white py-2.5"
                 />
+
+                {loginMethod === 'password' ? (
+                  <div className="space-y-1">
+                    <Input
+                      label="Security Key"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      icon="lock"
+                      placeholder="••••••••"
+                      className="rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white py-2.5"
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-slate-400 hover:text-green-600 transition-colors p-1"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                        </button>
+                      }
+                    />
+                    <div className="flex justify-end pr-1">
+                      <Link to="/forgot-password" title="Recover account" className="text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700 transition-colors">Forgot Password?</Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      label="6-Digit OTP"
+                      type="text"
+                      value={otp}
+                      onChange={handleOtpChange}
+                      maxLength={6}
+                      placeholder="••••••"
+                      className="text-xl font-black text-center tracking-[0.4em] rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white py-2.5"
+                      rightElement={
+                        <Button
+                          type="button"
+                          onClick={sendOTP}
+                          disabled={loading || otpTimer > 0}
+                          variant="ghost"
+                          size="sm"
+                          className="mr-1 text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50"
+                        >
+                          {otpTimer > 0 ? `Resend ${otpTimer}s` : 'Get Code'}
+                        </Button>
+                      }
+                    />
+                  </div>
+                )}
               </div>
 
-              {loginMethod === 'password' ? (
-                <div className="group">
-                  <div className="flex justify-end mb-1">
-                    <Link to="/forgot-password" className="text-xs font-bold text-green-600 hover:text-green-700">Forgot?</Link>
-                  </div>
-                  <Input
-                    label="Password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handleChange}
-                    icon="lock"
-                    placeholder="••••••••"
-                    className="rounded-2xl py-3.5 pr-12"
-                    rightElement={
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center p-1"
-                      >
-                        <span className="material-symbols-outlined text-xl leading-none">{showPassword ? 'visibility_off' : 'visibility'}</span>
-                      </button>
-                    }
-                  />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-end mb-1">
-                    {otpSent && <span className="text-xs font-medium text-green-600 flex items-center gap-1"><span className="material-symbols-outlined text-sm">check_circle</span> Sent</span>}
-                  </div>
-                  <Input
-                    label="One Time Password"
-                    type="text"
-                    value={otp}
-                    onChange={handleOtpChange}
-                    maxLength={6}
-                    placeholder="••••••"
-                    className="font-mono text-xl font-bold text-center tracking-[0.5em] rounded-2xl py-3.5"
-                    rightElement={
-                      <Button
-                        type="button"
-                        onClick={sendOTP}
-                        disabled={loading || otpTimer > 0}
-                        variant={otpTimer > 0 ? "outline" : "primary"}
-                        size="sm"
-                        className="mr-2 rounded-xl"
-                      >
-                        {otpTimer > 0 ? `Resend (${otpTimer}s)` : 'Req OTP'}
-                      </Button>
-                    }
-                  />
-                </div>
-              )}
-            </div>
+              <Button
+                type="submit"
+                disabled={loading || isBlocked}
+                isLoading={loading}
+                fullWidth
+                size="lg"
+                className="rounded-xl bg-gradient-to-r from-green-600 to-emerald-700 hover:shadow-green-200/50 shadow-xl transition-all font-black uppercase tracking-widest text-[10px] py-4"
+              >
+                Launch Dashboard
+              </Button>
+            </form>
 
-            {/* Remember Me */}
-            <div className="flex items-center ml-1">
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600">
-                Remember me
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading || isBlocked}
-              isLoading={loading}
-              fullWidth
-              size="lg"
-              className="mt-4 rounded-2xl text-base shadow-green-500/20 hover:-translate-y-0.5"
-            >
-              Sign In
-            </Button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <p className="text-center text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Or create new account</p>
-            <div className="grid grid-cols-2 gap-4">
-              <Link to="/farmer-registration" className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-600 text-sm font-bold hover:bg-green-50 hover:text-green-700 hover:border-green-100 transition-all">
-                <span className="material-symbols-outlined text-lg">agriculture</span>
-                Farmer
-              </Link>
-              <Link to="/vendor-registration" className="flex items-center justify-center gap-2 px-4 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-600 text-sm font-bold hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100 transition-all">
-                <span className="material-symbols-outlined text-lg">storefront</span>
-                Vendor
-              </Link>
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <p className="text-center text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Access Global Network</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Link to="/farmer-registration" className="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 border border-transparent hover:border-green-500/20 hover:bg-green-50 group transition-all">
+                  <span className="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-green-600 mb-1">agriculture</span>
+                  <span className="text-[8px] font-black uppercase text-slate-500 group-hover:text-slate-900">Farmer</span>
+                </Link>
+                <Link to="/vendor-registration" className="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 border border-transparent hover:border-blue-500/20 hover:bg-blue-50 group transition-all">
+                  <span className="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-blue-600 mb-1">storefront</span>
+                  <span className="text-[8px] font-black uppercase text-slate-500 group-hover:text-slate-900">Vendor</span>
+                </Link>
+                <Link to="/customer-registration" className="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 border border-transparent hover:border-orange-500/20 hover:bg-orange-50 group transition-all">
+                  <span className="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-orange-500 mb-1">shopping_basket</span>
+                  <span className="text-[8px] font-black uppercase text-slate-500 group-hover:text-slate-900">Customer</span>
+                </Link>
+              </div>
             </div>
           </div>
+
+          <p className="mt-6 text-center text-[10px] text-slate-400 font-bold">
+            Trouble signing in? <Link to="#" className="text-emerald-600 hover:underline">Contact Support</Link>
+          </p>
         </div>
       </div>
     </div>

@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['farmer', 'vendor', 'customer', 'admin'],
+    enum: ['farmer', 'vendor', 'customer'],
     required: true
   },
 
@@ -146,7 +146,6 @@ userSchema.virtual('profile', {
     if (this.role === 'farmer') return 'Farmer';
     if (this.role === 'customer') return 'Customer';
     if (this.role === 'vendor') return 'Vendor';
-    if (this.role === 'admin') return 'Admin';
     return null;
   },
   localField: '_id',
